@@ -3,7 +3,7 @@ import { ImpactStory } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { Link } from '../context/RouterContext';
 import { Heart, MapPin, ArrowRight, ShieldCheck } from 'lucide-react';
-import { getAssetUrl } from '../lib/utils/assetHelper';
+import { OptimizedImage } from './OptimizedImage';
 
 interface StoryCardProps {
   story: ImpactStory;
@@ -19,11 +19,13 @@ export const StoryCard: React.FC<StoryCardProps> = ({ story }) => {
         slug={story.slug}
         className="block relative aspect-16/10 overflow-hidden bg-slate-100"
       >
-        <img
-          src={getAssetUrl(story.imageUrl)}
+        <OptimizedImage
+          src={story.imageUrl}
           alt={tText(story.title)}
           className="w-full h-full object-cover motion-img-zoom"
-          loading="lazy"
+          width={600}
+          aspectRatio="16/10"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
 

@@ -3,7 +3,7 @@ import { Campaign } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { Link } from '../context/RouterContext';
 import { MapPin, Calendar, ArrowRight, Heart } from 'lucide-react';
-import { getAssetUrl } from '../lib/utils/assetHelper';
+import { OptimizedImage } from './OptimizedImage';
 
 interface CampaignCardProps {
   campaign: Campaign;
@@ -37,11 +37,13 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, featured =
         slug={campaign.slug}
         className="block relative aspect-16/10 overflow-hidden bg-slate-100"
       >
-        <img
-          src={getAssetUrl(campaign.imageUrl)}
+        <OptimizedImage
+          src={campaign.imageUrl}
           alt={tText(campaign.title)}
           className="w-full h-full object-cover motion-img-zoom"
-          loading="lazy"
+          width={600}
+          aspectRatio="16/10"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
 

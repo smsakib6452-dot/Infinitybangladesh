@@ -71,7 +71,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Plus Jakarta Sans', 'Hind Siliguri', 'Outfit', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Hind Siliguri', system-ui, sans-serif;
     font-weight: 800;
     letter-spacing: -0.025em;
     color: var(--brand-dark);
@@ -101,7 +101,7 @@
 /* TYPOGRAPHY HELPERS                                           */
 /* ============================================================ */
 .font-display {
-  font-family: 'Plus Jakarta Sans', 'Outfit', 'Hind Siliguri', system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Hind Siliguri', system-ui, sans-serif;
   font-weight: 800;
   letter-spacing: -0.025em;
 }

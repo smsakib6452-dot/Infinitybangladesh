@@ -18,6 +18,7 @@ export const CustomCursor: React.FC = () => {
   const mousePos = useRef({ x: -100, y: -100 });
   const followerPos = useRef({ x: -100, y: -100 });
   const rafId = useRef<number | null>(null);
+  const isLoopRunning = useRef(false);
 
   useEffect(() => {
     // Check if device supports fine hover (desktop/mouse) and not reduced motion
@@ -31,14 +32,51 @@ export const CustomCursor: React.FC = () => {
 
     setEnabled(true);
 
+    // Smooth lerp loop for the outer follower ring; auto-pauses when at rest
+    const renderLoop = () => {
+      const ease = 0.22;
+      const dx = mousePos.current.x - followerPos.current.x;
+      const dy = mousePos.current.y - followerPos.current.y;
+
+      if (Math.abs(dx) < 0.15 && Math.abs(dy) < 0.15) {
+        followerPos.current.x = mousePos.current.x;
+        followerPos.current.y = mousePos.current.y;
+        if (followerRef.current) {
+          followerRef.current.style.transform = `translate3d(${followerPos.current.x}px, ${followerPos.current.y}px, 0)`;
+        }
+        isLoopRunning.current = false;
+        rafId.current = null;
+        return;
+      }
+
+      followerPos.current.x += dx * ease;
+      followerPos.current.y += dy * ease;
+
+      if (followerRef.current) {
+        followerRef.current.style.transform = `translate3d(${followerPos.current.x}px, ${followerPos.current.y}px, 0)`;
+      }
+
+      rafId.current = requestAnimationFrame(renderLoop);
+    };
+
+    const startLoopIfNeeded = () => {
+      if (!isLoopRunning.current) {
+        isLoopRunning.current = true;
+        rafId.current = requestAnimationFrame(renderLoop);
+      }
+    };
+
     const onMouseMove = (e: MouseEvent) => {
       mousePos.current = { x: e.clientX, y: e.clientY };
-      if (!visible) setVisible(true);
+      setVisible(true);
 
       // Directly update the center dot position via GPU transform for zero latency
       if (cursorRef.current) {
         cursorRef.current.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
       }
+
+      // Wake up the follower lerp loop on movement
+      startLoopIfNeeded();
 
       // Check hovered element for cursor state
       const target = e.target as HTMLElement | null;
@@ -71,31 +109,18 @@ export const CustomCursor: React.FC = () => {
       setVisible(true);
     };
 
-    // Smooth lerp loop for the outer follower ring
-    const renderLoop = () => {
-      const ease = 0.22;
-      followerPos.current.x += (mousePos.current.x - followerPos.current.x) * ease;
-      followerPos.current.y += (mousePos.current.y - followerPos.current.y) * ease;
-
-      if (followerRef.current) {
-        followerRef.current.style.transform = `translate3d(${followerPos.current.x}px, ${followerPos.current.y}px, 0)`;
-      }
-
-      rafId.current = requestAnimationFrame(renderLoop);
-    };
-
     window.addEventListener('mousemove', onMouseMove, { passive: true });
     document.addEventListener('mouseleave', onMouseLeave);
     document.addEventListener('mouseenter', onMouseEnter);
-    rafId.current = requestAnimationFrame(renderLoop);
 
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseleave', onMouseLeave);
       document.removeEventListener('mouseenter', onMouseEnter);
       if (rafId.current) cancelAnimationFrame(rafId.current);
+      isLoopRunning.current = false;
     };
-  }, [visible]);
+  }, []);
 
   if (!enabled) return null;
 

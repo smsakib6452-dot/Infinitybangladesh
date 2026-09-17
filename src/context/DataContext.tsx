@@ -320,7 +320,9 @@ interface DataContextType {
 
   // Global System Controls
   setPreviewMode: (enabled: boolean) => void;
-  syncWithSupabase: () => Promise<void>;
+  syncWithSupabase: (forceAdmin?: boolean) => Promise<void>;
+  loadAdminData: () => Promise<void>;
+  isAdminLoaded: boolean;
   pushAllToSupabase: () => Promise<{ success: boolean; message: string }>;
   resetToDefaultData: () => void;
   exportDatabaseJSON: () => string;
@@ -361,6 +363,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
+  const [isAdminLoaded, setIsAdminLoaded] = useState(false);
 
   // Deleted IDs tracker to prevent resurrection across page reloads & sync
   const deletedIdsRef = useRef<Set<string>>(new Set(getStoredOrDefault<string[]>('deleted_video_ids', [])));
@@ -669,59 +672,64 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return stored.filter(cm => validCommitteeIds.has(cm.committeeId));
   });
 
-  // Local storage auto-sync
-  useEffect(() => {
-    localStorage.setItem(`${STORAGE_PREFIX}settings`, JSON.stringify(settings));
-    localStorage.setItem(`${STORAGE_PREFIX}homepageConfig`, JSON.stringify(homepageConfig));
-    localStorage.setItem(`${STORAGE_PREFIX}aboutSettings`, JSON.stringify(aboutSettings));
-    localStorage.setItem(`${STORAGE_PREFIX}headerSettings`, JSON.stringify(headerSettings));
-    localStorage.setItem(`${STORAGE_PREFIX}footerSettings`, JSON.stringify(footerSettings));
-    localStorage.setItem(`${STORAGE_PREFIX}socialLinks`, JSON.stringify(socialLinks));
-    localStorage.setItem(`${STORAGE_PREFIX}volunteerSettings`, JSON.stringify(volunteerSettings));
-    localStorage.setItem(`${STORAGE_PREFIX}supportSettings`, JSON.stringify(supportSettings));
-    localStorage.setItem(`${STORAGE_PREFIX}contactSettings`, JSON.stringify(contactSettings));
-    localStorage.setItem(`${STORAGE_PREFIX}seoSettings`, JSON.stringify(seoSettings));
-    localStorage.setItem(`${STORAGE_PREFIX}navigationItems`, JSON.stringify(navigationItems));
-    localStorage.setItem(`${STORAGE_PREFIX}banners`, JSON.stringify(banners));
-    localStorage.setItem(`${STORAGE_PREFIX}mediaLibrary`, JSON.stringify(mediaLibrary));
-    localStorage.setItem(`${STORAGE_PREFIX}galleryAlbums`, JSON.stringify(galleryAlbums));
-    localStorage.setItem(`${STORAGE_PREFIX}pressCoverages`, JSON.stringify(pressCoverages));
-    localStorage.setItem(`${STORAGE_PREFIX}adminProfiles`, JSON.stringify(adminProfiles));
-    localStorage.setItem(`${STORAGE_PREFIX}campaigns`, JSON.stringify(campaigns));
-    localStorage.setItem(`${STORAGE_PREFIX}programs`, JSON.stringify(programs));
-    localStorage.setItem(`${STORAGE_PREFIX}programEvents`, JSON.stringify(programEvents));
-    localStorage.setItem(`${STORAGE_PREFIX}eventMediaList`, JSON.stringify(eventMediaList));
-    localStorage.setItem(`${STORAGE_PREFIX}metrics`, JSON.stringify(metrics));
-    localStorage.setItem(`${STORAGE_PREFIX}stories`, JSON.stringify(stories));
-    localStorage.setItem(`${STORAGE_PREFIX}news`, JSON.stringify(news));
-    localStorage.setItem(`${STORAGE_PREFIX}events`, JSON.stringify(events));
-    localStorage.setItem(`${STORAGE_PREFIX}gallery`, JSON.stringify(gallery));
-    localStorage.setItem(`${STORAGE_PREFIX}videos`, JSON.stringify(videos));
-    localStorage.setItem(`${STORAGE_PREFIX}journeyVideos`, JSON.stringify(journeyVideos));
-    localStorage.setItem(`${STORAGE_PREFIX}reports`, JSON.stringify(reports));
-    localStorage.setItem(`${STORAGE_PREFIX}partners`, JSON.stringify(partners));
-    localStorage.setItem(`${STORAGE_PREFIX}volunteers`, JSON.stringify(volunteers));
-    localStorage.setItem(`${STORAGE_PREFIX}donations`, JSON.stringify(donations));
-    localStorage.setItem(`${STORAGE_PREFIX}messages`, JSON.stringify(messages));
-    localStorage.setItem(`${STORAGE_PREFIX}faqs`, JSON.stringify(faqs));
-    localStorage.setItem(`${STORAGE_PREFIX}auditLogs`, JSON.stringify(auditLogs));
-    localStorage.setItem(`${STORAGE_PREFIX}bloodDonors`, JSON.stringify(bloodDonors));
-    localStorage.setItem(`${STORAGE_PREFIX}emergencyRequests`, JSON.stringify(emergencyBloodRequests));
-    localStorage.setItem(`${STORAGE_PREFIX}bloodDonationSettings`, JSON.stringify(bloodDonationSettings));
-    localStorage.setItem(`${STORAGE_PREFIX}donorCategories`, JSON.stringify(donorCategories));
-    localStorage.setItem(`${STORAGE_PREFIX}committees`, JSON.stringify(committees));
-    localStorage.setItem(`${STORAGE_PREFIX}persons`, JSON.stringify(persons));
-    localStorage.setItem(`${STORAGE_PREFIX}positions`, JSON.stringify(positions));
-    localStorage.setItem(`${STORAGE_PREFIX}committeeMembers`, JSON.stringify(committeeMembers));
-  }, [
-    settings, homepageConfig, aboutSettings, headerSettings, footerSettings,
-    socialLinks, volunteerSettings, supportSettings, contactSettings, seoSettings,
-    navigationItems, banners, mediaLibrary, galleryAlbums, pressCoverages, adminProfiles,
-    campaigns, programs, programEvents, eventMediaList, metrics, stories, news, events, gallery, videos, journeyVideos,
-    bloodDonors, emergencyBloodRequests, bloodDonationSettings, donorCategories,
-    reports, partners, volunteers, donations, messages, faqs, auditLogs,
-    committees, persons, positions, committeeMembers
-  ]);
+  // Targeted debounced localStorage auto-sync per entity
+  const persistQueueRef = useRef<Record<string, any>>({});
+  const persistEntity = useCallback((key: string, data: any) => {
+    if (persistQueueRef.current[key]) {
+      clearTimeout(persistQueueRef.current[key]);
+    }
+    persistQueueRef.current[key] = setTimeout(() => {
+      try {
+        localStorage.setItem(`${STORAGE_PREFIX}${key}`, JSON.stringify(data));
+      } catch (err) {
+        console.warn(`Error persisting ${key} to localStorage:`, err);
+      }
+      delete persistQueueRef.current[key];
+    }, 400);
+  }, []);
+
+  useEffect(() => { persistEntity('settings', settings); }, [settings, persistEntity]);
+  useEffect(() => { persistEntity('homepageConfig', homepageConfig); }, [homepageConfig, persistEntity]);
+  useEffect(() => { persistEntity('aboutSettings', aboutSettings); }, [aboutSettings, persistEntity]);
+  useEffect(() => { persistEntity('headerSettings', headerSettings); }, [headerSettings, persistEntity]);
+  useEffect(() => { persistEntity('footerSettings', footerSettings); }, [footerSettings, persistEntity]);
+  useEffect(() => { persistEntity('socialLinks', socialLinks); }, [socialLinks, persistEntity]);
+  useEffect(() => { persistEntity('volunteerSettings', volunteerSettings); }, [volunteerSettings, persistEntity]);
+  useEffect(() => { persistEntity('supportSettings', supportSettings); }, [supportSettings, persistEntity]);
+  useEffect(() => { persistEntity('contactSettings', contactSettings); }, [contactSettings, persistEntity]);
+  useEffect(() => { persistEntity('seoSettings', seoSettings); }, [seoSettings, persistEntity]);
+  useEffect(() => { persistEntity('navigationItems', navigationItems); }, [navigationItems, persistEntity]);
+  useEffect(() => { persistEntity('banners', banners); }, [banners, persistEntity]);
+  useEffect(() => { persistEntity('mediaLibrary', mediaLibrary); }, [mediaLibrary, persistEntity]);
+  useEffect(() => { persistEntity('galleryAlbums', galleryAlbums); }, [galleryAlbums, persistEntity]);
+  useEffect(() => { persistEntity('pressCoverages', pressCoverages); }, [pressCoverages, persistEntity]);
+  useEffect(() => { persistEntity('adminProfiles', adminProfiles); }, [adminProfiles, persistEntity]);
+  useEffect(() => { persistEntity('campaigns', campaigns); }, [campaigns, persistEntity]);
+  useEffect(() => { persistEntity('programs', programs); }, [programs, persistEntity]);
+  useEffect(() => { persistEntity('programEvents', programEvents); }, [programEvents, persistEntity]);
+  useEffect(() => { persistEntity('eventMediaList', eventMediaList); }, [eventMediaList, persistEntity]);
+  useEffect(() => { persistEntity('metrics', metrics); }, [metrics, persistEntity]);
+  useEffect(() => { persistEntity('stories', stories); }, [stories, persistEntity]);
+  useEffect(() => { persistEntity('news', news); }, [news, persistEntity]);
+  useEffect(() => { persistEntity('events', events); }, [events, persistEntity]);
+  useEffect(() => { persistEntity('gallery', gallery); }, [gallery, persistEntity]);
+  useEffect(() => { persistEntity('videos', videos); }, [videos, persistEntity]);
+  useEffect(() => { persistEntity('journeyVideos', journeyVideos); }, [journeyVideos, persistEntity]);
+  useEffect(() => { persistEntity('reports', reports); }, [reports, persistEntity]);
+  useEffect(() => { persistEntity('partners', partners); }, [partners, persistEntity]);
+  useEffect(() => { persistEntity('volunteers', volunteers); }, [volunteers, persistEntity]);
+  useEffect(() => { persistEntity('donations', donations); }, [donations, persistEntity]);
+  useEffect(() => { persistEntity('messages', messages); }, [messages, persistEntity]);
+  useEffect(() => { persistEntity('faqs', faqs); }, [faqs, persistEntity]);
+  useEffect(() => { persistEntity('auditLogs', auditLogs); }, [auditLogs, persistEntity]);
+  useEffect(() => { persistEntity('bloodDonors', bloodDonors); }, [bloodDonors, persistEntity]);
+  useEffect(() => { persistEntity('emergencyRequests', emergencyBloodRequests); }, [emergencyBloodRequests, persistEntity]);
+  useEffect(() => { persistEntity('bloodDonationSettings', bloodDonationSettings); }, [bloodDonationSettings, persistEntity]);
+  useEffect(() => { persistEntity('donorCategories', donorCategories); }, [donorCategories, persistEntity]);
+  useEffect(() => { persistEntity('committees', committees); }, [committees, persistEntity]);
+  useEffect(() => { persistEntity('persons', persons); }, [persons, persistEntity]);
+  useEffect(() => { persistEntity('positions', positions); }, [positions, persistEntity]);
+  useEffect(() => { persistEntity('committeeMembers', committeeMembers); }, [committeeMembers, persistEntity]);
 
   // Multi-tab cross-storage auto synchronization
   useEffect(() => {
@@ -800,30 +808,28 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuditLogs(prev => [newLog, ...prev.slice(0, 99)]);
   }, []);
 
-  // Generic DB Upsert helper with dynamic recursive schema compatibility fallback
+  // Generic DB Upsert helper with clean single-attempt and safe schema compatibility fallback
   const safeDbUpsert = useCallback(async (tableName: string, data: any) => {
     if (!supabase || !isSupabaseConfigured) return;
     try {
-      let currentData = { ...data };
-      for (let attempt = 0; attempt < 6; attempt++) {
-        const { error } = await supabase.from(tableName).upsert(currentData);
-        if (!error) {
-          return;
-        }
-        console.warn(`Supabase upsert attempt ${attempt + 1} on ${tableName}:`, error.message);
+      const { error } = await supabase.from(tableName).upsert(data);
+      if (error) {
         const colMatch = error.message.match(/Could not find the '([^']+)' column/i);
         if (colMatch && colMatch[1]) {
-          const missingCol = colMatch[1];
-          delete currentData[missingCol];
-        } else if (error.message.includes('aspect_ratio') || error.message.includes('is_shorts')) {
-          delete currentData.aspect_ratio;
-          delete currentData.is_shorts;
-        } else {
-          break;
+          const fallbackData = { ...data };
+          delete fallbackData[colMatch[1]];
+          const { error: retryError } = await supabase.from(tableName).upsert(fallbackData);
+          if (retryError && import.meta.env.DEV) {
+            console.warn(`Supabase upsert fallback failed on ${tableName}:`, retryError.message);
+          }
+        } else if (import.meta.env.DEV) {
+          console.warn(`Supabase upsert error on ${tableName}:`, error.message);
         }
       }
     } catch (err: any) {
-      console.warn(`Supabase network error on ${tableName}:`, err.message);
+      if (import.meta.env.DEV) {
+        console.warn(`Supabase network error on ${tableName}:`, err.message);
+      }
     }
   }, []);
 
@@ -1340,20 +1346,31 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       }
 
-      // 17.5. Blood Donation Network
+      // 17.5. Blood Donation Network - Public Safe Query (Approved Donors Only for public)
       let bloodDonorsData: any[] | null = null;
       try {
-        const { data: bData, error: bErr } = await supabase
-          .from('blood_donors')
-          .select('*')
-          .order('created_at', { ascending: false });
+        const isAdminSession = typeof window !== 'undefined' && (
+          window.location.hash.includes('admin') ||
+          localStorage.getItem('infinity_bd_admin_auth') === 'true'
+        );
+
+        const query = isAdminSession
+          ? supabase.from('blood_donors').select('*').order('created_at', { ascending: false })
+          : supabase.from('blood_donors')
+              .select('id, full_name, blood_group, gender, district, upazila, area, org_category, availability_status, total_donations, photo_url, show_phone_publicly, phone, approval_status, is_verified')
+              .eq('approval_status', 'APPROVED')
+              .order('created_at', { ascending: false });
+
+        const { data: bData, error: bErr } = await query;
         if (!bErr && Array.isArray(bData)) {
           bloodDonorsData = bData;
-        } else if (bErr) {
+        } else if (bErr && import.meta.env.DEV) {
           console.warn('Supabase blood_donors query warning:', bErr.message);
         }
       } catch (err: any) {
-        console.warn('Supabase blood_donors fetch error:', err.message);
+        if (import.meta.env.DEV) {
+          console.warn('Supabase blood_donors fetch error:', err.message);
+        }
       }
 
       const legacyMockIds = new Set(['donor-1', 'donor-2', 'donor-3', 'donor-4', 'donor-5', 'donor-6', 'donor-7', 'donor-8', 'donor-9', 'donor-10']);
@@ -1367,43 +1384,46 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const remoteDonors: BloodDonor[] = bloodDonorsData
           .filter(d => !deletedDonorIdsRef.current.has(d.id) && !legacyMockIds.has(d.id))
-          .map(d => ({
-            id: d.id,
-            fullName: d.full_name,
-            bloodGroup: d.blood_group,
-            gender: d.gender || 'Male',
-            dateOfBirth: d.date_of_birth || d.dob,
-            dob: d.date_of_birth || d.dob,
-            phone: d.phone,
-            email: d.email || undefined,
-            photoUrl: getFreshImageUrl(d.photo_url),
-            district: d.district,
-            upazila: d.upazila,
-            area: d.area,
-            detailedAddress: d.detailed_address,
-            orgCategory: d.org_category || 'General Voluntary Donor',
-            committeePosition: d.committee_position,
-            availabilityStatus: d.availability_status || 'AVAILABLE_EMERGENCY',
-            lastDonationDate: d.last_donation_date || undefined,
-            totalDonations: Number(d.total_donations) || 0,
-            experienceNotes: d.experience_notes,
-            privacyConsent: d.privacy_consent ?? d.consent_confirmed ?? true,
-            showPhonePublicly: d.gender === 'Male' ? true : (d.show_phone_publicly ?? d.show_phone_number_publicly ?? false),
-            approvalStatus: d.approval_status || 'PENDING',
-            isVerified: d.is_verified ?? false,
-            donationHistory: Array.isArray(d.blood_donation_history) ? d.blood_donation_history.map((h: any) => ({
-              id: h.id,
-              donorId: h.donor_id,
-              donationDate: h.donation_date,
-              patientName: h.patient_name,
-              hospitalName: h.hospital_name,
-              location: h.location,
-              notes: h.notes,
-              recordedAt: h.created_at || h.recorded_at
-            })) : [],
-            createdAt: d.created_at,
-            updatedAt: d.updated_at
-          }));
+          .map(d => {
+            const canShowPhone = d.gender === 'Male' || Boolean(d.show_phone_publicly ?? d.show_phone_number_publicly);
+            return {
+              id: d.id,
+              fullName: d.full_name,
+              bloodGroup: d.blood_group,
+              gender: d.gender || 'Male',
+              dateOfBirth: d.date_of_birth || d.dob,
+              dob: d.date_of_birth || d.dob,
+              phone: canShowPhone ? d.phone : '',
+              email: d.email || undefined,
+              photoUrl: getFreshImageUrl(d.photo_url),
+              district: d.district,
+              upazila: d.upazila,
+              area: d.area,
+              detailedAddress: d.detailed_address,
+              orgCategory: d.org_category || 'General Voluntary Donor',
+              committeePosition: d.committee_position,
+              availabilityStatus: d.availability_status || 'AVAILABLE_EMERGENCY',
+              lastDonationDate: d.last_donation_date || undefined,
+              totalDonations: Number(d.total_donations) || 0,
+              experienceNotes: d.experience_notes,
+              privacyConsent: d.privacy_consent ?? d.consent_confirmed ?? true,
+              showPhonePublicly: canShowPhone,
+              approvalStatus: d.approval_status || 'APPROVED',
+              isVerified: d.is_verified ?? false,
+              donationHistory: Array.isArray(d.blood_donation_history) ? d.blood_donation_history.map((h: any) => ({
+                id: h.id,
+                donorId: h.donor_id,
+                donationDate: h.donation_date,
+                patientName: h.patient_name,
+                hospitalName: h.hospital_name,
+                location: h.location,
+                notes: h.notes,
+                recordedAt: h.created_at || h.recorded_at
+              })) : [],
+              createdAt: d.created_at,
+              updatedAt: d.updated_at
+            };
+          });
         setBloodDonors(prevLocal => {
           const remoteIds = new Set(remoteDonors.map(r => r.id));
           const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
@@ -1551,6 +1571,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       setLastSyncedAt(new Date());
+
+      // If in admin mode or explicitly requested, also sync admin-specific datasets
+      const isAdminContext = typeof window !== 'undefined' && (
+        window.location.hash.includes('admin') ||
+        localStorage.getItem('infinity_bd_admin_auth') === 'true'
+      );
+      if (isAdminContext) {
+        loadAdminData();
+      }
     } catch (err) {
       console.error('Supabase sync exception:', err);
     } finally {
@@ -1558,15 +1587,204 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Sync on initial mount & dynamic window revalidation
+  // Dedicated Admin-Only Data Loader: Fetches heavy admin management tables on demand
+  const loadAdminData = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured) return;
+    try {
+      // 1. Volunteer Applications
+      const { data: volData } = await supabase.from('volunteer_applications').select('*').order('submitted_at', { ascending: false });
+      if (volData && Array.isArray(volData)) {
+        setVolunteers(volData.map(v => ({
+          id: v.id,
+          fullName: v.full_name,
+          email: v.email,
+          phone: v.phone,
+          district: v.district,
+          institution: v.institution || '',
+          occupation: v.occupation || '',
+          bloodGroup: v.blood_group || '',
+          skills: v.skills || [],
+          preferredAreas: v.preferred_areas || [],
+          availability: v.availability || '',
+          message: v.message || '',
+          agreedCodeOfConduct: v.agreed_code_of_conduct ?? true,
+          status: v.status || 'New',
+          adminNotes: v.admin_notes || '',
+          submittedAt: v.submitted_at
+        })));
+      }
+
+      // 2. Donation Records
+      const { data: donData } = await supabase.from('donation_records').select('*').order('donated_at', { ascending: false });
+      if (donData && Array.isArray(donData)) {
+        setDonations(donData.map(d => ({
+          id: d.id,
+          receiptNumber: d.receipt_number || d.id,
+          donorName: d.donor_name,
+          donorEmail: d.donor_email || '',
+          donorPhone: d.donor_phone || '',
+          amountBDT: Number(d.amount_bdt) || 0,
+          campaignSlug: d.campaign_slug || '',
+          campaignTitle: d.campaign_title || '',
+          donationType: d.donation_type || 'one-time',
+          paymentMethod: d.payment_method || 'bKash',
+          transactionId: d.transaction_id || '',
+          status: d.status || 'Successful',
+          isAnonymous: d.is_anonymous ?? false,
+          notes: d.notes || '',
+          date: d.donated_at
+        })));
+      }
+
+      // 3. Contact Messages
+      const { data: msgData } = await supabase.from('contact_messages').select('*').order('submitted_at', { ascending: false });
+      if (msgData && Array.isArray(msgData)) {
+        setMessages(msgData.map(m => ({
+          id: m.id,
+          name: m.name,
+          email: m.email,
+          phone: m.phone || '',
+          subject: m.subject || '',
+          message: m.message || '',
+          status: m.status || 'Unread',
+          submittedAt: m.submitted_at
+        })));
+      }
+
+      // 4. Admin Profiles
+      const { data: admData } = await supabase.from('admin_profiles').select('*').order('created_at', { ascending: false });
+      if (admData && Array.isArray(admData)) {
+        setAdminProfiles(admData.map(a => ({
+          id: a.id,
+          email: a.email,
+          fullName: a.full_name,
+          role: a.role || 'super_admin',
+          avatarUrl: getFreshImageUrl(a.avatar_url),
+          isActive: a.is_active ?? true,
+          lastLoginAt: a.last_login_at,
+          createdAt: a.created_at
+        })));
+      }
+
+      // 5. Audit Logs
+      const { data: logData } = await supabase.from('audit_logs').select('*').order('timestamp', { ascending: false }).limit(100);
+      if (logData && Array.isArray(logData)) {
+        setAuditLogs(logData.map(l => ({
+          id: l.id,
+          user: l.user_email || 'Admin',
+          userEmail: l.user_email,
+          action: l.action,
+          entity: l.entity,
+          entityId: l.entity_id,
+          details: l.details,
+          timestamp: l.timestamp
+        })));
+      }
+
+      // 6. Media Library
+      const { data: medData } = await supabase.from('media_library').select('*').order('uploaded_at', { ascending: false });
+      if (medData && Array.isArray(medData)) {
+        setMediaLibrary(medData.map(m => ({
+          id: m.id,
+          fileName: m.file_name,
+          url: getFreshImageUrl(m.url),
+          fileSize: m.file_size || '0 KB',
+          mimeType: m.mime_type || 'image/jpeg',
+          category: m.category || 'General',
+          altText: m.alt_text || '',
+          caption: m.caption || '',
+          usageTags: m.usage_tags || [],
+          uploadedAt: m.uploaded_at
+        })));
+      }
+
+      setIsAdminLoaded(true);
+    } catch (err) {
+      console.warn('Admin dataset sync notice:', err);
+    }
+  }, []);
+
+  // Targeted single-table refetcher for granular Realtime events
+  const refetchTable = useCallback(async (tableName: string) => {
+    if (!supabase || !isSupabaseConfigured) return;
+    try {
+      if (tableName === 'campaigns') {
+        const { data } = await supabase.from('campaigns').select('*').order('created_at', { ascending: false });
+        if (data) {
+          setCampaigns(data.map(c => ({
+            id: c.id,
+            slug: c.slug,
+            title: c.title,
+            category: c.category,
+            status: c.status,
+            goalBDT: Number(c.goal_bdt) || 0,
+            raisedBDT: Number(c.raised_bdt) || 0,
+            donorsCount: Number(c.donors_count) || 0,
+            description: c.description,
+            beneficiaries: c.beneficiaries,
+            date: c.date,
+            location: c.location,
+            imageUrl: getFreshImageUrl(c.image_url),
+            secondaryImageUrl: getFreshImageUrl(c.secondary_image_url),
+            isFeatured: c.is_featured ?? false,
+            displayOrder: c.display_order || 0,
+            objectives: c.objectives || { en: [], bn: [] },
+            activities: c.activities || { en: [], bn: [] },
+            galleryImages: (c.gallery_images || []).map((img: string) => getFreshImageUrl(img))
+          })));
+        }
+      } else if (tableName === 'homepage_config') {
+        const { data } = await supabase.from('homepage_config').select('*').single();
+        if (data) {
+          setHomepageConfig(prev => ({
+            ...prev,
+            hero: { ...prev.hero, ...(data.hero || {}) },
+            aboutPreview: { ...prev.aboutPreview, ...(data.about_preview || {}) },
+            sectionOrder: data.section_order || prev.sectionOrder,
+            sectionVisibility: { ...(data.section_visibility || {}), ...prev.sectionVisibility }
+          }));
+        }
+      } else if (tableName === 'blood_donors') {
+        const { data } = await supabase.from('blood_donors').select('*').order('created_at', { ascending: false });
+        if (data) {
+          setBloodDonors(data.map(cleanBloodDonor));
+        }
+      } else if (tableName === 'emergency_blood_requests') {
+        const { data } = await supabase.from('emergency_blood_requests').select('*').order('created_at', { ascending: false });
+        if (data) {
+          setEmergencyBloodRequests(data.map(cleanEmergencyRequest));
+        }
+      } else if (tableName === 'site_settings') {
+        const { data } = await supabase.from('site_settings').select('*').single();
+        if (data) {
+          setSettings(prev => ({
+            ...prev,
+            organizationName: data.organization_name || prev.organizationName,
+            officialPhone: data.official_phone || prev.officialPhone,
+            officialEmail: data.official_email || prev.officialEmail,
+            officialAddress: data.official_address || prev.officialAddress
+          }));
+        }
+      }
+    } catch (err) {
+      console.warn(`Targeted refetch failed on ${tableName}:`, err);
+    }
+  }, []);
+
+  // Cooldown tracker for revalidation
+  const lastRevalidateRef = useRef<number>(Date.now());
+
+  // Sync on initial mount & throttled dynamic window revalidation (no 20s polling)
   useEffect(() => {
     if (isSupabaseConfigured) {
       syncWithSupabase();
     }
 
-    // Dynamic revalidation when user switches tabs or window regains focus
+    // Dynamic revalidation with 5-minute cooldown when user switches tabs or window regains focus
     const handleRevalidate = () => {
-      if (isSupabaseConfigured && document.visibilityState === 'visible') {
+      const now = Date.now();
+      if (isSupabaseConfigured && document.visibilityState === 'visible' && (now - lastRevalidateRef.current > 300000)) {
+        lastRevalidateRef.current = now;
         syncWithSupabase();
       }
     };
@@ -1575,29 +1793,32 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     window.addEventListener('online', handleRevalidate);
     document.addEventListener('visibilitychange', handleRevalidate);
 
-    // 20s periodic background sync fallback for multi-device instant updates
-    const syncInterval = setInterval(() => {
-      syncWithSupabase();
-    }, 20000);
-
     return () => {
-      clearInterval(syncInterval);
       window.removeEventListener('focus', handleRevalidate);
       window.removeEventListener('online', handleRevalidate);
       document.removeEventListener('visibilitychange', handleRevalidate);
     };
   }, [syncWithSupabase]);
 
-  // Real-time Supabase Broadcast/Change subscription
+  // Targeted Realtime: Scoped to Admin session and granular table events
   useEffect(() => {
     if (!supabase || !isSupabaseConfigured) return;
 
+    const isAdminSession = typeof window !== 'undefined' && (
+      window.location.hash.includes('admin') ||
+      localStorage.getItem('infinity_bd_admin_auth') === 'true'
+    );
+
+    // Public visitors do not subscribe to full-database realtime events
+    if (!isAdminSession) return;
+
     try {
       const channel = supabase
-        .channel('infinity-cms-changes')
-        .on('postgres_changes', { event: '*', schema: 'public' }, () => {
-          // Whenever an update happens remotely, pull the latest data
-          syncWithSupabase();
+        .channel('infinity-admin-targeted-changes')
+        .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
+          if (payload.table) {
+            refetchTable(payload.table);
+          }
         })
         .subscribe();
 
@@ -1607,7 +1828,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.warn('Realtime channel error:', err);
     }
-  }, [syncWithSupabase]);
+  }, [refetchTable]);
 
   // Push ALL local state to Supabase in one click
   const pushAllToSupabase = useCallback(async (): Promise<{ success: boolean; message: string }> => {
@@ -4791,29 +5012,40 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ? committeeMembers.filter(m => m.committeeId === committeeId)
       : committeeMembers;
 
+    const personsMap = new Map<string, Person>();
+    for (let i = 0; i < persons.length; i++) {
+      personsMap.set(persons[i].id, persons[i]);
+    }
+    const positionsMap = new Map<string, Position>();
+    for (let i = 0; i < positions.length; i++) {
+      positionsMap.set(positions[i].id, positions[i]);
+    }
+    const committeesMap = new Map<string, Committee>();
+    for (let i = 0; i < committees.length; i++) {
+      committeesMap.set(committees[i].id, committees[i]);
+    }
+
+    const fallbackPerson: Person = {
+      id: '',
+      fullName: 'Unknown Member',
+      banglaName: 'সদস্য',
+      englishName: 'Unknown Member',
+      active: true
+    };
+    const fallbackPosition: Position = {
+      id: '',
+      name: { en: 'Executive Member', bn: 'কার্যনির্বাহী সদস্য' },
+      level: 5,
+      sortOrder: 20
+    };
+
     return filtered
-      .map(m => {
-        const person = persons.find(p => p.id === m.personId) || {
-          id: m.personId,
-          fullName: 'Unknown Member',
-          banglaName: 'সদস্য',
-          englishName: 'Unknown Member',
-          active: true
-        };
-        const position = positions.find(pos => pos.id === m.positionId) || {
-          id: m.positionId,
-          name: { en: 'Executive Member', bn: 'কার্যনির্বাহী সদস্য' },
-          level: 5,
-          sortOrder: 20
-        };
-        const committee = committees.find(c => c.id === m.committeeId);
-        return {
-          ...m,
-          person,
-          position,
-          committee
-        };
-      })
+      .map(m => ({
+        ...m,
+        person: personsMap.get(m.personId) || { ...fallbackPerson, id: m.personId },
+        position: positionsMap.get(m.positionId) || { ...fallbackPosition, id: m.positionId },
+        committee: committeesMap.get(m.committeeId)
+      }))
       .sort((a, b) => (a.sortOrder || a.serialNumber || 0) - (b.sortOrder || b.serialNumber || 0));
   }, [committeeMembers, persons, positions, committees]);
 
@@ -5192,6 +5424,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         setPreviewMode,
         syncWithSupabase,
+        loadAdminData,
+        isAdminLoaded,
         pushAllToSupabase,
         resetToDefaultData,
         exportDatabaseJSON,

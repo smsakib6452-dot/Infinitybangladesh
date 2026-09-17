@@ -12,43 +12,61 @@ import { BackToTopButton } from './components/motion/BackToTopButton';
 import { PageTransition } from './components/motion/PageTransition';
 import { CustomCursor } from './components/motion/CustomCursor';
 
-// Pages
+// Eager Core Home Page (fast First Contentful Paint)
 import { HomePage } from './pages/HomePage';
-import { AboutPage } from './pages/AboutPage';
-import { TeamOverviewPage } from './pages/TeamOverviewPage';
-import { ExecutiveCommitteePage } from './pages/ExecutiveCommitteePage';
-import { StandingCommitteesPage } from './pages/StandingCommitteesPage';
-import { PastCommitteesPage } from './pages/PastCommitteesPage';
-import { ProgramsPage } from './pages/ProgramsPage';
-import { ProgramDetailPage } from './pages/ProgramDetailPage';
-import { ProgramEventDetailPage } from './pages/ProgramEventDetailPage';
-import { CampaignsPage } from './pages/CampaignsPage';
-import { CampaignDetailPage } from './pages/CampaignDetailPage';
-import { ImpactPage, StoryDetailPage } from './pages/ImpactPage';
-import { StoriesPage } from './pages/StoriesPage';
-import { VolunteerPage } from './pages/VolunteerPage';
-import { DonatePage } from './pages/DonatePage';
-import { TransparencyPage } from './pages/TransparencyPage';
-import { GalleryPage } from './pages/GalleryPage';
-import { VideosPage } from './pages/VideosPage';
-import { MediaCoveragePage } from './pages/MediaCoveragePage';
-import { PartnersPage } from './pages/PartnersPage';
-import { PrivacyPage } from './pages/PrivacyPage';
-import { TermsPage } from './pages/TermsPage';
-import { NewsPage, NewsDetailPage } from './pages/NewsPage';
-import { EventsPage, EventDetailPage } from './pages/EventsPage';
-import { ContactPage } from './pages/ContactPage';
-import { FAQPage } from './pages/FAQPage';
-import { BloodDonationPage } from './pages/BloodDonationPage';
-import { AdminPage } from './pages/AdminPage';
-import { NotFoundPage } from './pages/NotFoundPage';
+
+// Lazy Loaded Pages
+const AboutPage = React.lazy(() => import('./pages/AboutPage').then(m => ({ default: m.AboutPage })));
+const TeamOverviewPage = React.lazy(() => import('./pages/TeamOverviewPage').then(m => ({ default: m.TeamOverviewPage })));
+const ExecutiveCommitteePage = React.lazy(() => import('./pages/ExecutiveCommitteePage').then(m => ({ default: m.ExecutiveCommitteePage })));
+const StandingCommitteesPage = React.lazy(() => import('./pages/StandingCommitteesPage').then(m => ({ default: m.StandingCommitteesPage })));
+const PastCommitteesPage = React.lazy(() => import('./pages/PastCommitteesPage').then(m => ({ default: m.PastCommitteesPage })));
+const ProgramsPage = React.lazy(() => import('./pages/ProgramsPage').then(m => ({ default: m.ProgramsPage })));
+const ProgramDetailPage = React.lazy(() => import('./pages/ProgramDetailPage').then(m => ({ default: m.ProgramDetailPage })));
+const ProgramEventDetailPage = React.lazy(() => import('./pages/ProgramEventDetailPage').then(m => ({ default: m.ProgramEventDetailPage })));
+const CampaignsPage = React.lazy(() => import('./pages/CampaignsPage').then(m => ({ default: m.CampaignsPage })));
+const CampaignDetailPage = React.lazy(() => import('./pages/CampaignDetailPage').then(m => ({ default: m.CampaignDetailPage })));
+const ImpactPage = React.lazy(() => import('./pages/ImpactPage').then(m => ({ default: m.ImpactPage })));
+const StoryDetailPage = React.lazy(() => import('./pages/ImpactPage').then(m => ({ default: m.StoryDetailPage })));
+const StoriesPage = React.lazy(() => import('./pages/StoriesPage').then(m => ({ default: m.StoriesPage })));
+const VolunteerPage = React.lazy(() => import('./pages/VolunteerPage').then(m => ({ default: m.VolunteerPage })));
+const DonatePage = React.lazy(() => import('./pages/DonatePage').then(m => ({ default: m.DonatePage })));
+const TransparencyPage = React.lazy(() => import('./pages/TransparencyPage').then(m => ({ default: m.TransparencyPage })));
+const GalleryPage = React.lazy(() => import('./pages/GalleryPage').then(m => ({ default: m.GalleryPage })));
+const VideosPage = React.lazy(() => import('./pages/VideosPage').then(m => ({ default: m.VideosPage })));
+const MediaCoveragePage = React.lazy(() => import('./pages/MediaCoveragePage').then(m => ({ default: m.MediaCoveragePage })));
+const PartnersPage = React.lazy(() => import('./pages/PartnersPage').then(m => ({ default: m.PartnersPage })));
+const PrivacyPage = React.lazy(() => import('./pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
+const TermsPage = React.lazy(() => import('./pages/TermsPage').then(m => ({ default: m.TermsPage })));
+const NewsPage = React.lazy(() => import('./pages/NewsPage').then(m => ({ default: m.NewsPage })));
+const NewsDetailPage = React.lazy(() => import('./pages/NewsPage').then(m => ({ default: m.NewsDetailPage })));
+const EventsPage = React.lazy(() => import('./pages/EventsPage').then(m => ({ default: m.EventsPage })));
+const EventDetailPage = React.lazy(() => import('./pages/EventsPage').then(m => ({ default: m.EventDetailPage })));
+const ContactPage = React.lazy(() => import('./pages/ContactPage').then(m => ({ default: m.ContactPage })));
+const FAQPage = React.lazy(() => import('./pages/FAQPage').then(m => ({ default: m.FAQPage })));
+const BloodDonationPage = React.lazy(() => import('./pages/BloodDonationPage').then(m => ({ default: m.BloodDonationPage })));
+const AdminPage = React.lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })));
+const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
+
+// Lightweight Skeleton for Suspense transitions
+const PageSkeleton: React.FC = () => (
+  <div className="min-h-[50vh] max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-pulse space-y-6">
+    <div className="h-8 bg-[#EAE3D9]/60 rounded-2xl w-48" />
+    <div className="h-5 bg-[#EAE3D9]/40 rounded-xl w-80" />
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
+      <div className="h-56 bg-[#EAE3D9]/30 rounded-3xl" />
+      <div className="h-56 bg-[#EAE3D9]/30 rounded-3xl hidden sm:block" />
+      <div className="h-56 bg-[#EAE3D9]/30 rounded-3xl hidden lg:block" />
+    </div>
+  </div>
+);
 
 const AppContent: React.FC = () => {
   const { currentPage } = useRouter();
 
-  // Scroll to top on page change
+  // Instant scroll to top on page change
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo(0, 0);
   }, [currentPage]);
 
   const renderPage = () => {
@@ -155,7 +173,9 @@ const AppContent: React.FC = () => {
       <main className="flex-1">
         <AdminErrorBoundary fallbackTitle="Page Load Notice">
           <PageTransition pageKey={currentPage}>
-            {renderPage()}
+            <React.Suspense fallback={<PageSkeleton />}>
+              {renderPage()}
+            </React.Suspense>
           </PageTransition>
         </AdminErrorBoundary>
       </main>
