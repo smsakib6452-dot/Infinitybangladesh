@@ -12,41 +12,43 @@ import { BackToTopButton } from './components/motion/BackToTopButton';
 import { PageTransition } from './components/motion/PageTransition';
 import { CustomCursor } from './components/motion/CustomCursor';
 
+import { lazyWithRetry } from './lib/utils/lazyWithRetry';
+
 // Eager Core Home Page (fast First Contentful Paint)
 import { HomePage } from './pages/HomePage';
 
-// Lazy Loaded Pages
-const AboutPage = React.lazy(() => import('./pages/AboutPage').then(m => ({ default: m.AboutPage })));
-const TeamOverviewPage = React.lazy(() => import('./pages/TeamOverviewPage').then(m => ({ default: m.TeamOverviewPage })));
-const ExecutiveCommitteePage = React.lazy(() => import('./pages/ExecutiveCommitteePage').then(m => ({ default: m.ExecutiveCommitteePage })));
-const StandingCommitteesPage = React.lazy(() => import('./pages/StandingCommitteesPage').then(m => ({ default: m.StandingCommitteesPage })));
-const PastCommitteesPage = React.lazy(() => import('./pages/PastCommitteesPage').then(m => ({ default: m.PastCommitteesPage })));
-const ProgramsPage = React.lazy(() => import('./pages/ProgramsPage').then(m => ({ default: m.ProgramsPage })));
-const ProgramDetailPage = React.lazy(() => import('./pages/ProgramDetailPage').then(m => ({ default: m.ProgramDetailPage })));
-const ProgramEventDetailPage = React.lazy(() => import('./pages/ProgramEventDetailPage').then(m => ({ default: m.ProgramEventDetailPage })));
-const CampaignsPage = React.lazy(() => import('./pages/CampaignsPage').then(m => ({ default: m.CampaignsPage })));
-const CampaignDetailPage = React.lazy(() => import('./pages/CampaignDetailPage').then(m => ({ default: m.CampaignDetailPage })));
-const ImpactPage = React.lazy(() => import('./pages/ImpactPage').then(m => ({ default: m.ImpactPage })));
-const StoryDetailPage = React.lazy(() => import('./pages/ImpactPage').then(m => ({ default: m.StoryDetailPage })));
-const StoriesPage = React.lazy(() => import('./pages/StoriesPage').then(m => ({ default: m.StoriesPage })));
-const VolunteerPage = React.lazy(() => import('./pages/VolunteerPage').then(m => ({ default: m.VolunteerPage })));
-const DonatePage = React.lazy(() => import('./pages/DonatePage').then(m => ({ default: m.DonatePage })));
-const TransparencyPage = React.lazy(() => import('./pages/TransparencyPage').then(m => ({ default: m.TransparencyPage })));
-const GalleryPage = React.lazy(() => import('./pages/GalleryPage').then(m => ({ default: m.GalleryPage })));
-const VideosPage = React.lazy(() => import('./pages/VideosPage').then(m => ({ default: m.VideosPage })));
-const MediaCoveragePage = React.lazy(() => import('./pages/MediaCoveragePage').then(m => ({ default: m.MediaCoveragePage })));
-const PartnersPage = React.lazy(() => import('./pages/PartnersPage').then(m => ({ default: m.PartnersPage })));
-const PrivacyPage = React.lazy(() => import('./pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
-const TermsPage = React.lazy(() => import('./pages/TermsPage').then(m => ({ default: m.TermsPage })));
-const NewsPage = React.lazy(() => import('./pages/NewsPage').then(m => ({ default: m.NewsPage })));
-const NewsDetailPage = React.lazy(() => import('./pages/NewsPage').then(m => ({ default: m.NewsDetailPage })));
-const EventsPage = React.lazy(() => import('./pages/EventsPage').then(m => ({ default: m.EventsPage })));
-const EventDetailPage = React.lazy(() => import('./pages/EventsPage').then(m => ({ default: m.EventDetailPage })));
-const ContactPage = React.lazy(() => import('./pages/ContactPage').then(m => ({ default: m.ContactPage })));
-const FAQPage = React.lazy(() => import('./pages/FAQPage').then(m => ({ default: m.FAQPage })));
-const BloodDonationPage = React.lazy(() => import('./pages/BloodDonationPage').then(m => ({ default: m.BloodDonationPage })));
-const AdminPage = React.lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })));
-const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
+// Lazy Loaded Pages with automated stale chunk reload recovery
+const AboutPage = lazyWithRetry(() => import('./pages/AboutPage'), 'AboutPage');
+const TeamOverviewPage = lazyWithRetry(() => import('./pages/TeamOverviewPage'), 'TeamOverviewPage');
+const ExecutiveCommitteePage = lazyWithRetry(() => import('./pages/ExecutiveCommitteePage'), 'ExecutiveCommitteePage');
+const StandingCommitteesPage = lazyWithRetry(() => import('./pages/StandingCommitteesPage'), 'StandingCommitteesPage');
+const PastCommitteesPage = lazyWithRetry(() => import('./pages/PastCommitteesPage'), 'PastCommitteesPage');
+const ProgramsPage = lazyWithRetry(() => import('./pages/ProgramsPage'), 'ProgramsPage');
+const ProgramDetailPage = lazyWithRetry(() => import('./pages/ProgramDetailPage'), 'ProgramDetailPage');
+const ProgramEventDetailPage = lazyWithRetry(() => import('./pages/ProgramEventDetailPage'), 'ProgramEventDetailPage');
+const CampaignsPage = lazyWithRetry(() => import('./pages/CampaignsPage'), 'CampaignsPage');
+const CampaignDetailPage = lazyWithRetry(() => import('./pages/CampaignDetailPage'), 'CampaignDetailPage');
+const ImpactPage = lazyWithRetry(() => import('./pages/ImpactPage'), 'ImpactPage');
+const StoryDetailPage = lazyWithRetry(() => import('./pages/ImpactPage'), 'StoryDetailPage');
+const StoriesPage = lazyWithRetry(() => import('./pages/StoriesPage'), 'StoriesPage');
+const VolunteerPage = lazyWithRetry(() => import('./pages/VolunteerPage'), 'VolunteerPage');
+const DonatePage = lazyWithRetry(() => import('./pages/DonatePage'), 'DonatePage');
+const TransparencyPage = lazyWithRetry(() => import('./pages/TransparencyPage'), 'TransparencyPage');
+const GalleryPage = lazyWithRetry(() => import('./pages/GalleryPage'), 'GalleryPage');
+const VideosPage = lazyWithRetry(() => import('./pages/VideosPage'), 'VideosPage');
+const MediaCoveragePage = lazyWithRetry(() => import('./pages/MediaCoveragePage'), 'MediaCoveragePage');
+const PartnersPage = lazyWithRetry(() => import('./pages/PartnersPage'), 'PartnersPage');
+const PrivacyPage = lazyWithRetry(() => import('./pages/PrivacyPage'), 'PrivacyPage');
+const TermsPage = lazyWithRetry(() => import('./pages/TermsPage'), 'TermsPage');
+const NewsPage = lazyWithRetry(() => import('./pages/NewsPage'), 'NewsPage');
+const NewsDetailPage = lazyWithRetry(() => import('./pages/NewsPage'), 'NewsDetailPage');
+const EventsPage = lazyWithRetry(() => import('./pages/EventsPage'), 'EventsPage');
+const EventDetailPage = lazyWithRetry(() => import('./pages/EventsPage'), 'EventDetailPage');
+const ContactPage = lazyWithRetry(() => import('./pages/ContactPage'), 'ContactPage');
+const FAQPage = lazyWithRetry(() => import('./pages/FAQPage'), 'FAQPage');
+const BloodDonationPage = lazyWithRetry(() => import('./pages/BloodDonationPage'), 'BloodDonationPage');
+const AdminPage = lazyWithRetry(() => import('./pages/AdminPage'), 'AdminPage');
+const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage'), 'NotFoundPage');
 
 // Lightweight Skeleton for Suspense transitions
 const PageSkeleton: React.FC = () => (
