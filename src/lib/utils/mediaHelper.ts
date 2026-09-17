@@ -97,10 +97,18 @@ export function extractYouTubeId(url: string): string | null {
 /**
  * Generate standard YouTube embed URL
  */
-export function getYouTubeEmbedUrl(videoId: string, options?: { autoplay?: boolean; rel?: number }): string {
+export function getYouTubeEmbedUrl(videoId: string, options?: { autoplay?: boolean; rel?: number; mute?: boolean }): string {
   if (!videoId) return '';
   const params = new URLSearchParams();
-  if (options?.autoplay) params.set('autoplay', '1');
+  if (options?.autoplay) {
+    params.set('autoplay', '1');
+    // Browser autoplay policy requires muted audio for cross-origin iframes without user gesture activation
+    if (options?.mute !== false) {
+      params.set('mute', '1');
+    }
+    params.set('playsinline', '1');
+    params.set('enablejsapi', '1');
+  }
   if (options?.rel !== undefined) params.set('rel', options.rel.toString());
   else params.set('rel', '0');
   
@@ -144,6 +152,49 @@ export function getFacebookEmbedUrl(url: string, options?: { autoplay?: boolean 
   const encodedHref = encodeURIComponent(cleanUrl);
   const autoplay = options?.autoplay ? '&autoplay=true' : '';
   return `https://www.facebook.com/plugins/video.php?href=${encodedHref}&show_text=false&width=1280&allowfullscreen=true${autoplay}`;
+}
+
+/**
+ * Ensure an embed URL has autoplay enabled for active 1-click playback.
+ * Works seamlessly with YouTube, Facebook Reels/Videos, and direct iframe embed URLs.
+ */
+export function ensureAutoplayEmbedUrl(embedUrl: string, originalUrl?: string): string {
+  const targetEmbed = (embedUrl || '').trim();
+  const targetOrig = (originalUrl || '').trim();
+
+  // 1. YouTube ID extraction from either URL
+  const ytId = extractYouTubeId(targetOrig) || extractYouTubeId(targetEmbed);
+  if (ytId) {
+    return getYouTubeEmbedUrl(ytId, { autoplay: true, rel: 0, mute: true });
+  }
+
+  // 2. Facebook plugin URL already present
+  if (targetEmbed.includes('facebook.com/plugins/video.php')) {
+    if (!targetEmbed.includes('autoplay=')) {
+      return `${targetEmbed}&autoplay=true`;
+    }
+    return targetEmbed.replace(/autoplay=false/gi, 'autoplay=true');
+  }
+
+  // 3. Facebook original URL but no plugin embed yet
+  if (isFacebookVideoUrl(targetOrig)) {
+    return getFacebookEmbedUrl(targetOrig, { autoplay: true });
+  }
+
+  // 4. Fallback: If generic iframe embed URL
+  if (targetEmbed.startsWith('http')) {
+    try {
+      const parsed = new URL(targetEmbed);
+      if (!parsed.searchParams.has('autoplay')) {
+        parsed.searchParams.set('autoplay', '1');
+        return parsed.toString();
+      }
+    } catch {
+      // Return targetEmbed if parsing fails
+    }
+  }
+
+  return targetEmbed;
 }
 
 /**

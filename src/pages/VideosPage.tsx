@@ -20,6 +20,9 @@ import {
   detectAndNormalizeMedia,
   DEFAULT_VIDEO_THUMBNAIL,
   getYouTubeEmbedUrl,
+  getFacebookEmbedUrl,
+  isFacebookVideoUrl,
+  ensureAutoplayEmbedUrl,
   isPortraitVideo
 } from '../lib/utils/mediaHelper';
 
@@ -129,17 +132,37 @@ export const VideosPage: React.FC = () => {
     });
   }, [allVideos, activeFilter, searchQuery]);
 
-  // Compute safe embed URL for active modal
+  // Compute safe embed URL for active modal with guaranteed autoplay
   const activeEmbedInfo = useMemo(() => {
     if (!selectedVideo) return null;
-    const det = detectAndNormalizeMedia(selectedVideo.videoUrl || '');
+    const rawUrl = (selectedVideo.videoUrl || '').trim();
+    const det = detectAndNormalizeMedia(rawUrl);
+
     if (det.type === 'youtube' && det.videoId) {
       return {
         ...det,
-        embedUrl: getYouTubeEmbedUrl(det.videoId, { autoplay: true, rel: 0 })
+        embedUrl: getYouTubeEmbedUrl(det.videoId, { autoplay: true, rel: 0, mute: true })
       };
     }
-    return det;
+
+    if (det.type === 'facebook' || isFacebookVideoUrl(rawUrl)) {
+      return {
+        ...det,
+        embedUrl: getFacebookEmbedUrl(rawUrl, { autoplay: true })
+      };
+    }
+
+    if (selectedVideo.embedUrl && selectedVideo.embedUrl.trim()) {
+      return {
+        ...det,
+        embedUrl: ensureAutoplayEmbedUrl(selectedVideo.embedUrl, rawUrl)
+      };
+    }
+
+    return {
+      ...det,
+      embedUrl: ensureAutoplayEmbedUrl(det.embedUrl, rawUrl)
+    };
   }, [selectedVideo]);
 
   const isModalPortrait = isPortraitVideo(selectedVideo || undefined);

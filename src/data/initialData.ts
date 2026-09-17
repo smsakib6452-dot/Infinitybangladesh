@@ -2854,7 +2854,7 @@ export const INITIAL_VIDEOS: VideoItem[] = [
       "en": "সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-১১  (২০২৬)"
     },
     "videoUrl": "https://www.facebook.com/reel/950652967357340",
-    "embedUrl": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F950652967357340&show_text=false&width=1280&allowfullscreen=true",
+    "embedUrl": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F950652967357340&show_text=false&width=1280&allowfullscreen=true&autoplay=true",
     "thumbnailUrl": "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80",
     "platform": "facebook",
     "duration": "Video",
@@ -2879,7 +2879,7 @@ export const INITIAL_VIDEOS: VideoItem[] = [
       "en": "Field Drive Video"
     },
     "videoUrl": "https://www.facebook.com/reel/950652967357340",
-    "embedUrl": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F950652967357340&show_text=false&width=1280&allowfullscreen=true",
+    "embedUrl": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F950652967357340&show_text=false&width=1280&allowfullscreen=true&autoplay=true",
     "thumbnailUrl": "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80",
     "platform": "facebook",
     "duration": "Video",
@@ -2904,7 +2904,7 @@ export const INITIAL_VIDEOS: VideoItem[] = [
       "en": "সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-১১ (২০২৬)"
     },
     "videoUrl": "https://www.facebook.com/reel/950652967357340",
-    "embedUrl": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F950652967357340&show_text=false&width=1280&allowfullscreen=true",
+    "embedUrl": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F950652967357340&show_text=false&width=1280&allowfullscreen=true&autoplay=true",
     "thumbnailUrl": "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80",
     "platform": "facebook",
     "duration": "Video",
@@ -2979,7 +2979,7 @@ export const INITIAL_VIDEOS: VideoItem[] = [
       "en": "Hathazari Darpan এ সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-১১ (২০২৬)"
     },
     "videoUrl": "https://www.facebook.com/reel/950652967357340?locale=bn_IN",
-    "embedUrl": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F950652967357340%3Flocale%3Dbn_IN&show_text=false&width=1280&allowfullscreen=true",
+    "embedUrl": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F950652967357340%3Flocale%3Dbn_IN&show_text=false&width=1280&allowfullscreen=true&autoplay=true",
     "thumbnailUrl": "https://res.cloudinary.com/evj6fhsf/image/upload/v1787549742/Screenshot_2026-08-24_113254.png",
     "platform": "facebook",
     "duration": "7:13",
@@ -3042,7 +3042,7 @@ export const INITIAL_JOURNEY_VIDEOS: JourneyVideo[] = [
     "category": "Organizational Journey",
     "videoUrl": "https://www.facebook.com/reel/2180583382747395",
     "videoPlatform": "facebook",
-    "embedUrl": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F2180583382747395&show_text=false&width=1280&allowfullscreen=true",
+    "embedUrl": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F2180583382747395&show_text=false&width=1280&allowfullscreen=true&autoplay=true",
     "thumbnailUrl": "https://res.cloudinary.com/evj6fhsf/image/upload/v1787806819/Screenshot_2026-08-27_105905.png",
     "displayOrder": 1,
     "isPublished": true,
@@ -3067,7 +3067,7 @@ export const INITIAL_JOURNEY_VIDEOS: JourneyVideo[] = [
     "category": "Organizational Journey",
     "videoUrl": "https://www.facebook.com/reel/1606255444034690",
     "videoPlatform": "facebook",
-    "embedUrl": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F1606255444034690&show_text=false&width=1280&allowfullscreen=true",
+    "embedUrl": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F1606255444034690&show_text=false&width=1280&allowfullscreen=true&autoplay=true",
     "thumbnailUrl": "https://res.cloudinary.com/evj6fhsf/image/upload/v1787807091/Screenshot_2026-08-27_110433.png",
     "displayOrder": 2,
     "isPublished": true,

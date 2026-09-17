@@ -7,7 +7,9 @@ import {
   detectAndNormalizeMedia,
   DEFAULT_VIDEO_THUMBNAIL,
   getYouTubeEmbedUrl,
-  isFacebookVideoUrl
+  getFacebookEmbedUrl,
+  isFacebookVideoUrl,
+  ensureAutoplayEmbedUrl
 } from '../lib/utils/mediaHelper';
 import {
   Play,
@@ -79,23 +81,37 @@ export const JourneyVideoArchive: React.FC<JourneyVideoArchiveProps> = ({
     return publishedVideos.find(v => v.id === selectedId) || publishedVideos[0];
   }, [publishedVideos, selectedId]);
 
-  // Detect media URL format & embed information
+  // Detect media URL format & embed information with guaranteed autoplay for 1-click playback
   const mediaInfo = useMemo(() => {
     if (!currentVideo || !currentVideo.videoUrl?.trim()) return null;
-    const det = detectAndNormalizeMedia(currentVideo.videoUrl.trim());
+    const rawUrl = currentVideo.videoUrl.trim();
+    const det = detectAndNormalizeMedia(rawUrl);
+
     if (det.type === 'youtube' && det.videoId) {
       return {
         ...det,
-        embedUrl: getYouTubeEmbedUrl(det.videoId, { autoplay: true, rel: 0 })
+        embedUrl: getYouTubeEmbedUrl(det.videoId, { autoplay: true, rel: 0, mute: true })
       };
     }
+
+    if (det.type === 'facebook' || isFacebookVideoUrl(rawUrl)) {
+      return {
+        ...det,
+        embedUrl: getFacebookEmbedUrl(rawUrl, { autoplay: true })
+      };
+    }
+
     if (currentVideo.embedUrl && currentVideo.embedUrl.trim()) {
       return {
         ...det,
-        embedUrl: currentVideo.embedUrl
+        embedUrl: ensureAutoplayEmbedUrl(currentVideo.embedUrl, rawUrl)
       };
     }
-    return det;
+
+    return {
+      ...det,
+      embedUrl: ensureAutoplayEmbedUrl(det.embedUrl, rawUrl)
+    };
   }, [currentVideo]);
 
   const rawThumbnail = currentVideo?.thumbnailUrl || mediaInfo?.thumbnailUrl || aboutSettings.heroImageUrl || '/images/infinity-cover-hero.jpg';
@@ -211,16 +227,25 @@ export const JourneyVideoArchive: React.FC<JourneyVideoArchiveProps> = ({
       <div className="relative group">
         <div className="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video bg-black relative flex items-center justify-center ring-1 ring-slate-900/10">
           {/* STATE A: ACTIVE EMBEDDED PLAYER */}
-          {isPlaying && hasValidVideoUrl && mediaInfo?.embedUrl && !embedError ? (
+          {isPlaying && hasValidVideoUrl && (mediaInfo?.embedUrl || mediaInfo?.type === 'direct_video') && !embedError ? (
             <div className="w-full h-full relative bg-black flex flex-col justify-between overflow-hidden">
-              <iframe
-                src={mediaInfo.embedUrl}
-                title={tText(currentVideo.title) || 'Infinity Bangladesh Journey Video'}
-                className="w-full h-full border-0 absolute inset-0 z-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                onError={() => setEmbedError(true)}
-              />
+              {mediaInfo?.type === 'direct_video' ? (
+                <video
+                  src={mediaInfo.originalUrl}
+                  controls
+                  autoPlay
+                  className="w-full h-full object-contain absolute inset-0 z-0"
+                />
+              ) : (
+                <iframe
+                  src={mediaInfo?.embedUrl}
+                  title={tText(currentVideo.title) || 'Infinity Bangladesh Journey Video'}
+                  className="w-full h-full border-0 absolute inset-0 z-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  onError={() => setEmbedError(true)}
+                />
+              )}
 
               {/* Floating Glassmorphism Player Control Bar */}
               <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between pointer-events-none z-10 opacity-90 hover:opacity-100 transition-opacity">
