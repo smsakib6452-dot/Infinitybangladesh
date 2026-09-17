@@ -1357,7 +1357,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const query = isAdminSession
           ? supabase.from('blood_donors').select('*').order('created_at', { ascending: false })
           : supabase.from('blood_donors')
-              .select('id, full_name, blood_group, gender, district, upazila, area, org_category, availability_status, total_donations, photo_url, show_phone_publicly, phone, approval_status, is_verified')
+              .select('id, full_name, blood_group, district, upazila, area, org_category, availability_status, total_donations, photo_url, show_phone_publicly, phone, approval_status, is_verified')
               .eq('approval_status', 'APPROVED')
               .order('created_at', { ascending: false });
 
