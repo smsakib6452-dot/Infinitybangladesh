@@ -145,7 +145,7 @@ export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setCurrentPage(page);
     setCurrentSlug(slug);
     setSubSlug(subSlugParam);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo(0, 0);
 
     let hash: string = page;
     if (page === 'campaigns/detail' && slug) hash = `campaigns/${slug}`;

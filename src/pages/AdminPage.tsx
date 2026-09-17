@@ -233,8 +233,16 @@ export const AdminPage: React.FC = () => {
     addEmergencyBloodRequest, updateEmergencyBloodRequestStatus, deleteEmergencyBloodRequest,
     updateBloodDonationSettings, addDonorCategory, updateDonorCategory, deleteDonorCategory,
     programEvents, getEventsByProgramId, getEventHighlights, getEventMedia, deleteProgramEvent,
-    isLiveSupabase, isSyncing, lastSyncedAt, syncWithSupabase, pushAllToSupabase, resetToDefaultData, exportDatabaseJSON, importDatabaseJSON
+    isLiveSupabase, isSyncing, lastSyncedAt, syncWithSupabase, pushAllToSupabase, resetToDefaultData, exportDatabaseJSON, importDatabaseJSON,
+    loadAdminData, isAdminLoaded
   } = useData();
+
+  // Load complete admin-only datasets on entry if not already loaded
+  React.useEffect(() => {
+    if (!isAdminLoaded) {
+      loadAdminData();
+    }
+  }, [isAdminLoaded, loadAdminData]);
 
   // Auth State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {

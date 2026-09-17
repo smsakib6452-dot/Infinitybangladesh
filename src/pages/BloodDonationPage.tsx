@@ -76,7 +76,6 @@ import {
   ShieldAlert
 } from 'lucide-react';
 import { ScrollReveal } from '../components/motion/ScrollReveal';
-import { StaggerGroup, StaggerItem } from '../components/motion/StaggerGroup';
 import { AnimatedCounter } from '../components/motion/AnimatedCounter';
 import { LifeLineHeroLogoAnimation } from '../components/motion/LifeLineHeroLogoAnimation';
 
@@ -181,8 +180,8 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
   const [searchAvailability, setSearchAvailability] = useState<string>('ALL');
   const [searchOrgCategory, setSearchOrgCategory] = useState<string>('ALL');
 
-  // Pagination for Donors Directory
-  const [displayCount, setDisplayCount] = useState<number>(8);
+  // Pagination for Donors Directory (12 for 3-column desktop grid alignment)
+  const [displayCount, setDisplayCount] = useState<number>(12);
 
   // Available Upazilas for selected district in search
   const availableUpazilas = useMemo(() => {
@@ -1235,14 +1234,14 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
                   </button>
                 </div>
               ) : (
-                <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {filteredDonors.slice(0, displayCount).map(donor => {
                     const isAvailEmg = donor.availabilityStatus === 'AVAILABLE_EMERGENCY';
                     const donorAge = calculateAge(donor.dateOfBirth || donor.dob);
                     const genderLabel = donor.gender === 'Female' ? (isBn ? 'নারী' : 'Female') : donor.gender === 'Other' ? (isBn ? 'অন্যান্য' : 'Other') : (isBn ? 'পুরুষ' : 'Male');
 
                     return (
-                      <StaggerItem
+                      <div
                         key={donor.id}
                         className="p-5 sm:p-6 rounded-3xl bg-white border border-[#EAE3D9] shadow-warm-sm hover:shadow-warm-md transition-all hover:-translate-y-0.5 space-y-4 relative flex flex-col justify-between"
                       >
@@ -1392,10 +1391,10 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
                             <span>{isBn ? 'যোগাযোগ' : 'Contact'}</span>
                           </button>
                         </div>
-                      </StaggerItem>
+                      </div>
                     );
                   })}
-                </StaggerGroup>
+                </div>
               )}
 
               {/* Load More Button */}
