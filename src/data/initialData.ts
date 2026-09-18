@@ -2833,6 +2833,7 @@ export const INITIAL_VIDEOS: VideoItem[] = [
     "sourceType": "youtube",
     "aspectRatio": "16/9",
     "isShorts": false,
+    "displayOrder": 1,
     "createdAt": "2026-08-24T08:46:15.18+00:00",
     "updatedAt": "2026-08-24T08:46:15.18+00:00"
   },
@@ -2858,6 +2859,7 @@ export const INITIAL_VIDEOS: VideoItem[] = [
     "sourceType": "url",
     "aspectRatio": "9/16",
     "isShorts": true,
+    "displayOrder": 2,
     "createdAt": "2026-08-24T06:04:59.065+00:00",
     "updatedAt": "2026-08-24T06:04:59.065+00:00"
   },
@@ -2883,6 +2885,7 @@ export const INITIAL_VIDEOS: VideoItem[] = [
     "sourceType": "youtube",
     "aspectRatio": "16/9",
     "isShorts": false,
+    "displayOrder": 3,
     "createdAt": "2026-08-24T05:19:38.49+00:00",
     "updatedAt": "2026-08-24T05:20:53.352+00:00"
   }

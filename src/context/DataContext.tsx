@@ -245,6 +245,7 @@ interface DataContextType {
   addVideo: (video: Omit<VideoItem, 'id'>) => VideoItem;
   updateVideo: (id: string, video: Partial<VideoItem>) => void;
   deleteVideo: (id: string) => void;
+  reorderVideos: (orderedIds: string[]) => void;
 
   // Journey Videos (About Overview & Story)
   addJourneyVideo: (video: Omit<JourneyVideo, 'id' | 'createdAt' | 'updatedAt'>) => JourneyVideo;
@@ -826,7 +827,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { error } = await supabase.from(tableName).upsert(data);
       if (error) {
-        const colMatch = error.message.match(/Could not find the '([^']+)' column/i);
+        const colMatch = error.message.match(/Could not find the '([^']+)' column/i)
+          || error.message.match(/column (?:[a-zA-Z0-9_]+\.)?([a-zA-Z0-9_]+) does not exist/i);
         if (colMatch && colMatch[1]) {
           const fallbackData = { ...data };
           delete fallbackData[colMatch[1]];
@@ -1317,10 +1319,27 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
               sourceType: v.source_type || 'url',
               aspectRatio,
               isShorts,
+              displayOrder: v.display_order ?? undefined,
               createdAt: v.created_at,
               updatedAt: v.updated_at
             };
           });
+
+        // Apply saved video sequence order if present
+        try {
+          const savedOrderStr = localStorage.getItem(`${STORAGE_PREFIX}video_order`);
+          if (savedOrderStr) {
+            const savedOrder: string[] = JSON.parse(savedOrderStr);
+            if (Array.isArray(savedOrder) && savedOrder.length > 0) {
+              const orderMap = new Map(savedOrder.map((id, idx) => [id, idx + 1]));
+              remoteVideos.forEach(v => {
+                if (orderMap.has(v.id)) {
+                  v.displayOrder = orderMap.get(v.id);
+                }
+              });
+            }
+          }
+        } catch {}
 
         setVideos(prevLocal => {
           const remoteIds = new Set(remoteVideos.map(r => r.id));
@@ -1360,12 +1379,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 source_type: l.sourceType,
                 aspect_ratio: l.aspectRatio,
                 is_shorts: l.isShorts,
+                display_order: l.displayOrder,
                 created_at: l.createdAt || new Date().toISOString(),
                 updated_at: l.updatedAt || new Date().toISOString()
               });
             });
-            return [...localOnly, ...remoteVideos];
+            const merged = [...localOnly, ...remoteVideos];
+            merged.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+            return merged;
           }
+          remoteVideos.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
           return remoteVideos;
         });
       }
@@ -3650,6 +3673,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       sourceType: video.sourceType || 'url',
       aspectRatio,
       isShorts,
+      displayOrder: video.displayOrder || (videos.length + 1),
       date: video.date || new Date().toISOString().split('T')[0],
       duration: video.duration || (isShorts ? 'Shorts' : 'Video'),
       createdAt: new Date().toISOString(),
@@ -3713,12 +3737,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       source_type: newVid.sourceType,
       aspect_ratio: newVid.aspectRatio,
       is_shorts: newVid.isShorts,
+      display_order: newVid.displayOrder,
       created_at: newVid.createdAt,
       updated_at: newVid.updatedAt
     });
 
     return newVid;
-  }, [logAudit, safeDbUpsert]);
+  }, [logAudit, safeDbUpsert, videos.length]);
 
   const updateVideo = useCallback((id: string, video: Partial<VideoItem>) => {
     setVideos(prev => {
@@ -3743,6 +3768,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           thumbnailUrl: nextThumbnail ? getFreshImageUrl(nextThumbnail) : v.thumbnailUrl,
           aspectRatio,
           isShorts,
+          displayOrder: video.displayOrder !== undefined ? video.displayOrder : v.displayOrder,
           updatedAt: new Date().toISOString()
         };
       });
@@ -3765,6 +3791,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           source_type: match.sourceType || 'url',
           aspect_ratio: match.aspectRatio || '16/9',
           is_shorts: match.isShorts || false,
+          display_order: match.displayOrder,
           created_at: match.createdAt || new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
@@ -3817,6 +3844,57 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
   }, [logAudit]);
+
+  const reorderVideos = useCallback((orderedIds: string[]) => {
+    setVideos(prev => {
+      const idMap = new Map(prev.map(item => [item.id, item]));
+      const reordered: VideoItem[] = [];
+
+      orderedIds.forEach((id, index) => {
+        const item = idMap.get(id);
+        if (item) {
+          const updatedItem: VideoItem = { ...item, displayOrder: index + 1, updatedAt: new Date().toISOString() };
+          reordered.push(updatedItem);
+          safeDbUpsert('video_items', {
+            id: updatedItem.id,
+            title: updatedItem.title,
+            video_url: updatedItem.videoUrl,
+            embed_url: updatedItem.embedUrl || '',
+            thumbnail_url: updatedItem.thumbnailUrl,
+            platform: updatedItem.platform,
+            duration: updatedItem.duration || '',
+            date: updatedItem.date,
+            description: updatedItem.description,
+            category: updatedItem.category,
+            status: updatedItem.status,
+            is_featured: updatedItem.isFeatured,
+            source_type: updatedItem.sourceType,
+            aspect_ratio: updatedItem.aspectRatio,
+            is_shorts: updatedItem.isShorts,
+            display_order: updatedItem.displayOrder,
+            created_at: updatedItem.createdAt || new Date().toISOString(),
+            updated_at: updatedItem.updatedAt
+          });
+        }
+      });
+
+      prev.forEach(item => {
+        if (!orderedIds.includes(item.id)) {
+          reordered.push(item);
+        }
+      });
+
+      try {
+        localStorage.setItem(`${STORAGE_PREFIX}videos`, JSON.stringify(reordered));
+        localStorage.setItem(`${STORAGE_PREFIX}video_order`, JSON.stringify(orderedIds));
+      } catch (e) {
+        console.warn('Storage error on reorderVideos:', e);
+      }
+
+      return reordered;
+    });
+    logAudit('UPDATE', 'VideoItem', 'bulk', 'Reordered video items sequence');
+  }, [logAudit, safeDbUpsert]);
 
   // ----------------------------------------------------
   // JOURNEY VIDEOS (ABOUT OVERVIEW & STORY)
@@ -5373,6 +5451,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addVideo,
         updateVideo,
         deleteVideo,
+        reorderVideos,
 
         addJourneyVideo,
         updateJourneyVideo,

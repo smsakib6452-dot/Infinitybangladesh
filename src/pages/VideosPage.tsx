@@ -70,6 +70,7 @@ export const VideosPage: React.FC = () => {
         });
       }
     });
+    list.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
     return list;
   }, [videos, mediaLibrary]);
 
@@ -269,7 +270,7 @@ export const VideosPage: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className="flex flex-wrap justify-center gap-6 sm:gap-8 items-start">
+          <div className="flex flex-wrap justify-center gap-6 sm:gap-8 items-stretch">
             {filteredVideos.map((item) => {
               const detection = detectAndNormalizeMedia(item.videoUrl || '');
               const displayThumbnail = item.thumbnailUrl || detection.thumbnailUrl || DEFAULT_VIDEO_THUMBNAIL;
@@ -280,44 +281,65 @@ export const VideosPage: React.FC = () => {
               return (
                 <div
                   key={item.id}
-                  className={`group bg-white rounded-3xl border border-[#EAE3D9] overflow-hidden shadow-warm-sm hover:shadow-warm-lg transition-all duration-300 flex flex-col cursor-pointer transform hover:-translate-y-1 w-full ${
-                    isPortrait
-                      ? 'sm:w-[280px] md:w-[310px] max-w-[320px]'
-                      : 'md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.35rem)] max-w-sm'
-                  }`}
+                  className="group bg-white rounded-3xl border border-[#EAE3D9] overflow-hidden shadow-warm-sm hover:shadow-warm-lg transition-all duration-300 flex flex-col cursor-pointer transform hover:-translate-y-1 w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.35rem)] max-w-sm"
                   onClick={() => setSelectedVideo(item)}
                 >
-                  {/* Thumbnail with Play Overlay (Adapts to 9:16 Portrait Reel vs 16:9 Landscape) */}
-                  <div className={`relative ${isPortrait ? 'aspect-[9/16] max-h-[520px]' : 'aspect-video'} bg-slate-950 overflow-hidden flex items-center justify-center`}>
-                    <img
-                      src={displayThumbnail}
-                      alt={videoTitle}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-95 group-hover:opacity-100"
-                      loading="lazy"
-                      onError={(e) => {
-                        const target = e.currentTarget as HTMLImageElement;
-                        target.onerror = null;
-                        target.src = DEFAULT_VIDEO_THUMBNAIL;
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-slate-950/25 group-hover:bg-slate-950/10 transition-colors flex items-center justify-center">
-                      <div className="w-14 h-14 rounded-full bg-[#006A4E]/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:bg-[#006A4E] transition-all">
-                        <Play className="w-6 h-6 fill-current ml-0.5" />
+                  {/* Thumbnail with Play Overlay (Balanced Uniform Aspect Ratio) */}
+                  <div className="relative aspect-video bg-slate-950 overflow-hidden flex items-center justify-center">
+                    {isPortrait ? (
+                      <>
+                        {/* Ambient blurred backdrop for vertical videos */}
+                        <img
+                          src={displayThumbnail}
+                          alt=""
+                          aria-hidden="true"
+                          className="absolute inset-0 w-full h-full object-cover blur-xl scale-125 opacity-35"
+                        />
+                        {/* Crisp centered portrait reel display */}
+                        <img
+                          src={displayThumbnail}
+                          alt={videoTitle}
+                          className="relative z-10 h-full w-auto max-w-[65%] object-contain py-1 drop-shadow-md group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                          onError={(e) => {
+                            const target = e.currentTarget as HTMLImageElement;
+                            target.onerror = null;
+                            target.src = DEFAULT_VIDEO_THUMBNAIL;
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <img
+                        src={displayThumbnail}
+                        alt={videoTitle}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-95 group-hover:opacity-100"
+                        loading="lazy"
+                        onError={(e) => {
+                          const target = e.currentTarget as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = DEFAULT_VIDEO_THUMBNAIL;
+                        }}
+                      />
+                    )}
+
+                    <div className="absolute inset-0 z-20 bg-slate-950/20 group-hover:bg-slate-950/10 transition-colors flex items-center justify-center">
+                      <div className="w-13 h-13 rounded-full bg-[#006A4E]/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:bg-[#006A4E] transition-all">
+                        <Play className="w-5 h-5 fill-current ml-0.5" />
                       </div>
                     </div>
 
                     {item.duration && (
-                      <span className="absolute bottom-3 right-3 bg-slate-950/80 text-white text-[11px] px-2.5 py-1 rounded-lg font-mono font-medium backdrop-blur-sm shadow-xs">
+                      <span className="absolute bottom-3 right-3 z-20 bg-slate-950/80 text-white text-[11px] px-2.5 py-1 rounded-lg font-mono font-medium backdrop-blur-sm shadow-xs">
                         {item.duration}
                       </span>
                     )}
 
-                    <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
+                    <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 flex-wrap">
                       <span className="bg-[#006A4E]/90 text-white text-[10px] px-2.5 py-0.5 rounded-full font-extrabold uppercase tracking-wide backdrop-blur-sm shadow-xs">
                         {item.platform === 'youtube' ? 'YouTube' : item.platform === 'facebook' ? 'Facebook' : (item.platform || 'Video')}
                       </span>
                       {isPortrait && (
-                        <span className="bg-rose-600 text-white text-[10px] px-2 py-0.5 rounded-full font-extrabold uppercase tracking-wide backdrop-blur-sm shadow-xs flex items-center gap-1">
+                        <span className="bg-rose-600 text-white text-[10px] px-2.5 py-0.5 rounded-full font-extrabold uppercase tracking-wide backdrop-blur-sm shadow-xs flex items-center gap-1">
                           <Smartphone className="w-3 h-3" />
                           <span>Shorts / Reel (9:16)</span>
                         </span>

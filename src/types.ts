@@ -586,6 +586,7 @@ export interface VideoItem {
   sourceType?: 'youtube' | 'facebook' | 'url' | 'upload' | string;
   aspectRatio?: '16/9' | '9/16' | '16:9' | '9:16' | 'landscape' | 'portrait' | string;
   isShorts?: boolean;
+  displayOrder?: number;
   createdAt?: string;
   updatedAt?: string;
 }

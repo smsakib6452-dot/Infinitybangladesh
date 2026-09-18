@@ -200,7 +200,7 @@ export const AdminPage: React.FC = () => {
     news, addNews, updateNews, deleteNews,
     events, addEvent, updateEvent, deleteEvent,
     gallery, addGalleryPhoto, updateGalleryPhoto, deleteGalleryPhoto,
-    videos, addVideo, updateVideo, deleteVideo,
+    videos, addVideo, updateVideo, deleteVideo, reorderVideos,
     journeyVideos, addJourneyVideo, updateJourneyVideo, deleteJourneyVideo, reorderJourneyVideos, setFeaturedJourneyVideo,
     reports, addReport, updateReport, deleteReport,
     volunteers, updateVolunteerStatus, deleteVolunteerApplication,
@@ -450,6 +450,23 @@ export const AdminPage: React.FC = () => {
 
     reorderJourneyVideos(reordered.map(v => v.id));
     showToast(isBn ? 'ক্রম পরিবর্তন করা হয়েছে' : 'Display order updated');
+  };
+
+  const handleMoveVideo = (id: string, direction: 'up' | 'down') => {
+    const list = [...videos].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+    const idx = list.findIndex(v => v.id === id);
+    if (idx === -1) return;
+    if (direction === 'up' && idx === 0) return;
+    if (direction === 'down' && idx === list.length - 1) return;
+
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    const reordered = [...list];
+    const temp = reordered[idx];
+    reordered[idx] = reordered[targetIdx];
+    reordered[targetIdx] = temp;
+
+    reorderVideos(reordered.map(v => v.id));
+    showToast(isBn ? 'ভিডিও প্রদর্শন ক্রম সফলভাবে আপডেট হয়েছে' : 'Video display order updated');
   };
 
   // Committee Member Save Handler
@@ -6437,6 +6454,111 @@ export const AdminPage: React.FC = () => {
                       ))}
                     </div>
                   </div>
+
+                  {/* Video Display Order Manager (Prominently displayed when viewing videos) */}
+                  {(mediaLibraryFilter === 'video' || mediaLibraryFilter === 'youtube' || mediaLibraryFilter === 'facebook') && videos.length > 0 && (
+                    <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] border border-[#C2E2D7] space-y-3 shadow-2xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="p-1.5 rounded-xl bg-[#006A4E] text-white shadow-2xs">
+                            <VideoIcon className="w-4 h-4" />
+                          </span>
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-900 font-display">
+                              {isBn ? 'ভিডিও প্রদর্শন ক্রম ব্যবস্থাপনা' : 'Video Gallery Display Sequence'}
+                            </h4>
+                            <p className="text-[11px] text-slate-500">
+                              {isBn
+                                ? 'ওয়েবসাইটের ভিডিও পেজে যে ক্রমে ভিডিওগুলো সাজানো থাকবে তা এখান থেকে উপরে/নিচে স্থানান্তর করে নির্ধারণ করুন।'
+                                : 'Control the exact sequence of videos appearing on the public Videos page.'}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-[11px] font-bold text-[#006A4E] px-2.5 py-1 rounded-full bg-[#E6F3EF] border border-[#C2E2D7] self-start sm:self-auto">
+                          {videos.length} {isBn ? 'টি ভিডিও তালিকাভুক্ত' : 'Videos active'}
+                        </span>
+                      </div>
+
+                      <div className="divide-y divide-slate-200/80 bg-white rounded-xl border border-[#EAE3D9] overflow-hidden shadow-2xs">
+                        {[...videos]
+                          .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                          .map((vid, idx, arr) => {
+                            const isPortrait = isPortraitVideo(vid);
+                            const vTitle = tText(vid.title) || vid.videoUrl;
+                            return (
+                              <div key={vid.id} className="p-2.5 sm:p-3 flex items-center justify-between gap-3 hover:bg-[#FAF7F2]/80 transition-colors">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <span className="w-6 h-6 rounded-full bg-[#E6F3EF] text-[#006A4E] font-mono text-xs font-black flex items-center justify-center shrink-0 border border-[#C2E2D7]">
+                                    #{vid.displayOrder || idx + 1}
+                                  </span>
+                                  <div className="w-12 h-8 rounded-lg overflow-hidden bg-slate-950 shrink-0 border border-slate-200 relative">
+                                    <img
+                                      src={vid.thumbnailUrl || DEFAULT_VIDEO_THUMBNAIL}
+                                      alt=""
+                                      className="w-full h-full object-cover"
+                                    />
+                                    {isPortrait && (
+                                      <div className="absolute inset-0 bg-rose-600/30 flex items-center justify-center">
+                                        <Smartphone className="w-3 h-3 text-white" />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-bold text-slate-800 truncate">{vTitle}</p>
+                                    <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                                      <span className="uppercase font-semibold text-slate-600">{vid.platform || 'Video'}</span>
+                                      <span>•</span>
+                                      <span>{vid.duration || (isPortrait ? 'Reel' : 'Video')}</span>
+                                      {isPortrait && (
+                                        <>
+                                          <span>•</span>
+                                          <span className="text-rose-600 font-bold">9:16 Shorts / Reel</span>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <div className="flex items-center bg-[#FAF7F2] p-0.5 rounded-lg border border-[#EAE3D9]">
+                                    <button
+                                      type="button"
+                                      disabled={idx === 0}
+                                      onClick={() => handleMoveVideo(vid.id, 'up')}
+                                      className="p-1 rounded-md hover:bg-white text-slate-600 disabled:opacity-25 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                                      title={isBn ? 'উপরে নিন' : 'Move Up'}
+                                    >
+                                      <ArrowUp className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={idx === arr.length - 1}
+                                      onClick={() => handleMoveVideo(vid.id, 'down')}
+                                      className="p-1 rounded-md hover:bg-white text-slate-600 disabled:opacity-25 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                                      title={isBn ? 'নিচে নিন' : 'Move Down'}
+                                    >
+                                      <ArrowDown className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingVideo(vid);
+                                      setIsVideoModalOpen(true);
+                                    }}
+                                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-[#006A4E] cursor-pointer border border-[#EAE3D9]"
+                                    title="Edit"
+                                  >
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Media Grid */}
                   {filteredMediaList.length === 0 ? (

@@ -33,6 +33,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   const [customThumbnail, setCustomThumbnail] = useState('');
   const [aspectRatio, setAspectRatio] = useState<'16/9' | '9/16'>('16/9');
   const [isShorts, setIsShorts] = useState(false);
+  const [displayOrder, setDisplayOrder] = useState<number>(1);
 
   // Reset or populate fields when modal opens/changes
   useEffect(() => {
@@ -51,6 +52,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       const portrait = isPortraitVideo(videoToEdit);
       setAspectRatio(portrait ? '9/16' : '16/9');
       setIsShorts(portrait);
+      setDisplayOrder(videoToEdit.displayOrder || 1);
     } else {
       setTitleEn('');
       setTitleBn('');
@@ -65,6 +67,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       setCustomThumbnail('');
       setAspectRatio('16/9');
       setIsShorts(false);
+      setDisplayOrder(1);
     }
   }, [videoToEdit, isOpen]);
 
@@ -113,6 +116,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       isFeatured,
       aspectRatio: isPortraitMode ? '9/16' : '16/9',
       isShorts: isPortraitMode,
+      displayOrder: Number(displayOrder) || 1,
       sourceType: detection.type === 'youtube' ? 'youtube' : 'url'
     };
 
@@ -330,8 +334,8 @@ export const VideoModal: React.FC<VideoModalProps> = ({
             </div>
           </div>
 
-          {/* Category & Duration & Date */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Category & Duration & Date & Sequence Order */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             <div className="space-y-1">
               <label className="block font-bold text-slate-700">Category</label>
               <select
@@ -366,6 +370,18 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                 maxYear={new Date().getFullYear() + 2}
                 showQuickToday
                 compact
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="block font-bold text-slate-700">{isBn ? 'প্রদর্শন ক্রম (ক্রমিক #)' : 'Display Order (#)'}</label>
+              <input
+                type="number"
+                min={1}
+                value={displayOrder}
+                onChange={e => setDisplayOrder(parseInt(e.target.value) || 1)}
+                placeholder="1, 2, 3..."
+                className="w-full px-3.5 py-2 bg-[#FAF7F2] border border-[#EAE3D9] rounded-xl text-xs font-mono font-bold text-[#006A4E] focus:outline-none focus:border-[#006A4E] focus:bg-white"
               />
             </div>
           </div>
