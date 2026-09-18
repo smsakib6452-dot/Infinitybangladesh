@@ -862,10 +862,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           organizationName: prev.organizationName || siteData.organization_name,
           teamIdentity: prev.teamIdentity || siteData.team_identity,
           tagline: prev.tagline || siteData.tagline,
-          officialAddress: prev.officialAddress || siteData.official_address,
-          officialPhone: prev.officialPhone || siteData.official_phone,
-          officialEmail: prev.officialEmail || siteData.official_email,
-          establishedYear: prev.establishedYear || siteData.established_year,
+          officialAddress: siteData.official_address || prev.officialAddress,
+          officialPhone: siteData.official_phone || prev.officialPhone,
+          officialEmail: (siteData.official_email && !siteData.official_email.includes('infinitybangladesh.org')) 
+            ? siteData.official_email 
+            : (prev.officialEmail && !prev.officialEmail.includes('infinitybangladesh.org') ? prev.officialEmail : 'smsakib6452@gmail.com'),
+          establishedYear: siteData.established_year || prev.establishedYear,
           logoUrl: getFreshImageUrl(prev.logoUrl || siteData.logo_url),
           faviconUrl: getFreshImageUrl(prev.faviconUrl || siteData.favicon_url),
           country: prev.country || siteData.country
@@ -950,9 +952,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ...prev,
           footerLogoUrl: getFreshImageUrl(prev.footerLogoUrl || footerData.footer_logo_url),
           description: prev.description?.bn ? prev.description : (footerData.description || prev.description),
-          address: prev.address || footerData.address || '',
-          phone: prev.phone || footerData.phone || '',
-          email: prev.email || footerData.email || '',
+          address: footerData.address || prev.address || '',
+          phone: footerData.phone || prev.phone || '',
+          email: (footerData.email && !footerData.email.includes('infinitybangladesh.org')) 
+            ? footerData.email 
+            : (prev.email && !prev.email.includes('infinitybangladesh.org') ? prev.email : 'smsakib6452@gmail.com'),
           copyrightText: prev.copyrightText?.bn ? prev.copyrightText : (footerData.copyright_text || prev.copyrightText),
           calloutEyebrow: prev.calloutEyebrow || footerData.callout_eyebrow,
           calloutTitle: prev.calloutTitle || footerData.callout_title,
@@ -1810,7 +1814,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Sync on initial mount & throttled dynamic window revalidation (no 20s polling)
   useEffect(() => {
-    // Purge any stale blacklisted items from localStorage immediately on mount
+    // Purge any stale blacklisted items and outdated emails from localStorage immediately on mount
     try {
       ['infinity_bd_videos', 'infinity_bd_mediaLibrary'].forEach(key => {
         const item = localStorage.getItem(key);
@@ -1822,6 +1826,26 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
               localStorage.setItem(key, JSON.stringify(cleaned));
             }
           }
+        }
+      });
+
+      [
+        'infinity_bd_settings',
+        'infinity_bd_footerSettings',
+        'infinity_bd_contactSettings',
+        'infinity_bd_supportSettings',
+        'infinity_bd_volunteerSettings',
+        'infinity_bd_seoSettings'
+      ].forEach(key => {
+        const item = localStorage.getItem(key);
+        if (item && item.includes('infinitybangladesh.org')) {
+          const cleaned = item
+            .replace(/contact@infinitybangladesh\.org/g, 'smsakib6452@gmail.com')
+            .replace(/volunteer@infinitybangladesh\.org/g, 'smsakib6452@gmail.com')
+            .replace(/donate@infinitybangladesh\.org/g, 'smsakib6452@gmail.com')
+            .replace(/https:\/\/infinitybangladesh\.org/g, 'https://infinitybangladesh.vercel.app')
+            .replace(/infinitybangladesh\.org/g, 'smsakib6452@gmail.com');
+          localStorage.setItem(key, cleaned);
         }
       });
     } catch {}

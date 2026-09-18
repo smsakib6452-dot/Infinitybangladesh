@@ -40,7 +40,7 @@ export const ContactPage: React.FC = () => {
   };
 
   const address = contactSettings.address || settings.officialAddress || 'Hathazari, Chattogram, Bangladesh';
-  const emailAddr = contactSettings.email || settings.officialEmail || 'contact@infinitybangladesh.org';
+  const emailAddr = contactSettings.email || settings.officialEmail || 'smsakib6452@gmail.com';
   const phoneNum = contactSettings.phone || settings.officialPhone || '+880 1800-000000';
   const hours = contactSettings.workingHours || (isBn ? 'শনিবার - বৃহস্পতিবার: সকাল ৯টা - সন্ধ্যা ৬টা' : 'Sat - Thu: 9:00 AM - 6:00 PM');
 

@@ -133,7 +133,7 @@ export const INITIAL_SITE_SETTINGS: SiteSettings = {
   "country": "Bangladesh",
   "officialAddress": "Hathazari, Chattogram, Bangladesh",
   "officialPhone": "+880 1839008339",
-  "officialEmail": "contact@infinitybangladesh.org",
+  "officialEmail": "smsakib6452@gmail.com",
   "facebookUrl": "https://www.facebook.com/infinitybangladesh",
   "youtubeUrl": "https://youtube.com",
   "instagramUrl": "https://instagram.com",
@@ -615,7 +615,7 @@ export const INITIAL_FOOTER_SETTINGS: FooterSettings = {
   },
   "address": "Hathazari, Chattogram, Bangladesh",
   "phone": "+880 1839-008339",
-  "email": "contact@infinitybangladesh.org",
+  "email": "smsakib6452@gmail.com",
   "copyrightText": {
     "bn": "© ২০১৫–২০২৬ ইনফিনিটি বাংলাদেশ। সর্বস্বত্ব সংরক্ষিত। মানবতার জন্য একতাবদ্ধ।",
     "en": "© 2015–2026 Infinity Bangladesh. All rights reserved. United for Humanity."
@@ -728,7 +728,7 @@ export const INITIAL_VOLUNTEER_SETTINGS: VolunteerSettings = {
       "মাঠপর্যায়ের কাজে দায়িত্বশীলতা ও শৃঙ্খলা বজায় রাখা"
     ]
   },
-  "contactEmail": "volunteer@infinitybangladesh.org"
+  "contactEmail": "smsakib6452@gmail.com"
 };
 
 export const INITIAL_SUPPORT_SETTINGS: SupportSettings = {
@@ -756,7 +756,7 @@ export const INITIAL_SUPPORT_SETTINGS: SupportSettings = {
     "en": "Please include your name and campaign reference in the transaction counter or note. An automated digital receipt can be downloaded.",
     "bn": "অনুগ্রহ করে ট্রানজেকশনে আপনার নাম ও রেফারেন্স উল্লেখ করুন। অনুদান নিশ্চিতকরণের পর ডিজিটাল মানি রিসিট ডাউনলোড করতে পারবেন।"
   },
-  "supportEmail": "donate@infinitybangladesh.org",
+  "supportEmail": "smsakib6452@gmail.com",
   "supportPhone": "+880 1839-008339"
 };
 
@@ -766,7 +766,7 @@ export const INITIAL_CONTACT_SETTINGS: ContactSettings = {
     "bn": "হাটহাজারী, চট্টগ্রাম, বাংলাদেশ"
   },
   "phone": "+880 1839-008339",
-  "email": "contact@infinitybangladesh.org",
+  "email": "smsakib6452@gmail.com",
   "officeHours": {
     "en": "Saturday – Thursday: 10:00 AM – 6:00 PM (Friday Closed)",
     "bn": "শনিবার – বৃহস্পতিবার: সকাল ১০:০০ – সন্ধ্যা ৬:০০ (শুক্রবার বন্ধ)"

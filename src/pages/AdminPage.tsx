@@ -1315,7 +1315,7 @@ export const AdminPage: React.FC = () => {
                       <label className="text-xs font-bold text-slate-700">Official Email Address</label>
                       <input
                         type="email"
-                        value={settings.officialEmail || 'contact@infinitybangladesh.org'}
+                        value={settings.officialEmail || 'smsakib6452@gmail.com'}
                         onChange={(e) => updateSettings({ officialEmail: e.target.value })}
                         className="w-full px-3.5 py-2 bg-[#FAF7F2] border border-[#EAE3D9] rounded-xl text-xs font-mono"
                       />
