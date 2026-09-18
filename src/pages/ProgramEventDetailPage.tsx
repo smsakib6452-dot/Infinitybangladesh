@@ -3,6 +3,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useRouter, Link } from '../context/RouterContext';
 import { useData } from '../context/DataContext';
 import { getAssetUrl } from '../lib/utils/assetHelper';
+import { isPortraitVideo } from '../lib/utils/mediaHelper';
 import {
   ArrowLeft,
   Calendar,
@@ -479,8 +480,9 @@ export const ProgramEventDetailPage: React.FC = () => {
               const isVid = currentItem.media.type === 'video' || currentItem.media.embedUrl;
 
               if (isVid && currentItem.media.embedUrl) {
+                const isPortrait = isPortraitVideo(currentItem.media);
                 return (
-                  <div className="w-full aspect-video rounded-2xl overflow-hidden shadow-2xl bg-black">
+                  <div className={`w-full ${isPortrait ? 'aspect-[9/16] max-w-sm mx-auto max-h-[75vh]' : 'aspect-video'} rounded-2xl overflow-hidden shadow-2xl bg-black`}>
                     <iframe
                       src={currentItem.media.embedUrl}
                       title={currentItem.media.altText}

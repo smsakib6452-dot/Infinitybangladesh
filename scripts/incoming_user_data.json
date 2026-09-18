@@ -953,45 +953,34 @@
   ],
   "mediaLibrary": [
     {
-      "id": "med-1787510104630-ge4c",
-      "fileName": "C-Plus TV তে সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-৫ (২০১৯)",
-      "url": "https://www.youtube.com/watch?v=tDZeQ_AHHo8&list=LL&index=1",
-      "fileSize": "Embedded Stream",
-      "mimeType": "video/mp4",
-      "category": "Events",
-      "altText": "C-Plus TV তে সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-৫ (২০১৯)",
-      "caption": "",
-      "uploadedAt": "2026-08-29T06:02:24.522+00:00",
+      "id": "vid-1787551499065",
+      "fileName": "Hathazari Darpan এ সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-১১ (২০২৬)",
+      "url": "https://www.facebook.com/reel/950652967357340?locale=bn_IN",
+      "fileSize": "7:13",
+      "mimeType": "video/embed",
+      "category": "Ramadan & Eid",
+      "altText": "Hathazari Darpan এ সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-১১ (২০২৬)",
+      "caption": "Team Infinity official field drive video footage.",
+      "uploadedAt": "2026-08-24T06:04:59.065+00:00",
       "usageTags": [
-        "External Media URL"
+        "Video Gallery",
+        "Shorts / Reel",
+        "Field Footage"
       ]
     },
     {
-      "id": "med-1787512571793-d8o9",
-      "fileName": "Hathazari Darpan এ সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-৬ (২০২১)",
-      "url": "https://www.youtube.com/watch?v=cg8zkgv_EAs&t=1091s",
-      "fileSize": "Embedded Stream",
-      "mimeType": "video/mp4",
-      "category": "General",
-      "altText": "Hathazari Darpan এ সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-৬ (২০২১)",
-      "caption": "",
-      "uploadedAt": "2026-08-29T06:02:24.681+00:00",
+      "id": "vid-1787548778490",
+      "fileName": "C Plus টিভিতে সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-৫ (২০১৯)",
+      "url": "https://youtu.be/tDZeQ_AHHo8?si=yGnm9PSgN7l3friz",
+      "fileSize": "3:13",
+      "mimeType": "video/embed",
+      "category": "Relief Campaigns",
+      "altText": "C Plus টিভিতে সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-৫ (২০১৯)",
+      "caption": "Team Infinity official field drive video footage.",
+      "uploadedAt": "2026-08-24T05:19:38.49+00:00",
       "usageTags": [
-        "External Media URL"
-      ]
-    },
-    {
-      "id": "med-1787513124016-73mc",
-      "fileName": "সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-১১ (২০২৬)",
-      "url": "https://www.facebook.com/reel/950652967357340",
-      "fileSize": "Embedded Stream",
-      "mimeType": "video/mp4",
-      "category": "Events",
-      "altText": "সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-১১ (২০২৬)",
-      "caption": "",
-      "uploadedAt": "2026-08-29T06:02:24.843+00:00",
-      "usageTags": [
-        "External Media URL"
+        "Video Gallery",
+        "Field Footage"
       ]
     },
     {
@@ -1952,131 +1941,6 @@
     }
   ],
   "videos": [
-    {
-      "id": "vid-1787510104630",
-      "title": {
-        "bn": "C-Plus TV তে সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-৫ (২০১৯)",
-        "en": "C-Plus TV তে সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-৫ (২০১৯)"
-      },
-      "videoUrl": "https://www.youtube.com/watch?v=tDZeQ_AHHo8&list=LL&index=1",
-      "embedUrl": "https://www.youtube.com/embed/tDZeQ_AHHo8?rel=0",
-      "thumbnailUrl": "https://img.youtube.com/vi/tDZeQ_AHHo8/hqdefault.jpg",
-      "platform": "youtube",
-      "duration": "Video",
-      "date": "2026-08-23",
-      "description": {
-        "bn": "টিম ইনফিনিটি অফিশিয়াল মানবিক কার্যক্রম।",
-        "en": "Team Infinity official field drive coverage."
-      },
-      "category": "Field Drives",
-      "status": "published",
-      "isFeatured": false,
-      "sourceType": "url",
-      "aspectRatio": "16/9",
-      "isShorts": false,
-      "createdAt": "2026-08-25T16:19:17.117797+00:00",
-      "updatedAt": "2026-08-25T16:19:17.117797+00:00"
-    },
-    {
-      "id": "vid-1787513033697",
-      "title": {
-        "bn": "সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-১১  (২০২৬)",
-        "en": "সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-১১  (২০২৬)"
-      },
-      "videoUrl": "https://www.facebook.com/reel/950652967357340",
-      "embedUrl": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F950652967357340&show_text=false&width=1280&allowfullscreen=true",
-      "thumbnailUrl": "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80",
-      "platform": "facebook",
-      "duration": "Video",
-      "date": "2026-08-23",
-      "description": {
-        "bn": "টিম ইনফিনিটি অফিশিয়াল মানবিক কার্যক্রম।",
-        "en": "Team Infinity official field drive coverage."
-      },
-      "category": "Field Drives",
-      "status": "published",
-      "isFeatured": false,
-      "sourceType": "url",
-      "aspectRatio": "9/16",
-      "isShorts": true,
-      "createdAt": "2026-08-25T16:19:17.116782+00:00",
-      "updatedAt": "2026-08-25T16:19:17.116782+00:00"
-    },
-    {
-      "id": "vid-1787512940555",
-      "title": {
-        "bn": "মাঠপর্যায়ের ভিডিও",
-        "en": "Field Drive Video"
-      },
-      "videoUrl": "https://www.facebook.com/reel/950652967357340",
-      "embedUrl": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F950652967357340&show_text=false&width=1280&allowfullscreen=true",
-      "thumbnailUrl": "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80",
-      "platform": "facebook",
-      "duration": "Video",
-      "date": "2026-08-23",
-      "description": {
-        "bn": "টিম ইনফিনিটি অফিশিয়াল মানবিক কার্যক্রম।",
-        "en": "Team Infinity official field drive coverage."
-      },
-      "category": "Field Drives",
-      "status": "published",
-      "isFeatured": false,
-      "sourceType": "url",
-      "aspectRatio": "9/16",
-      "isShorts": true,
-      "createdAt": "2026-08-25T16:19:17.110826+00:00",
-      "updatedAt": "2026-08-25T16:19:17.110826+00:00"
-    },
-    {
-      "id": "vid-1787513124016",
-      "title": {
-        "bn": "সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-১১ (২০২৬)",
-        "en": "সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-১১ (২০২৬)"
-      },
-      "videoUrl": "https://www.facebook.com/reel/950652967357340",
-      "embedUrl": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F950652967357340&show_text=false&width=1280&allowfullscreen=true",
-      "thumbnailUrl": "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80",
-      "platform": "facebook",
-      "duration": "Video",
-      "date": "2026-08-23",
-      "description": {
-        "bn": "টিম ইনফিনিটি অফিশিয়াল মানবিক কার্যক্রম।",
-        "en": "Team Infinity official field drive coverage."
-      },
-      "category": "Field Drives",
-      "status": "published",
-      "isFeatured": false,
-      "sourceType": "url",
-      "aspectRatio": "9/16",
-      "isShorts": true,
-      "createdAt": "2026-08-25T16:19:17.104664+00:00",
-      "updatedAt": "2026-08-25T16:19:17.104664+00:00"
-    },
-    {
-      "id": "vid-1787512571793",
-      "title": {
-        "bn": "Hathazari Darpan এ সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-৬ (২০২১)",
-        "en": "Hathazari Darpan এ সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ-৬ (২০২১)"
-      },
-      "videoUrl": "https://www.youtube.com/watch?v=cg8zkgv_EAs&t=1091s",
-      "embedUrl": "https://www.youtube.com/embed/cg8zkgv_EAs?rel=0",
-      "thumbnailUrl": "https://img.youtube.com/vi/cg8zkgv_EAs/hqdefault.jpg",
-      "platform": "youtube",
-      "duration": "Video",
-      "date": "2026-08-23",
-      "description": {
-        "bn": "টিম ইনফিনিটি অফিশিয়াল মানবিক কার্যক্রম।",
-        "en": "Team Infinity official field drive coverage."
-      },
-      "category": "Field Drives",
-      "status": "published",
-      "isFeatured": false,
-      "sourceType": "url",
-      "aspectRatio": "16/9",
-      "isShorts": false,
-      "createdAt": "2026-08-25T16:19:17.076444+00:00",
-      "updatedAt": "2026-08-25T16:19:17.076444+00:00"
-    },
     {
       "id": "vid-1787561175180",
       "title": {

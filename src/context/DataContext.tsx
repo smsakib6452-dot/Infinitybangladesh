@@ -461,7 +461,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [mediaLibrary, setMediaLibrary] = useState<MediaItem[]>(() => {
     const stored = getStoredOrDefault<MediaItem[]>('mediaLibrary', INITIAL_MEDIA_LIBRARY);
     const deletedSet = new Set(getStoredOrDefault<string[]>('deleted_video_ids', []));
-    return stored.filter(m => m.id !== 'vid-1' && !deletedSet.has(m.id) && !(m.url && m.url.includes('dQw4w9WgXcQ')));
+    const duplicateMediaIds = new Set(['med-1787510104630-ge4c', 'med-1787512571793-d8o9', 'med-1787513124016-73mc']);
+    return stored.filter(m => m.id !== 'vid-1' && !deletedSet.has(m.id) && !duplicateMediaIds.has(m.id) && !(m.url && m.url.includes('dQw4w9WgXcQ')));
   });
   const [galleryAlbums, setGalleryAlbums] = useState<GalleryAlbum[]>(() => getStoredOrDefault('galleryAlbums', INITIAL_GALLERY_ALBUMS));
   const [adminProfiles, setAdminProfiles] = useState<AdminProfile[]>(() => getStoredOrDefault('adminProfiles', INITIAL_ADMIN_PROFILES));
@@ -499,7 +500,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [videos, setVideos] = useState<VideoItem[]>(() => {
     const stored = getStoredOrDefault<VideoItem[]>('videos', INITIAL_VIDEOS);
     const deletedSet = new Set(getStoredOrDefault<string[]>('deleted_video_ids', []));
-    return stored.filter(v => v.id !== 'vid-1' && !deletedSet.has(v.id) && !(v.videoUrl && v.videoUrl.includes('dQw4w9WgXcQ')));
+    const duplicateVideoIds = new Set([
+      'vid-1787510104630',
+      'vid-1787513033697',
+      'vid-1787512940555',
+      'vid-1787513124016',
+      'vid-1787512571793',
+      'vid-1787554234983',
+      'vid-1787547567877',
+      'vid-1787554099447',
+      'vid-1787547018353'
+    ]);
+    return stored.filter(v => v.id !== 'vid-1' && !deletedSet.has(v.id) && !duplicateVideoIds.has(v.id) && !(v.videoUrl && v.videoUrl.includes('dQw4w9WgXcQ')));
   });
   const [journeyVideos, setJourneyVideos] = useState<JourneyVideo[]>(() => {
     const stored = getStoredOrDefault<JourneyVideo[]>('journeyVideos', INITIAL_JOURNEY_VIDEOS);
@@ -1312,10 +1324,22 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         setVideos(prevLocal => {
           const remoteIds = new Set(remoteVideos.map(r => r.id));
+          const duplicateVideoIds = new Set([
+            'vid-1787510104630',
+            'vid-1787513033697',
+            'vid-1787512940555',
+            'vid-1787513124016',
+            'vid-1787512571793',
+            'vid-1787554234983',
+            'vid-1787547567877',
+            'vid-1787554099447',
+            'vid-1787547018353'
+          ]);
           const localOnly = prevLocal.filter(l => 
             l.id !== 'vid-1' && 
             !remoteIds.has(l.id) && 
             !deletedIdsRef.current.has(l.id) && 
+            !duplicateVideoIds.has(l.id) &&
             !(l.videoUrl && l.videoUrl.includes('dQw4w9WgXcQ'))
           );
           if (localOnly.length > 0) {
