@@ -92,7 +92,7 @@ import {
 import { cleanBloodDonor, cleanEmergencyRequest } from '../data/bloodDonationData';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { getFreshImageUrl } from '../lib/cloudinary';
-import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL } from '../lib/utils/mediaHelper';
+import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL, isBlacklistedMedia, BLACKLISTED_VIDEO_IDS } from '../lib/utils/mediaHelper';
 
 interface DataContextType {
   // Entities
@@ -462,8 +462,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [mediaLibrary, setMediaLibrary] = useState<MediaItem[]>(() => {
     const stored = getStoredOrDefault<MediaItem[]>('mediaLibrary', INITIAL_MEDIA_LIBRARY);
     const deletedSet = new Set(getStoredOrDefault<string[]>('deleted_video_ids', []));
-    const duplicateMediaIds = new Set(['med-1787510104630-ge4c', 'med-1787512571793-d8o9', 'med-1787513124016-73mc']);
-    return stored.filter(m => m.id !== 'vid-1' && !deletedSet.has(m.id) && !duplicateMediaIds.has(m.id) && !(m.url && m.url.includes('dQw4w9WgXcQ')));
+    return stored.filter(m => !isBlacklistedMedia(m.id, m.url) && !deletedSet.has(m.id));
   });
   const [galleryAlbums, setGalleryAlbums] = useState<GalleryAlbum[]>(() => getStoredOrDefault('galleryAlbums', INITIAL_GALLERY_ALBUMS));
   const [adminProfiles, setAdminProfiles] = useState<AdminProfile[]>(() => getStoredOrDefault('adminProfiles', INITIAL_ADMIN_PROFILES));
@@ -501,18 +500,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [videos, setVideos] = useState<VideoItem[]>(() => {
     const stored = getStoredOrDefault<VideoItem[]>('videos', INITIAL_VIDEOS);
     const deletedSet = new Set(getStoredOrDefault<string[]>('deleted_video_ids', []));
-    const duplicateVideoIds = new Set([
-      'vid-1787510104630',
-      'vid-1787513033697',
-      'vid-1787512940555',
-      'vid-1787513124016',
-      'vid-1787512571793',
-      'vid-1787554234983',
-      'vid-1787547567877',
-      'vid-1787554099447',
-      'vid-1787547018353'
-    ]);
-    return stored.filter(v => v.id !== 'vid-1' && !deletedSet.has(v.id) && !duplicateVideoIds.has(v.id) && !(v.videoUrl && v.videoUrl.includes('dQw4w9WgXcQ')));
+    return stored.filter(v => !isBlacklistedMedia(v.id, v.videoUrl) && !deletedSet.has(v.id));
   });
   const [journeyVideos, setJourneyVideos] = useState<JourneyVideo[]>(() => {
     const stored = getStoredOrDefault<JourneyVideo[]>('journeyVideos', INITIAL_JOURNEY_VIDEOS);
@@ -752,7 +740,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const entityKey = e.key.replace(STORAGE_PREFIX, '');
         const parsed = JSON.parse(e.newValue);
         if (entityKey === 'videos' && Array.isArray(parsed)) {
-          setVideos(parsed);
+          setVideos(parsed.filter(v => !isBlacklistedMedia(v.id, v.videoUrl)));
         } else if (entityKey === 'bloodDonors' && Array.isArray(parsed)) {
           setBloodDonors(parsed);
         } else if (entityKey === 'emergencyRequests' && Array.isArray(parsed)) {
@@ -770,7 +758,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else if (entityKey === 'eventMediaList' && Array.isArray(parsed)) {
           setEventMediaList(parsed);
         } else if (entityKey === 'mediaLibrary' && Array.isArray(parsed)) {
-          setMediaLibrary(parsed);
+          setMediaLibrary(parsed.filter(m => !isBlacklistedMedia(m.id, m.url)));
         } else if (entityKey === 'gallery' && Array.isArray(parsed)) {
           setGallery(parsed);
         } else if (entityKey === 'persons' && Array.isArray(parsed)) {
@@ -1171,7 +1159,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data: mediaData } = await supabase.from('media_library').select('*').order('created_at', { ascending: false });
       if (mediaData && Array.isArray(mediaData)) {
         const remoteMedia: MediaItem[] = mediaData
-          .filter(m => m.id !== 'vid-1' && !deletedIdsRef.current.has(m.id) && !(m.url && m.url.includes('dQw4w9WgXcQ')))
+          .filter(m => !isBlacklistedMedia(m.id, m.url) && !deletedIdsRef.current.has(m.id))
           .map(m => ({
             id: m.id,
             fileName: m.file_name,
@@ -1188,16 +1176,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setMediaLibrary(prevLocal => {
           const remoteIds = new Set(remoteMedia.map(r => r.id));
           const localOnly = prevLocal.filter(l => 
-            l.id !== 'vid-1' && 
+            !isBlacklistedMedia(l.id, l.url) && 
             !remoteIds.has(l.id) && 
-            !deletedIdsRef.current.has(l.id) && 
-            !(l.url && l.url.includes('dQw4w9WgXcQ'))
+            !deletedIdsRef.current.has(l.id)
           );
           const merged = localOnly.length > 0 ? [...localOnly, ...remoteMedia] : remoteMedia;
+          const cleanMerged = merged.filter(m => !isBlacklistedMedia(m.id, m.url));
           try {
-            localStorage.setItem(`${STORAGE_PREFIX}mediaLibrary`, JSON.stringify(merged));
+            localStorage.setItem(`${STORAGE_PREFIX}mediaLibrary`, JSON.stringify(cleanMerged));
           } catch {}
-          return merged;
+          return cleanMerged;
         });
       }
 
@@ -1298,7 +1286,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data: vidData } = await supabase.from('video_items').select('*').order('created_at', { ascending: false });
       if (vidData && Array.isArray(vidData)) {
         const remoteVideos: VideoItem[] = vidData
-          .filter(v => v.id !== 'vid-1' && !deletedIdsRef.current.has(v.id) && !(v.video_url && v.video_url.includes('dQw4w9WgXcQ')))
+          .filter(v => !isBlacklistedMedia(v.id, v.video_url) && !deletedIdsRef.current.has(v.id) && !(v.video_url && v.video_url.includes('dQw4w9WgXcQ')))
           .map(v => {
             const det = detectAndNormalizeMedia(v.video_url || '');
             const isShorts = v.is_shorts ?? det.isShorts;
@@ -1343,22 +1331,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         setVideos(prevLocal => {
           const remoteIds = new Set(remoteVideos.map(r => r.id));
-          const duplicateVideoIds = new Set([
-            'vid-1787510104630',
-            'vid-1787513033697',
-            'vid-1787512940555',
-            'vid-1787513124016',
-            'vid-1787512571793',
-            'vid-1787554234983',
-            'vid-1787547567877',
-            'vid-1787554099447',
-            'vid-1787547018353'
-          ]);
           const localOnly = prevLocal.filter(l => 
-            l.id !== 'vid-1' && 
+            !isBlacklistedMedia(l.id, l.videoUrl) && 
             !remoteIds.has(l.id) && 
             !deletedIdsRef.current.has(l.id) && 
-            !duplicateVideoIds.has(l.id) &&
             !(l.videoUrl && l.videoUrl.includes('dQw4w9WgXcQ'))
           );
           if (localOnly.length > 0) {
@@ -1385,11 +1361,19 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
               });
             });
             const merged = [...localOnly, ...remoteVideos];
-            merged.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
-            return merged;
+            const cleanMerged = merged.filter(v => !isBlacklistedMedia(v.id, v.videoUrl));
+            cleanMerged.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+            try {
+              localStorage.setItem(`${STORAGE_PREFIX}videos`, JSON.stringify(cleanMerged));
+            } catch {}
+            return cleanMerged;
           }
-          remoteVideos.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
-          return remoteVideos;
+          const cleanRemote = remoteVideos.filter(v => !isBlacklistedMedia(v.id, v.videoUrl));
+          cleanRemote.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+          try {
+            localStorage.setItem(`${STORAGE_PREFIX}videos`, JSON.stringify(cleanRemote));
+          } catch {}
+          return cleanRemote;
         });
       }
 
@@ -1731,18 +1715,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 6. Media Library
       const { data: medData } = await supabase.from('media_library').select('*').order('uploaded_at', { ascending: false });
       if (medData && Array.isArray(medData)) {
-        setMediaLibrary(medData.map(m => ({
-          id: m.id,
-          fileName: m.file_name,
-          url: getFreshImageUrl(m.url),
-          fileSize: m.file_size || '0 KB',
-          mimeType: m.mime_type || 'image/jpeg',
-          category: m.category || 'General',
-          altText: m.alt_text || '',
-          caption: m.caption || '',
-          usageTags: m.usage_tags || [],
-          uploadedAt: m.uploaded_at
-        })));
+        setMediaLibrary(medData
+          .filter(m => !isBlacklistedMedia(m.id, m.url))
+          .map(m => ({
+            id: m.id,
+            fileName: m.file_name,
+            url: getFreshImageUrl(m.url),
+            fileSize: m.file_size || '0 KB',
+            mimeType: m.mime_type || 'image/jpeg',
+            category: m.category || 'General',
+            altText: m.alt_text || '',
+            caption: m.caption || '',
+            usageTags: m.usage_tags || [],
+            uploadedAt: m.uploaded_at
+          }))
+        );
       }
 
       setIsAdminLoaded(true);
@@ -1823,6 +1810,22 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Sync on initial mount & throttled dynamic window revalidation (no 20s polling)
   useEffect(() => {
+    // Purge any stale blacklisted items from localStorage immediately on mount
+    try {
+      ['infinity_bd_videos', 'infinity_bd_mediaLibrary'].forEach(key => {
+        const item = localStorage.getItem(key);
+        if (item) {
+          const parsed = JSON.parse(item);
+          if (Array.isArray(parsed)) {
+            const cleaned = parsed.filter((x: any) => !isBlacklistedMedia(x.id, x.videoUrl || x.url));
+            if (cleaned.length !== parsed.length) {
+              localStorage.setItem(key, JSON.stringify(cleaned));
+            }
+          }
+        }
+      });
+    } catch {}
+
     if (isSupabaseConfigured) {
       syncWithSupabase();
     }

@@ -27,6 +27,29 @@ export interface MediaDetectionResult {
 
 export const DEFAULT_VIDEO_THUMBNAIL = 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80';
 
+export const BLACKLISTED_VIDEO_IDS = new Set([
+  'vid-1',
+  'vid-1787510104630',
+  'vid-1787513033697',
+  'vid-1787512940555',
+  'vid-1787513124016',
+  'vid-1787512571793',
+  'vid-1787554234983',
+  'vid-1787547567877',
+  'vid-1787554099447',
+  'vid-1787547018353',
+  'med-1787510104630-ge4c',
+  'med-1787512571793-d8o9',
+  'med-1787513124016-73mc'
+]);
+
+export function isBlacklistedMedia(id?: string, url?: string): boolean {
+  if (!id && !url) return false;
+  if (id && BLACKLISTED_VIDEO_IDS.has(id)) return true;
+  if (url && (url.includes('dQw4w9WgXcQ') || BLACKLISTED_VIDEO_IDS.has(url))) return true;
+  return false;
+}
+
 /**
  * Check if a video is Portrait (9:16 - YouTube Shorts, Facebook Reels)
  */

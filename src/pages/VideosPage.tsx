@@ -23,7 +23,8 @@ import {
   getFacebookEmbedUrl,
   isFacebookVideoUrl,
   ensureAutoplayEmbedUrl,
-  isPortraitVideo
+  isPortraitVideo,
+  isBlacklistedMedia
 } from '../lib/utils/mediaHelper';
 
 export const VideosPage: React.FC = () => {
@@ -46,30 +47,32 @@ export const VideosPage: React.FC = () => {
     { id: 'Community Impact', labelEn: 'Community Impact', labelBn: 'সামাজিক প্রভাব' }
   ];
 
-  // Unify videos from videos state & mediaLibrary video assets
+  // Unify videos from videos state & mediaLibrary video assets, rigorously excluding any deleted/blacklisted duplicates
   const allVideos: VideoItem[] = useMemo(() => {
-    const list: VideoItem[] = [...videos];
-    mediaLibrary.filter(m => m.type === 'video').forEach(m => {
-      const exists = list.some(v => v.id === m.id || v.videoUrl === m.url);
-      if (!exists) {
-        list.push({
-          id: m.id,
-          title: { en: m.title || m.fileName, bn: m.altText || m.title || m.fileName },
-          description: { en: m.caption || '', bn: m.caption || '' },
-          videoUrl: m.url,
-          embedUrl: m.embedUrl,
-          thumbnailUrl: m.thumbnailUrl || DEFAULT_VIDEO_THUMBNAIL,
-          platform: (m.platform as any) || 'youtube',
-          category: m.category || 'General',
-          duration: m.fileSize || 'Video',
-          date: m.uploadedAt || 'Recent',
-          status: (m.status as any) || 'published',
-          isFeatured: m.isFeatured,
-          aspectRatio: m.aspectRatio,
-          isShorts: m.isShorts
-        });
-      }
-    });
+    const list: VideoItem[] = videos.filter(v => !isBlacklistedMedia(v.id, v.videoUrl));
+    mediaLibrary
+      .filter(m => m.type === 'video' && !isBlacklistedMedia(m.id, m.url))
+      .forEach(m => {
+        const exists = list.some(v => v.id === m.id || v.videoUrl === m.url);
+        if (!exists) {
+          list.push({
+            id: m.id,
+            title: { en: m.title || m.fileName, bn: m.altText || m.title || m.fileName },
+            description: { en: m.caption || '', bn: m.caption || '' },
+            videoUrl: m.url,
+            embedUrl: m.embedUrl,
+            thumbnailUrl: m.thumbnailUrl || DEFAULT_VIDEO_THUMBNAIL,
+            platform: (m.platform as any) || 'youtube',
+            category: m.category || 'General',
+            duration: m.fileSize || 'Video',
+            date: m.uploadedAt || 'Recent',
+            status: (m.status as any) || 'published',
+            isFeatured: m.isFeatured,
+            aspectRatio: m.aspectRatio,
+            isShorts: m.isShorts
+          });
+        }
+      });
     list.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
     return list;
   }, [videos, mediaLibrary]);
