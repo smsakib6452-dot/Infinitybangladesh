@@ -20,7 +20,7 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
   const { isBn } = useLanguage();
   const [copied, setCopied] = useState(false);
 
-  const url = propsUrl || (path ? (typeof window !== 'undefined' ? `${window.location.origin}${path}` : `https://infinitybangladesh.org${path}`) : (typeof window !== 'undefined' ? window.location.href : 'https://infinitybangladesh.org'));
+  const url = propsUrl || (path ? (typeof window !== 'undefined' ? `${window.location.origin}${path}` : `https://infinitybangladesh.vercel.app${path}`) : (typeof window !== 'undefined' ? window.location.href : 'https://infinitybangladesh.vercel.app'));
 
   if (!isOpen) return null;
 

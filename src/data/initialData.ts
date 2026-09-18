@@ -797,7 +797,7 @@ export const INITIAL_SEO_SETTINGS: GlobalSEOSettings = {
   ],
   "ogImageUrl": "/images/infinity-cover-hero.jpg",
   "organizationName": "Infinity Bangladesh",
-  "canonicalUrl": "https://infinitybangladesh.org"
+  "canonicalUrl": "https://infinitybangladesh.vercel.app"
 };
 
 export const INITIAL_NAVIGATION_ITEMS: NavigationItem[] = [
@@ -2986,7 +2986,7 @@ export const INITIAL_PARTNERS: Partner[] = [
     "id": "part-1",
     "name": "[OFFICIAL PARTNER/INSTITUTIONAL COLLABORATOR SLOT]",
     "logoUrl": "",
-    "website": "https://infinitybangladesh.org",
+    "website": "https://infinitybangladesh.vercel.app",
     "type": "Institutional",
     "description": {
       "bn": "স্বেচ্ছাসেবী কার্যক্রমে অংশীদারিত্বের জন্য উন্মুক্ত সুযোগ।",

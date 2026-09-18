@@ -4,7 +4,7 @@
 > **Location:** Hathazari, Chattogram, Bangladesh  
 > **Established:** 2015  
 > **Official Facebook:** [https://www.facebook.com/infinitybangladesh](https://www.facebook.com/infinitybangladesh)  
-> **Official Website:** [https://infinitybangladesh.org](https://infinitybangladesh.org)
+> **Official Website:** [https://infinitybangladesh.vercel.app](https://infinitybangladesh.vercel.app)
 
 ---
 
