@@ -130,6 +130,7 @@ import {
 import { getAssetUrl, handleImageError } from '../lib/utils/assetHelper';
 import { formatBDT, formatDateDDMMYYYY } from '../lib/utils/formatters';
 import { Toast } from '../components/Toast';
+import { DonorAvatar } from '../components/DonorAvatar';
 import { MediaPickerModal } from '../components/MediaPickerModal';
 import { CampaignModal } from '../components/CampaignModal';
 import { ProgramModal } from '../components/ProgramModal';
@@ -4347,11 +4348,7 @@ export const AdminPage: React.FC = () => {
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-11 h-11 rounded-xl bg-emerald-950 text-white font-bold flex items-center justify-center shrink-0 overflow-hidden border border-[#EAE3D9]">
-                                  {donor.photoUrl ? (
-                                    <img src={getAssetUrl(donor.photoUrl)} alt={donor.fullName} className="w-full h-full object-cover" />
-                                  ) : (
-                                    donor.fullName.charAt(0)
-                                  )}
+                                  <DonorAvatar photoUrl={donor.photoUrl} fullName={donor.fullName} gender={donor.gender} className="w-full h-full" />
                                 </div>
                                 <div className="space-y-1">
                                   <div className="flex items-center gap-2">
@@ -4466,11 +4463,7 @@ export const AdminPage: React.FC = () => {
                           >
                             <div className="flex items-start sm:items-center gap-3.5">
                               <div className="w-12 h-12 rounded-2xl bg-emerald-950 text-white font-bold flex items-center justify-center shrink-0 overflow-hidden border border-slate-300">
-                                {donor.photoUrl ? (
-                                  <img src={getAssetUrl(donor.photoUrl)} alt={donor.fullName} className="w-full h-full object-cover" />
-                                ) : (
-                                  <span className="text-base">{donor.fullName.charAt(0)}</span>
-                                )}
+                                <DonorAvatar photoUrl={donor.photoUrl} fullName={donor.fullName} gender={donor.gender} className="w-full h-full" />
                               </div>
                               <div className="space-y-1">
                                 <div className="flex flex-wrap items-center gap-2">
@@ -4642,11 +4635,7 @@ export const AdminPage: React.FC = () => {
                                 <td className="p-3.5">
                                   <div className="flex items-center gap-2.5">
                                     <div className="w-9 h-9 rounded-xl bg-emerald-950 text-white font-bold flex items-center justify-center shrink-0 overflow-hidden">
-                                      {donor.photoUrl ? (
-                                        <img src={getAssetUrl(donor.photoUrl)} alt={donor.fullName} className="w-full h-full object-cover" />
-                                      ) : (
-                                        donor.fullName.charAt(0)
-                                      )}
+                                      <DonorAvatar photoUrl={donor.photoUrl} fullName={donor.fullName} gender={donor.gender} className="w-full h-full" />
                                     </div>
                                     <div className="min-w-0">
                                       <p className="font-extrabold text-slate-900 flex items-center gap-1">

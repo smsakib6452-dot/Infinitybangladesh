@@ -28,6 +28,7 @@ import {
 import { getAssetUrl } from '../lib/utils/assetHelper';
 import { SectionHeading } from '../components/SectionHeading';
 import { BloodDonorProfileModal } from '../components/BloodDonorProfileModal';
+import { DonorAvatar } from '../components/DonorAvatar';
 import { EmergencyBloodContactModal } from '../components/EmergencyBloodContactModal';
 import { ImageEditorModal } from '../components/ImageEditorModal';
 import { DateInput } from '../components/DateInput';
@@ -1295,18 +1296,12 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
                                     ? 'border-emerald-400 ring-2 ring-emerald-100 shadow-xs' 
                                     : 'border-slate-200'
                                 }`}>
-                                  {donor.photoUrl ? (
-                                    <img
-                                      src={getAssetUrl(donor.photoUrl)}
-                                      alt={donor.fullName}
-                                      className="w-full h-full object-cover"
-                                      loading="lazy"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-white text-base font-extrabold font-display bg-gradient-to-br from-emerald-800 to-emerald-950">
-                                      {donor.fullName.charAt(0)}
-                                    </div>
-                                  )}
+                                  <DonorAvatar
+                                    photoUrl={donor.photoUrl}
+                                    fullName={donor.fullName}
+                                    gender={donor.gender}
+                                    className="w-full h-full"
+                                  />
                                 </div>
                                 {/* Mini Status Dot on Avatar */}
                                 <span className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center ${

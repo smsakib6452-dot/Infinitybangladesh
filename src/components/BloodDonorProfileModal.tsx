@@ -2,6 +2,7 @@ import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { BloodDonor } from '../types';
 import { getAssetUrl } from '../lib/utils/assetHelper';
+import { DonorAvatar } from './DonorAvatar';
 import { calculateAge, getCooldownStatusInfo, BLOOD_DONATION_COOLDOWN_DAYS, cleanBloodDonor, getDonorPhoneVisibility } from '../data/bloodDonationData';
 import { formatDateDDMMYYYY } from '../lib/utils/formatters';
 import {
@@ -87,17 +88,12 @@ export const BloodDonorProfileModal: React.FC<BloodDonorProfileModalProps> = ({
             {/* Avatar & Blood Group Badge */}
             <div className="relative shrink-0">
               <div className="w-20 sm:w-24 h-20 sm:h-24 rounded-2xl overflow-hidden border-3 border-white/60 shadow-lg bg-emerald-950">
-                {donor.photoUrl ? (
-                  <img
-                    src={getAssetUrl(donor.photoUrl)}
-                    alt={donor.fullName}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-white text-2xl font-extrabold font-display bg-gradient-to-br from-emerald-800 to-emerald-950">
-                    {donor.fullName.charAt(0)}
-                  </div>
-                )}
+                <DonorAvatar
+                  photoUrl={donor.photoUrl}
+                  fullName={donor.fullName}
+                  gender={donor.gender}
+                  className="w-full h-full"
+                />
               </div>
               <div className="absolute -bottom-2.5 -right-2.5 px-2.5 py-0.5 rounded-xl bg-rose-600 text-white font-black font-display text-xs sm:text-sm border-2 border-white shadow-md flex items-center gap-0.5">
                 <Droplet className="w-3 h-3 fill-current" />
