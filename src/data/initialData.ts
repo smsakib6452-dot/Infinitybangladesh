@@ -236,7 +236,7 @@ export const INITIAL_HOMEPAGE_CONFIG: HomepageConfig = {
     },
     "description": {
       "bn": "ইনফিনিটি বাংলাদেশ তরুণদের হাত ধরে চলা একটি স্বেচ্ছাসেবী সামাজিক সংগঠন। ঈদের উপহার পৌঁছে দেওয়া, মানবিক সাহায্য, জরুরি ত্রাণ কিংবা সমাজ উন্নয়ন—আমরা বিশ্বাস করি আমাদের ছোট ছোট উদ্যোগই দেশের প্রতিটি প্রান্তে এনে দিতে পারে সত্যি কারের এক সুন্দর পরিবর্তন।",
-      "en": "\"Infinity Bangladesh is a youth-driven volunteer organization empowering communities nationwide. From spreading Eid joy and delivering emergency relief to providing humanitarian aid and driving local development, we believe small actions create truly meaningful impact across Bangladesh.\""
+      "en": "Infinity Bangladesh is a youth-driven volunteer organization empowering communities nationwide. From spreading Eid joy and delivering emergency relief to providing humanitarian aid and driving local development, we believe small actions create truly meaningful impact across Bangladesh."
     },
     "primaryCta": {
       "url": "donate",

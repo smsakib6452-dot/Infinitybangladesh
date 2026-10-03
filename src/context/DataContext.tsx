@@ -394,10 +394,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
   const [homepageConfig, setHomepageConfig] = useState<HomepageConfig>(() => {
     const stored = getStoredOrDefault<HomepageConfig>('homepageConfig', INITIAL_HOMEPAGE_CONFIG);
+    const heroMerged = { ...INITIAL_HOMEPAGE_CONFIG.hero, ...(stored?.hero || {}) };
+    if (heroMerged.description?.en) {
+      heroMerged.description = {
+        ...heroMerged.description,
+        en: heroMerged.description.en.replace(/^["“']|["”']$/g, '').trim()
+      };
+    }
     return {
       ...INITIAL_HOMEPAGE_CONFIG,
       ...stored,
-      hero: { ...INITIAL_HOMEPAGE_CONFIG.hero, ...(stored?.hero || {}) },
+      hero: heroMerged,
       aboutPreview: { ...INITIAL_HOMEPAGE_CONFIG.aboutPreview, ...(stored?.aboutPreview || {}) },
       volunteerBanner: { ...INITIAL_HOMEPAGE_CONFIG.volunteerBanner, ...(stored?.volunteerBanner || {}) },
       supportBanner: { ...INITIAL_HOMEPAGE_CONFIG.supportBanner, ...(stored?.supportBanner || {}) },

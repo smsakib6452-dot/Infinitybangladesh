@@ -20,6 +20,9 @@ interface HeroSectionProps {
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) => {
+  const rawDescription = tText(hero.description) || '';
+  const cleanDescription = rawDescription.replace(/^["“'”]+|["“'”]+$/g, '').trim();
+
   const renderTrustIcon = (iconName: string) => {
     switch (iconName) {
       case 'CheckCircle2':
@@ -54,7 +57,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
           {/* Left Column: Headline, Description & CTAs */}
           <ScrollReveal effect="slide-right" className="lg:col-span-7 space-y-6 sm:space-y-7 text-left">
             {/* Eyebrow Pill */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E6F3EF] border border-[#C2E2D7] text-[#00523C] text-xs sm:text-sm font-extrabold shadow-2xs">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E6F3EF]/90 backdrop-blur-xs border border-[#C2E2D7] text-[#00523C] text-xs sm:text-sm font-extrabold shadow-2xs">
               <span className="w-2 h-2 rounded-full bg-[#006A4E] animate-pulse" />
               <span className="tracking-wide">
                 {tText(hero.eyebrow)}
@@ -62,7 +65,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.12] font-display">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.14] font-display">
               {tText(hero.headlineMain)}{' '}
               <span className="text-[#006A4E] relative inline-block">
                 {tText(hero.headlineHighlight)}
@@ -73,8 +76,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
             </h1>
 
             {/* Supporting Description */}
-            <p className="text-base sm:text-lg text-slate-700 leading-relaxed max-w-2xl font-normal">
-              {tText(hero.description)}
+            <p className="text-base sm:text-lg text-slate-600 leading-relaxed sm:leading-8 max-w-2xl font-normal">
+              {cleanDescription}
             </p>
 
             {/* CTA Action Cluster */}
@@ -117,11 +120,14 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
             {/* 3 Hero Trust Indicators */}
             <div className="pt-6 sm:pt-7 border-t border-[#EAE3D9] grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-xs text-slate-700">
               {hero.trustIndicators?.filter((t: any) => t.active).map((indicator: any, idx: number) => (
-                <div key={idx} className="flex items-center gap-2 bg-white/80 p-2.5 rounded-xl border border-[#EAE3D9]/80 shadow-2xs">
-                  <div className="w-6 h-6 rounded-full bg-[#E6F3EF] flex items-center justify-center shrink-0">
+                <div
+                  key={idx}
+                  className="flex items-center gap-2.5 bg-white/90 backdrop-blur-xs p-3 rounded-2xl border border-[#EAE3D9] shadow-2xs hover:shadow-warm-sm hover:-translate-y-0.5 transition-all duration-200"
+                >
+                  <div className="w-7 h-7 rounded-xl bg-[#E6F3EF] flex items-center justify-center shrink-0 border border-[#C2E2D7]/60 shadow-xs">
                     {renderTrustIcon(indicator.icon)}
                   </div>
-                  <span className="font-bold">{tText(indicator.text)}</span>
+                  <span className="font-bold text-slate-800 leading-snug">{tText(indicator.text)}</span>
                 </div>
               ))}
             </div>
@@ -147,24 +153,24 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/15 to-transparent pointer-events-none" />
 
                 {/* Floating Established 2015 Badge */}
-                <div className="absolute bottom-3.5 left-3.5 right-3.5 bg-white/95 backdrop-blur-md rounded-2xl p-3.5 shadow-warm-lg border border-[#EAE3D9] flex items-center justify-between gap-3">
+                <div className="absolute bottom-3.5 left-3.5 right-3.5 bg-white/90 backdrop-blur-xl rounded-2xl p-3.5 shadow-2xl border border-white/70 flex items-center justify-between gap-3 transition-transform duration-200">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#006A4E] text-white flex items-center justify-center font-bold font-display text-sm shrink-0 shadow-xs">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#006A4E] to-[#004835] text-white flex items-center justify-center font-bold font-display text-sm shrink-0 shadow-md border border-white/20">
                       {hero.badgeYear || '2015'}
                     </div>
                     <div>
-                      <p className="text-xs font-extrabold text-slate-900 font-display">
+                      <p className="text-xs font-extrabold text-slate-900 font-display tracking-tight">
                         {tText(hero.badgeTitle) || (isBn ? `প্রতিষ্ঠিত ${hero.badgeYear || '২০১৫'}` : `Established ${hero.badgeYear || '2015'}`)}
                       </p>
-                      <p className="text-[11px] text-slate-600 flex items-center gap-1 font-medium">
-                        <MapPin className="w-3 h-3 text-[#006A4E]" />
+                      <p className="text-[11px] text-slate-600 flex items-center gap-1 font-medium mt-0.5">
+                        <MapPin className="w-3 h-3 text-[#006A4E] shrink-0" />
                         <span>{hero.badgeLocation || 'Hathazari, Chattogram'}</span>
                       </p>
                     </div>
                   </div>
 
                   <div className="text-right shrink-0">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#E6F3EF] text-[#00523C] border border-[#C2E2D7]">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold bg-[#E6F3EF] text-[#00523C] border border-[#C2E2D7] shadow-xs">
                       {hero.badgeTag || 'Team Infinity'}
                     </span>
                   </div>
