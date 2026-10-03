@@ -1037,7 +1037,7 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
                 { id: 'emergency-request', label: isBn ? 'জরুরি রক্তের আবেদন' : 'Emergency Request', icon: AlertTriangle, badge: stats.activeEmergencyRequests ? `${stats.activeEmergencyRequests}` : undefined },
                 { id: 'statistics', label: isBn ? 'রক্তদান পরিসংখ্যান' : 'Statistics', icon: Activity },
                 { id: 'guidelines', label: isBn ? 'নির্দেশিকা ও তথ্য' : 'Guidelines', icon: Info }
-              ]}.map(tab => {
+              ].map(tab => {
                 const Icon = tab.icon;
                 const isSelected = activeTab === tab.id;
                 return (
