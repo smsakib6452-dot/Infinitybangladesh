@@ -16,8 +16,8 @@ export const SupportSection: React.FC<SupportSectionProps> = ({
 }) => {
   return (
     <ScrollReveal effect="fade-up" key="support" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="bg-gradient-to-br from-[#FAF7F2] to-white rounded-[2.5rem] border border-[#EAE3D9] p-8 sm:p-12 text-center space-y-6 shadow-warm-md">
-        <div className="w-14 h-14 rounded-3xl bg-[#E6F3EF] text-[#006A4E] flex items-center justify-center mx-auto shadow-warm-xs">
+      <div className="bg-gradient-to-br from-[#FAF7F2] via-white to-[#F6F1EA] rounded-[2.5rem] border border-[#EAE3D9] p-8 sm:p-12 text-center space-y-6 shadow-warm-lg hover:shadow-warm-xl transition-shadow duration-300">
+        <div className="w-14 h-14 rounded-3xl bg-[#E6F3EF] text-[#006A4E] border border-[#C2E2D7]/70 flex items-center justify-center mx-auto shadow-xs">
           <HandHeart className="w-7 h-7" />
         </div>
 

@@ -16,9 +16,9 @@ export const VolunteerSection: React.FC<VolunteerSectionProps> = ({
 }) => {
   return (
     <section key="volunteer" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="bg-[#11241E] rounded-[2.5rem] p-8 sm:p-12 lg:p-14 text-white relative overflow-hidden shadow-warm-xl border border-emerald-900/40">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#D97706]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="bg-gradient-to-br from-[#021811] via-[#05291E] to-[#01140E] rounded-[2.5rem] p-8 sm:p-12 lg:p-14 text-white relative overflow-hidden shadow-2xl border border-emerald-600/30 ring-1 ring-white/10">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#D97706]/15 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <ScrollReveal effect="slide-right" className="lg:col-span-8 space-y-4 text-left">

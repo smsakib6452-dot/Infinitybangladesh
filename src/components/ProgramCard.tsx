@@ -32,7 +32,7 @@ export const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
   const icon = ICON_MAP[program.iconName] || <Sparkles className="w-6 h-6" />;
 
   return (
-    <div className="group bg-white rounded-3xl border border-[#EAE3D9] p-6 sm:p-7 shadow-warm-sm hover:shadow-warm-lg motion-card-hover transition-all duration-300 flex flex-col justify-between hover:border-[#006A4E]/40 w-full">
+    <div className="group bg-white rounded-3xl border border-[#EAE3D9] p-6 sm:p-7 shadow-warm-sm hover:shadow-warm-lg hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between hover:border-[#006A4E]/40 w-full h-full">
       <div className="space-y-4">
         {/* Icon & Category */}
         <div className="flex items-center justify-between">
@@ -71,8 +71,8 @@ export const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
         </div>
       </div>
 
-      {/* Footer Action */}
-      <div className="pt-6">
+      {/* Footer Action - Pinned uniformly to bottom */}
+      <div className="pt-6 mt-auto">
         <Link
           to="programs/detail"
           slug={program.slug}

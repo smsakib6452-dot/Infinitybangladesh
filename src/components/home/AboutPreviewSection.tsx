@@ -44,28 +44,32 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({
           </p>
 
           {/* Mission & Vision Feature Highlights */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#FAF7F2] border border-[#EAE3D9]/80">
-              <Target className="w-4 h-4 text-[#006A4E] shrink-0 mt-0.5" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+            <div className="flex items-start gap-3 p-4 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] hover:border-[#006A4E]/30 transition-colors shadow-2xs">
+              <div className="w-8 h-8 rounded-xl bg-[#E6F3EF] text-[#006A4E] flex items-center justify-center shrink-0 border border-[#C2E2D7]/60 shadow-xs">
+                <Target className="w-4 h-4" />
+              </div>
               <div>
-                <h4 className="text-xs font-bold text-slate-900">{tText(aboutPreview?.missionHeading) || (isBn ? 'আমাদের লক্ষ্য' : 'Our Mission')}</h4>
-                <p className="text-[11px] text-slate-600 mt-0.5 leading-snug line-clamp-2">{tText(aboutPreview?.missionText) || tText(aboutSettings?.mission)}</p>
+                <h4 className="text-xs font-bold text-slate-900 font-display">{tText(aboutPreview?.missionHeading) || (isBn ? 'আমাদের লক্ষ্য' : 'Our Mission')}</h4>
+                <p className="text-[11px] text-slate-600 mt-1 leading-relaxed line-clamp-2">{tText(aboutPreview?.missionText) || tText(aboutSettings?.mission)}</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#FAF7F2] border border-[#EAE3D9]/80">
-              <Eye className="w-4 h-4 text-[#006A4E] shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 p-4 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] hover:border-[#006A4E]/30 transition-colors shadow-2xs">
+              <div className="w-8 h-8 rounded-xl bg-[#E6F3EF] text-[#006A4E] flex items-center justify-center shrink-0 border border-[#C2E2D7]/60 shadow-xs">
+                <Eye className="w-4 h-4" />
+              </div>
               <div>
-                <h4 className="text-xs font-bold text-slate-900">{tText(aboutPreview?.visionHeading) || (isBn ? 'আমাদের দর্শন' : 'Our Vision')}</h4>
-                <p className="text-[11px] text-slate-600 mt-0.5 leading-snug line-clamp-2">{tText(aboutPreview?.visionText) || tText(aboutSettings?.vision)}</p>
+                <h4 className="text-xs font-bold text-slate-900 font-display">{tText(aboutPreview?.visionHeading) || (isBn ? 'আমাদের দর্শন' : 'Our Vision')}</h4>
+                <p className="text-[11px] text-slate-600 mt-1 leading-relaxed line-clamp-2">{tText(aboutPreview?.visionText) || tText(aboutSettings?.vision)}</p>
               </div>
             </div>
           </div>
 
-          <div className="pt-2 flex items-center gap-3">
+          <div className="pt-2 flex flex-wrap items-center gap-3">
             <Link
               to={aboutPreview?.ctaUrl || 'about/story'}
-              className="px-6 py-3 rounded-2xl bg-[#006A4E] hover:bg-[#00523C] text-white text-xs sm:text-sm font-bold shadow-warm-sm transition-all flex items-center gap-2 cursor-pointer"
+              className="px-6 py-3.5 rounded-2xl bg-[#006A4E] hover:bg-[#00523C] text-white text-xs sm:text-sm font-bold shadow-warm-sm hover:shadow-warm-md transition-all flex items-center gap-2 cursor-pointer transform hover:-translate-y-0.5"
             >
               <span>{tText(aboutPreview?.ctaText) || (isBn ? 'আমাদের সম্পূর্ণ যাত্রা পড়ুন' : 'Read Our Full Story')}</span>
               <ArrowRight className="w-4 h-4" />
@@ -73,7 +77,7 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({
 
             <Link
               to={aboutPreview?.secondaryCtaUrl || "about/executive-committee"}
-              className="px-5 py-3 rounded-2xl bg-[#FAF7F2] hover:bg-[#F2ECE1] text-slate-800 text-xs sm:text-sm font-bold border border-[#D8CFC4] transition-all flex items-center gap-2 cursor-pointer"
+              className="px-5 py-3.5 rounded-2xl bg-[#FAF7F2] hover:bg-[#F2ECE1] text-slate-800 text-xs sm:text-sm font-bold border border-[#D8CFC4] hover:border-[#006A4E] hover:text-[#006A4E] transition-all flex items-center gap-2 cursor-pointer transform hover:-translate-y-0.5"
             >
               <Users className="w-4 h-4 text-[#006A4E]" />
               <span>{tText(aboutPreview?.secondaryCtaText) || (isBn ? 'নেতৃত্ব কমিটি' : 'Executive Team')}</span>
@@ -82,7 +86,7 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({
         </ScrollReveal>
 
         <ScrollReveal effect="slide-left" delay={0.2} className="lg:col-span-6">
-          <div className="rounded-3xl overflow-hidden shadow-warm-lg border-2 border-white aspect-4/3 bg-slate-900 relative">
+          <div className="rounded-3xl overflow-hidden shadow-warm-xl border-4 border-white aspect-4/3 bg-slate-900 relative">
             <OptimizedImage
               src={aboutPreview?.imageUrl || aboutSettings?.heroImageUrl || 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1000&q=80'}
               alt={aboutPreview?.imageAlt || "Team Infinity Bangladesh"}
@@ -91,12 +95,16 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({
               sizes="(max-width: 1024px) 100vw, 600px"
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent flex items-end p-6">
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
+
+            {/* Floating Glassmorphic Badge */}
+            <div className="absolute bottom-4 left-4 right-4 bg-slate-950/80 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-2xl flex items-center justify-between gap-3">
               <div className="text-white space-y-1">
-                <p className="text-xs font-bold text-amber-300 uppercase tracking-wider">
-                  {tText(aboutPreview?.imageBadgeTitle) || (isBn ? 'টিম ইনফিনিটি — মানবতার জন্য একতাবদ্ধ' : 'TEAM INFINITY — UNITED FOR HUMANITY')}
-                </p>
-                <p className="text-sm font-medium text-slate-200">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-extrabold uppercase tracking-wider">
+                  <Sparkles className="w-3 h-3 text-amber-400" />
+                  <span>{tText(aboutPreview?.imageBadgeTitle) || (isBn ? 'টিম ইনফিনিটি — মানবতার জন্য একতাবদ্ধ' : 'TEAM INFINITY — UNITED FOR HUMANITY')}</span>
+                </div>
+                <p className="text-xs sm:text-sm font-medium text-slate-200">
                   {tText(aboutPreview?.imageBadgeSubtitle) || (isBn ? '২০১৫ সাল থেকে সুবিধাবঞ্চিত মানুষের পাশে' : 'Serving underserved communities since 2015')}
                 </p>
               </div>
