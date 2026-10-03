@@ -355,7 +355,13 @@ export type MediaCategory =
   | 'Stories'
   | 'Gallery'
   | 'Documents'
-  | 'General';
+  | 'Ramadan & Eid'
+  | 'Field Drives'
+  | 'Youth Leadership'
+  | 'Winter Warmth'
+  | 'Emergency Flood Relief'
+  | 'General'
+  | (string & {});
 
 export type MediaType = 'image' | 'video';
 export type MediaSourceType = 'upload' | 'url' | 'youtube' | 'facebook' | 'direct';

@@ -5,4 +5,4 @@ Disallow: /#/admin
 Disallow: /admin
 
 # Sitemap location
-Sitemap: https://infinitybangladesh.org/sitemap.xml
+Sitemap: https://infinitybangladesh.vercel.app/sitemap.xml
