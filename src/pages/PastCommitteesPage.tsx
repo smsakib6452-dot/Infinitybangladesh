@@ -17,6 +17,8 @@ import {
 import { getAssetUrl, handleImageError } from '../lib/utils/assetHelper';
 import { ScrollReveal } from '../components/motion/ScrollReveal';
 import { StaggerGroup, StaggerItem } from '../components/motion/StaggerGroup';
+import { ExecutiveAvatar } from '../components/ExecutiveAvatar';
+import { CommitteeNavigation } from '../components/CommitteeNavigation';
 
 export const PastCommitteesPage: React.FC = () => {
   const { isBn, tText } = useLanguage();
@@ -70,36 +72,7 @@ export const PastCommitteesPage: React.FC = () => {
           </p>
 
           {/* Sub-navigation */}
-          <div className="pt-3 flex flex-wrap justify-center items-center gap-2.5 sm:gap-3">
-            <Link
-              to="team"
-              className="px-4 py-2 rounded-2xl bg-white hover:bg-[#FAF7F2] text-slate-700 text-xs sm:text-sm font-bold border border-[#EAE3D9] transition-all cursor-pointer flex items-center gap-1.5"
-            >
-              <LayoutGrid className="w-4 h-4 text-[#006A4E]" />
-              <span>{isBn ? 'টিম ওভারভিউ' : 'Team Overview'}</span>
-            </Link>
-
-            <Link
-              to="team/executive-committee"
-              className="px-4 py-2 rounded-2xl bg-white hover:bg-[#FAF7F2] text-slate-700 text-xs sm:text-sm font-bold border border-[#EAE3D9] transition-all cursor-pointer"
-            >
-              {isBn ? 'কার্যনির্বাহী পরিষদ (২০২৬)' : 'Executive Committee (2026)'}
-            </Link>
-
-            <Link
-              to="team/standing-committee"
-              className="px-4 py-2 rounded-2xl bg-white hover:bg-[#FAF7F2] text-slate-700 text-xs sm:text-sm font-bold border border-[#EAE3D9] transition-all cursor-pointer"
-            >
-              {isBn ? 'স্থায়ী কমিটি' : 'Standing Committee'}
-            </Link>
-
-            <Link
-              to="team/past-committees"
-              className="px-4 py-2 rounded-2xl bg-[#006A4E] text-white text-xs sm:text-sm font-extrabold shadow-warm-sm cursor-pointer"
-            >
-              {isBn ? 'প্রাক্তন কমিটি আর্কাইভ' : 'Past Committees Archive'}
-            </Link>
-          </div>
+          <CommitteeNavigation activeTab="past" />
         </div>
       </ScrollReveal>
 
@@ -154,18 +127,14 @@ export const PastCommitteesPage: React.FC = () => {
                             <div
                               className="bg-white rounded-2xl p-4 border border-[#EAE3D9] shadow-2xs text-center space-y-2 hover:border-[#006A4E] hover:shadow-warm-sm transition-all duration-200 flex flex-col justify-between h-full"
                             >
-                              <div className="mx-auto w-16 h-20 rounded-t-full rounded-b-xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center">
-                                {m.person.photoUrl ? (
-                                  <img
-                                    src={getAssetUrl(m.person.photoUrl)}
-                                    alt={m.person.fullName}
-                                    className="w-full h-full object-cover select-none pointer-events-none transform-gpu"
-                                    onError={handleImageError}
-                                    loading="lazy"
-                                  />
-                                ) : (
-                                  <Users className="w-8 h-8 text-slate-400" />
-                                )}
+                              <div className="mx-auto w-16 h-20 rounded-t-full rounded-b-xl overflow-hidden bg-gradient-to-b from-[#004835] to-[#00261C] border border-[#006A4E]/30 flex items-center justify-center shadow-xs">
+                                <ExecutiveAvatar
+                                  photoUrl={m.person.photoUrl}
+                                  fullName={m.person.fullName}
+                                  photoPosition={m.person.photoPosition}
+                                  photoZoom={m.person.photoZoom}
+                                  variant="emerald"
+                                />
                               </div>
                               <div>
                                 <h4 className="text-xs sm:text-sm font-bold text-slate-900 font-display">

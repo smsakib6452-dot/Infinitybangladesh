@@ -28,6 +28,8 @@ import {
 import { CommitteeMember, Person, Position, ExecutiveTierBar } from '../types';
 import { DEFAULT_EXECUTIVE_TIER_BARS } from '../data/initialData';
 import { getAssetUrl, handleImageError } from '../lib/utils/assetHelper';
+import { ExecutiveAvatar } from '../components/ExecutiveAvatar';
+import { CommitteeNavigation } from '../components/CommitteeNavigation';
 
 export const ExecutiveCommitteePage: React.FC = () => {
   const { isBn, tText } = useLanguage();
@@ -122,17 +124,17 @@ export const ExecutiveCommitteePage: React.FC = () => {
     if (!bar || bar.visible === false) return null;
 
     const colorClasses = accentColor === 'green'
-      ? 'text-[#00523C] bg-[#E6F3EF] border-[#C2E2D7]'
+      ? 'text-[#00523C] bg-gradient-to-r from-[#E6F3EF] to-[#D5EDE6] border-[#A8DAC9] shadow-warm-xs'
       : accentColor === 'red'
-      ? 'text-[#B31224] bg-[#FDF1F2] border-[#FCD3D7]'
-      : 'text-slate-700 bg-[#FAF7F2] border-[#EAE3D9]';
+      ? 'text-[#B31224] bg-gradient-to-r from-[#FDF1F2] to-[#FCE4E7] border-[#F9BDC4] shadow-warm-xs'
+      : 'text-slate-700 bg-gradient-to-r from-[#FAF7F2] to-[#F2EDE4] border-[#DFD7CC] shadow-warm-xs';
 
     return (
-      <div className="w-full flex items-center justify-center gap-3 sm:gap-4 my-4 sm:my-6 px-2">
-        <div className="h-px flex-1 max-w-xs sm:max-w-md bg-gradient-to-r from-transparent via-slate-200 to-slate-300" />
+      <div className="w-full flex items-center justify-center gap-3 sm:gap-4 my-5 sm:my-7 px-2">
+        <div className="h-px flex-1 max-w-xs sm:max-w-md bg-gradient-to-r from-transparent via-slate-300 to-slate-200" />
 
         <div className="relative inline-flex items-center justify-center group/tierbar shrink-0">
-          <span className={`text-[11px] sm:text-xs font-extrabold uppercase tracking-widest px-4 py-1.5 rounded-full border shadow-2xs transition-all text-center inline-block ${colorClasses}`}>
+          <span className={`text-[11px] sm:text-xs font-extrabold uppercase tracking-widest px-4 sm:px-5 py-1.5 sm:py-2 rounded-full border transition-all text-center inline-block ${colorClasses}`}>
             {isBn ? bar.title.bn : bar.title.en}
           </span>
 
@@ -259,36 +261,7 @@ export const ExecutiveCommitteePage: React.FC = () => {
         </p>
 
         {/* Committee Sub-Navigation */}
-        <div className="pt-3 flex flex-wrap justify-center items-center gap-2.5 sm:gap-3">
-          <Link
-            to="team"
-            className="px-4 py-2 rounded-2xl bg-white hover:bg-[#FAF7F2] text-slate-700 text-xs sm:text-sm font-bold border border-[#EAE3D9] transition-all cursor-pointer flex items-center gap-1.5"
-          >
-            <LayoutGrid className="w-4 h-4 text-[#006A4E]" />
-            <span>{isBn ? 'টিম ওভারভিউ' : 'Team Overview'}</span>
-          </Link>
-
-          <Link
-            to="team/executive-committee"
-            className="px-4 py-2 rounded-2xl bg-[#006A4E] text-white text-xs sm:text-sm font-extrabold shadow-warm-sm cursor-pointer"
-          >
-            {isBn ? `কার্যনির্বাহী পরিষদ (${currentCommittee?.year || '২০২৬'})` : `Executive Committee (${currentCommittee?.year || '2026'})`}
-          </Link>
-
-          <Link
-            to="team/standing-committee"
-            className="px-4 py-2 rounded-2xl bg-white hover:bg-[#FAF7F2] text-slate-700 text-xs sm:text-sm font-bold border border-[#EAE3D9] transition-all cursor-pointer"
-          >
-            {isBn ? 'স্থায়ী কমিটি' : 'Standing Committee'}
-          </Link>
-
-          <Link
-            to="team/past-committees"
-            className="px-4 py-2 rounded-2xl bg-white hover:bg-[#FAF7F2] text-slate-700 text-xs sm:text-sm font-bold border border-[#EAE3D9] transition-all cursor-pointer"
-          >
-            {isBn ? 'প্রাক্তন কমিটি আর্কাইভ' : 'Past Committees Archive'}
-          </Link>
-        </div>
+        <CommitteeNavigation activeTab="executive" year={currentCommittee?.year} />
       </ScrollReveal>
 
       {/* Official Hierarchy & Search Bar */}
@@ -342,22 +315,14 @@ export const ExecutiveCommitteePage: React.FC = () => {
                         #{String(m.serialNumber).padStart(2, '0')}
                       </div>
 
-                      <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-t-full rounded-b-xl overflow-hidden bg-gradient-to-b from-rose-700 to-rose-900 border border-rose-600/60 mb-2 sm:mb-2.5 flex items-center justify-center shadow-xs flex-shrink-0">
-                        {m.person.photoUrl ? (
-                          <img
-                            src={getAssetUrl(m.person.photoUrl)}
-                            alt={m.person.fullName}
-                            className="w-full h-full object-cover select-none pointer-events-none transform-gpu"
-                            style={{
-                              objectPosition: m.person.photoPosition || 'center 15%',
-                              transform: m.person.photoZoom ? `scale(${m.person.photoZoom})` : undefined
-                            }}
-                            onError={handleImageError}
-                            loading="lazy"
-                          />
-                        ) : (
-                          <Users className="w-8 h-8 text-rose-200/70" />
-                        )}
+                      <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-t-full rounded-b-xl overflow-hidden bg-slate-900 border border-slate-700/60 mb-2 sm:mb-2.5 flex items-center justify-center shadow-xs flex-shrink-0">
+                        <ExecutiveAvatar
+                          photoUrl={m.person.photoUrl}
+                          fullName={m.person.fullName}
+                          photoPosition={m.person.photoPosition}
+                          photoZoom={m.person.photoZoom}
+                          variant="emerald"
+                        />
                       </div>
 
                       <div className="w-full">
@@ -408,22 +373,14 @@ export const ExecutiveCommitteePage: React.FC = () => {
                         #{String(member1.serialNumber).padStart(2, '0')}
                       </div>
 
-                      <div className="relative mx-auto w-32 h-36 sm:w-36 sm:h-40 rounded-t-full rounded-b-2xl overflow-hidden bg-[#E6F3EF] border-2 border-[#006A4E]/30 shadow-inner mb-4 flex items-center justify-center">
-                        {member1.person.photoUrl ? (
-                          <img
-                            src={getAssetUrl(member1.person.photoUrl)}
-                            alt={member1.person.fullName}
-                            className="w-full h-full object-cover select-none pointer-events-none transform-gpu"
-                            style={{
-                              objectPosition: member1.person.photoPosition || 'center 15%',
-                              transform: member1.person.photoZoom ? `scale(${member1.person.photoZoom})` : undefined
-                            }}
-                            onError={handleImageError}
-                            loading="lazy"
-                          />
-                        ) : (
-                          <Users className="w-16 h-16 text-[#006A4E]/60" />
-                        )}
+                      <div className="relative mx-auto w-32 h-36 sm:w-36 sm:h-40 rounded-t-full rounded-b-2xl overflow-hidden bg-gradient-to-b from-[#004835] to-[#00261C] border-2 border-[#006A4E]/40 shadow-inner mb-4 flex items-center justify-center">
+                        <ExecutiveAvatar
+                          photoUrl={member1.person.photoUrl}
+                          fullName={member1.person.fullName}
+                          photoPosition={member1.person.photoPosition}
+                          photoZoom={member1.person.photoZoom}
+                          variant="emerald"
+                        />
                       </div>
 
                       <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight font-display text-slate-900 group-hover:text-[#006A4E] transition-colors">
@@ -460,35 +417,29 @@ export const ExecutiveCommitteePage: React.FC = () => {
                       <StaggerItem key={m.id}>
                         <div
                           onClick={() => setSelectedMember(m)}
-                          className="group cursor-pointer bg-white text-slate-900 rounded-3xl p-5 sm:p-6 text-center shadow-warm-sm border border-[#EAE3D9] hover:border-[#006A4E] transition-all transform hover:-translate-y-1 relative h-full"
+                          className="group cursor-pointer bg-white text-slate-900 rounded-3xl p-5 sm:p-6 text-center shadow-warm-sm border border-[#EAE3D9] hover:border-[#006A4E] transition-all transform hover:-translate-y-1 relative h-full flex flex-col justify-between items-center"
                         >
                           <div className="absolute top-3 right-3 bg-[#FAF7F2] text-slate-700 font-mono font-bold text-[11px] px-2 py-0.5 rounded-full border border-[#EAE3D9]">
                             #{String(m.serialNumber).padStart(2, '0')}
                           </div>
 
-                          <div className="relative mx-auto w-24 h-28 sm:w-28 sm:h-32 rounded-t-full rounded-b-2xl overflow-hidden bg-[#FAF7F2] border border-[#EAE3D9] mb-3 flex items-center justify-center">
-                            {m.person.photoUrl ? (
-                              <img
-                                src={getAssetUrl(m.person.photoUrl)}
-                                alt={m.person.fullName}
-                                className="w-full h-full object-cover select-none pointer-events-none transform-gpu"
-                                style={{
-                                  objectPosition: m.person.photoPosition || 'center 15%',
-                                  transform: m.person.photoZoom ? `scale(${m.person.photoZoom})` : undefined
-                                }}
-                                onError={handleImageError}
-                                loading="lazy"
+                          <div className="w-full flex flex-col items-center">
+                            <div className="relative mx-auto w-24 h-28 sm:w-28 sm:h-32 rounded-t-full rounded-b-2xl overflow-hidden bg-gradient-to-b from-[#004835] to-[#00261C] border border-[#006A4E]/30 mb-3 flex items-center justify-center shadow-xs">
+                              <ExecutiveAvatar
+                                photoUrl={m.person.photoUrl}
+                                fullName={m.person.fullName}
+                                photoPosition={m.person.photoPosition}
+                                photoZoom={m.person.photoZoom}
+                                variant="emerald"
                               />
-                            ) : (
-                              <Users className="w-12 h-12 text-slate-400" />
-                            )}
+                            </div>
+
+                            <h3 className="text-base sm:text-lg font-bold font-display text-slate-900 group-hover:text-[#006A4E] transition-colors">
+                              {isBn ? m.person.banglaName : m.person.fullName}
+                            </h3>
                           </div>
 
-                          <h3 className="text-base sm:text-lg font-bold font-display text-slate-900 group-hover:text-[#006A4E] transition-colors">
-                            {isBn ? m.person.banglaName : m.person.fullName}
-                          </h3>
-
-                          <div className="mt-1.5 inline-block px-3 py-0.5 rounded-full bg-[#FAF7F2] text-slate-700 font-semibold text-xs border border-[#EAE3D9]">
+                          <div className="mt-3 inline-block px-3 py-1 rounded-full bg-[#FAF7F2] text-slate-700 font-semibold text-xs border border-[#EAE3D9]">
                             {isBn ? m.position.name.bn : m.position.name.en}
                           </div>
                         </div>
@@ -518,22 +469,14 @@ export const ExecutiveCommitteePage: React.FC = () => {
                         #{String(member5.serialNumber).padStart(2, '0')}
                       </div>
 
-                      <div className="relative mx-auto w-32 h-36 sm:w-36 sm:h-40 rounded-t-full rounded-b-2xl overflow-hidden bg-[#FDF1F2] border-2 border-[#D4182E]/30 shadow-inner mb-4 flex items-center justify-center">
-                        {member5.person.photoUrl ? (
-                          <img
-                            src={getAssetUrl(member5.person.photoUrl)}
-                            alt={member5.person.fullName}
-                            className="w-full h-full object-cover select-none pointer-events-none transform-gpu"
-                            style={{
-                              objectPosition: member5.person.photoPosition || 'center 15%',
-                              transform: member5.person.photoZoom ? `scale(${member5.person.photoZoom})` : undefined
-                            }}
-                            onError={handleImageError}
-                            loading="lazy"
-                          />
-                        ) : (
-                          <Users className="w-16 h-16 text-[#D4182E]/60" />
-                        )}
+                      <div className="relative mx-auto w-32 h-36 sm:w-36 sm:h-40 rounded-t-full rounded-b-2xl overflow-hidden bg-gradient-to-b from-[#8B0D1D] to-[#360208] border-2 border-[#D4182E]/40 shadow-inner mb-4 flex items-center justify-center">
+                        <ExecutiveAvatar
+                          photoUrl={member5.person.photoUrl}
+                          fullName={member5.person.fullName}
+                          photoPosition={member5.person.photoPosition}
+                          photoZoom={member5.person.photoZoom}
+                          variant="crimson"
+                        />
                       </div>
 
                       <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight font-display text-slate-900 group-hover:text-[#D4182E] transition-colors">
@@ -582,22 +525,14 @@ export const ExecutiveCommitteePage: React.FC = () => {
                           #{String(m.serialNumber).padStart(2, '0')}
                         </div>
 
-                        <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-t-full rounded-b-xl overflow-hidden bg-gradient-to-b from-rose-700 to-rose-900 border border-rose-600/60 mb-2 sm:mb-2.5 flex items-center justify-center shadow-xs flex-shrink-0">
-                          {m.person.photoUrl ? (
-                            <img
-                              src={getAssetUrl(m.person.photoUrl)}
-                              alt={m.person.fullName}
-                              className="w-full h-full object-cover select-none pointer-events-none transform-gpu"
-                              style={{
-                                objectPosition: m.person.photoPosition || 'center 15%',
-                                transform: m.person.photoZoom ? `scale(${m.person.photoZoom})` : undefined
-                              }}
-                              onError={handleImageError}
-                              loading="lazy"
-                            />
-                          ) : (
-                            <Users className="w-8 h-8 text-rose-200/70" />
-                          )}
+                        <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-t-full rounded-b-xl overflow-hidden bg-gradient-to-b from-[#8B0D1D] to-[#360208] border border-rose-600/60 mb-2 sm:mb-2.5 flex items-center justify-center shadow-xs flex-shrink-0">
+                          <ExecutiveAvatar
+                            photoUrl={m.person.photoUrl}
+                            fullName={m.person.fullName}
+                            photoPosition={m.person.photoPosition}
+                            photoZoom={m.person.photoZoom}
+                            variant="crimson"
+                          />
                         </div>
 
                         <div className="w-full">
@@ -661,25 +596,17 @@ export const ExecutiveCommitteePage: React.FC = () => {
                         <div
                           className={
                             isHighlighted
-                              ? 'w-20 h-24 sm:w-24 sm:h-28 rounded-t-full rounded-b-xl overflow-hidden bg-gradient-to-b from-rose-700 to-rose-900 border border-rose-600/60 mb-2 sm:mb-2.5 flex items-center justify-center shadow-xs flex-shrink-0'
-                              : 'w-16 h-20 sm:w-20 sm:h-24 rounded-t-full rounded-b-xl overflow-hidden bg-gradient-to-b from-rose-700 to-rose-900 border border-rose-600/60 mb-2 sm:mb-2.5 flex items-center justify-center shadow-xs flex-shrink-0'
+                              ? 'w-20 h-24 sm:w-24 sm:h-28 rounded-t-full rounded-b-xl overflow-hidden bg-gradient-to-b from-[#004835] to-[#00261C] border border-[#006A4E]/40 mb-2 sm:mb-2.5 flex items-center justify-center shadow-xs flex-shrink-0'
+                              : 'w-16 h-20 sm:w-20 sm:h-24 rounded-t-full rounded-b-xl overflow-hidden bg-gradient-to-b from-slate-800 to-slate-950 border border-slate-700/60 mb-2 sm:mb-2.5 flex items-center justify-center shadow-xs flex-shrink-0'
                           }
                         >
-                          {m.person.photoUrl ? (
-                            <img
-                              src={getAssetUrl(m.person.photoUrl)}
-                              alt={m.person.fullName}
-                              className="w-full h-full object-cover select-none pointer-events-none transform-gpu"
-                              style={{
-                                objectPosition: m.person.photoPosition || 'center 15%',
-                                transform: m.person.photoZoom ? `scale(${m.person.photoZoom})` : undefined
-                              }}
-                              onError={handleImageError}
-                              loading="lazy"
-                            />
-                          ) : (
-                            <Users className={isHighlighted ? 'w-9 h-9 text-rose-200/70' : 'w-8 h-8 text-rose-200/70'} />
-                          )}
+                          <ExecutiveAvatar
+                            photoUrl={m.person.photoUrl}
+                            fullName={m.person.fullName}
+                            photoPosition={m.person.photoPosition}
+                            photoZoom={m.person.photoZoom}
+                            variant={isHighlighted ? 'emerald' : 'slate'}
+                          />
                         </div>
 
                         <div className="w-full">
@@ -755,25 +682,17 @@ export const ExecutiveCommitteePage: React.FC = () => {
                         <div
                           className={
                             isHighlighted
-                              ? 'w-20 h-24 sm:w-24 sm:h-28 rounded-t-full rounded-b-xl overflow-hidden bg-gradient-to-b from-rose-700 to-rose-900 border border-rose-600/60 mb-2 sm:mb-2.5 flex items-center justify-center shadow-xs flex-shrink-0'
-                              : 'w-16 h-20 sm:w-20 sm:h-24 rounded-t-full rounded-b-xl overflow-hidden bg-gradient-to-b from-rose-700 to-rose-900 border border-rose-600/60 mb-2 sm:mb-2.5 flex items-center justify-center shadow-xs flex-shrink-0'
+                              ? 'w-20 h-24 sm:w-24 sm:h-28 rounded-t-full rounded-b-xl overflow-hidden bg-gradient-to-b from-[#004835] to-[#00261C] border border-[#006A4E]/40 mb-2 sm:mb-2.5 flex items-center justify-center shadow-xs flex-shrink-0'
+                              : 'w-16 h-20 sm:w-20 sm:h-24 rounded-t-full rounded-b-xl overflow-hidden bg-gradient-to-b from-slate-800 to-slate-950 border border-slate-700/60 mb-2 sm:mb-2.5 flex items-center justify-center shadow-xs flex-shrink-0'
                           }
                         >
-                          {m.person.photoUrl ? (
-                            <img
-                              src={getAssetUrl(m.person.photoUrl)}
-                              alt={m.person.fullName}
-                              className="w-full h-full object-cover select-none pointer-events-none transform-gpu"
-                              style={{
-                                objectPosition: m.person.photoPosition || 'center 15%',
-                                transform: m.person.photoZoom ? `scale(${m.person.photoZoom})` : undefined
-                              }}
-                              onError={handleImageError}
-                              loading="lazy"
-                            />
-                          ) : (
-                            <Users className={isHighlighted ? 'w-9 h-9 text-rose-200/70' : 'w-8 h-8 text-rose-200/70'} />
-                          )}
+                          <ExecutiveAvatar
+                            photoUrl={m.person.photoUrl}
+                            fullName={m.person.fullName}
+                            photoPosition={m.person.photoPosition}
+                            photoZoom={m.person.photoZoom}
+                            variant={isHighlighted ? 'emerald' : 'slate'}
+                          />
                         </div>
 
                         <div className="w-full">
@@ -832,22 +751,14 @@ export const ExecutiveCommitteePage: React.FC = () => {
                           #{String(m.serialNumber).padStart(2, '0')}
                         </div>
 
-                        <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-t-full rounded-b-xl overflow-hidden bg-gradient-to-b from-rose-700 to-rose-900 border border-rose-600/60 mb-2 sm:mb-2.5 flex items-center justify-center shadow-xs flex-shrink-0">
-                          {m.person.photoUrl ? (
-                            <img
-                              src={getAssetUrl(m.person.photoUrl)}
-                              alt={m.person.fullName}
-                              className="w-full h-full object-cover select-none pointer-events-none transform-gpu"
-                              style={{
-                                objectPosition: m.person.photoPosition || 'center 15%',
-                                transform: m.person.photoZoom ? `scale(${m.person.photoZoom})` : undefined
-                              }}
-                              onError={handleImageError}
-                              loading="lazy"
-                            />
-                          ) : (
-                            <Users className="w-8 h-8 text-rose-200/70" />
-                          )}
+                        <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-t-full rounded-b-xl overflow-hidden bg-slate-900 border border-slate-700/60 mb-2 sm:mb-2.5 flex items-center justify-center shadow-xs flex-shrink-0">
+                          <ExecutiveAvatar
+                            photoUrl={m.person.photoUrl}
+                            fullName={m.person.fullName}
+                            photoPosition={m.person.photoPosition}
+                            photoZoom={m.person.photoZoom}
+                            variant="slate"
+                          />
                         </div>
 
                         <div className="w-full">
@@ -1028,21 +939,14 @@ export const ExecutiveCommitteePage: React.FC = () => {
             </button>
 
             <div className="text-center space-y-3">
-              <div className="mx-auto w-24 h-28 rounded-t-full rounded-b-2xl overflow-hidden bg-slate-100 border-2 border-[#006A4E] shadow-md flex items-center justify-center">
-                {selectedMember.person.photoUrl ? (
-                  <img
-                    src={getAssetUrl(selectedMember.person.photoUrl)}
-                    alt={selectedMember.person.fullName}
-                    className="w-full h-full object-cover select-none pointer-events-none transform-gpu"
-                    style={{
-                      objectPosition: selectedMember.person.photoPosition || 'center 15%',
-                      transform: selectedMember.person.photoZoom ? `scale(${selectedMember.person.photoZoom})` : undefined
-                    }}
-                    onError={handleImageError}
-                  />
-                ) : (
-                  <Users className="w-12 h-12 text-[#006A4E]/60" />
-                )}
+              <div className="mx-auto w-24 h-28 rounded-t-full rounded-b-2xl overflow-hidden bg-gradient-to-b from-[#004835] to-[#00261C] border-2 border-[#006A4E] shadow-md flex items-center justify-center">
+                <ExecutiveAvatar
+                  photoUrl={selectedMember.person.photoUrl}
+                  fullName={selectedMember.person.fullName}
+                  photoPosition={selectedMember.person.photoPosition}
+                  photoZoom={selectedMember.person.photoZoom}
+                  variant="emerald"
+                />
               </div>
 
               <div className="space-y-1">
