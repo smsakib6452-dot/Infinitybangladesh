@@ -1461,12 +1461,54 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
         setBloodDonors(prevLocal => {
           const remoteIds = new Set(remoteDonors.map(r => r.id));
-          const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
-          const merged = [...remoteDonors, ...localOnly];
+          const localOnly = prevLocal.filter(l => !remoteIds.has(l.id) && !deletedDonorIdsRef.current.has(l.id));
+
+          // If local has extra donors (e.g. added in Chrome when database was offline/paused),
+          // auto-sync them to Supabase so they become permanently accessible on all devices
+          if (localOnly.length > 0 && isSupabaseConfigured) {
+            localOnly.forEach(d => {
+              if (d.fullName && d.bloodGroup) {
+                safeDbUpsert('blood_donors', {
+                  id: d.id,
+                  full_name: d.fullName,
+                  blood_group: d.bloodGroup,
+                  gender: d.gender || null,
+                  date_of_birth: d.dateOfBirth || d.dob || null,
+                  phone: d.phone,
+                  email: d.email || null,
+                  photo_url: d.photoUrl || null,
+                  district: d.district,
+                  upazila: d.upazila,
+                  area: d.area,
+                  detailed_address: d.detailedAddress || null,
+                  org_category: d.orgCategory,
+                  committee_position: d.committeePosition || null,
+                  availability_status: d.availabilityStatus,
+                  first_donation_date: d.firstDonationDate || null,
+                  last_donation_date: d.lastDonationDate || null,
+                  total_donations: d.totalDonations,
+                  experience_notes: d.experienceNotes || null,
+                  is_verified: d.isVerified,
+                  approval_status: d.approvalStatus,
+                  privacy_consent: d.privacyConsent,
+                  show_phone_publicly: d.showPhonePublicly,
+                  created_at: d.createdAt || new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                });
+              }
+            });
+            const merged = [...remoteDonors, ...localOnly];
+            try {
+              localStorage.setItem(`${STORAGE_PREFIX}bloodDonors`, JSON.stringify(merged));
+            } catch {}
+            return merged;
+          }
+
+          // Authoritative remote synchronization for all browsers
           try {
-            localStorage.setItem(`${STORAGE_PREFIX}bloodDonors`, JSON.stringify(merged));
+            localStorage.setItem(`${STORAGE_PREFIX}bloodDonors`, JSON.stringify(remoteDonors));
           } catch {}
-          return merged;
+          return remoteDonors;
         });
       }
 
@@ -1499,12 +1541,40 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }));
           setEmergencyBloodRequests(prevLocal => {
             const remoteIds = new Set(remoteRequests.map(r => r.id));
-            const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
-            const merged = [...remoteRequests, ...localOnly];
+            const localOnly = prevLocal.filter(l => !remoteIds.has(l.id) && !deletedRequestIdsRef.current.has(l.id));
+
+            if (localOnly.length > 0 && isSupabaseConfigured) {
+              localOnly.forEach(r => {
+                safeDbUpsert('emergency_blood_requests', {
+                  id: r.id,
+                  requester_name: r.requesterName,
+                  contact_number: r.contactNumber,
+                  patient_name: r.patientName,
+                  blood_group: r.bloodGroup,
+                  units_needed: r.unitsNeeded,
+                  hospital_name: r.hospitalName,
+                  district: r.district,
+                  upazila: r.upazila,
+                  emergency_level: r.emergencyLevel,
+                  required_date: r.requiredDate,
+                  additional_notes: r.additionalNotes || null,
+                  status: r.status,
+                  matched_donor_ids: r.matchedDonorIds || [],
+                  created_at: r.createdAt || new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                });
+              });
+              const merged = [...remoteRequests, ...localOnly];
+              try {
+                localStorage.setItem(`${STORAGE_PREFIX}emergencyRequests`, JSON.stringify(merged));
+              } catch {}
+              return merged;
+            }
+
             try {
-              localStorage.setItem(`${STORAGE_PREFIX}emergencyRequests`, JSON.stringify(merged));
+              localStorage.setItem(`${STORAGE_PREFIX}emergencyRequests`, JSON.stringify(remoteRequests));
             } catch {}
-            return merged;
+            return remoteRequests;
           });
         }
       } catch (err: any) {
