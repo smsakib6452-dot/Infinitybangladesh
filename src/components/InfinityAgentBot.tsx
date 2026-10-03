@@ -1041,14 +1041,14 @@ const resolveLeadershipQuery = (cleanQuery: string): KnowledgeIntent | null => {
   return (
     <>
       {/* Floating Launcher Button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40">
         <motion.button
           type="button"
           onClick={() => setIsOpen(prev => !prev)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           aria-label={isBn ? 'ইনফি রোবট খুলুন' : 'Open Infi Robot'}
-          className="relative group p-2.5 sm:px-4 sm:py-2.5 rounded-full bg-gradient-to-r from-[#006A4E] to-[#0A4E3B] text-white shadow-warm-xl border border-emerald-400/40 flex items-center justify-center gap-2.5 cursor-pointer transition-all hover:shadow-[0_12px_30px_rgba(0,106,78,0.4)]"
+          className="relative group p-2.5 sm:px-4 sm:py-2.5 rounded-full bg-gradient-to-r from-[#006A4E] to-[#0A4E3B] text-white shadow-warm-xl border border-emerald-400/40 flex items-center justify-center gap-2.5 cursor-pointer transition-all hover:shadow-[0_12px_30px_rgba(0,106,78,0.4)] touch-manipulation active:scale-95"
         >
           {/* Active Pulse Ring */}
           <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
@@ -1106,7 +1106,7 @@ const resolveLeadershipQuery = (cleanQuery: string): KnowledgeIntent | null => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.94 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-24 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-[420px] max-w-[430px] h-[580px] max-h-[82vh] bg-white/95 backdrop-blur-xl rounded-3xl border border-[#EAE3D9] shadow-2xl flex flex-col overflow-hidden text-slate-800"
+            className="fixed bottom-18 right-2.5 left-2.5 sm:left-auto sm:right-6 sm:bottom-24 z-50 w-auto sm:w-[420px] max-w-[430px] h-[580px] max-h-[82vh] bg-white/95 backdrop-blur-xl rounded-3xl border border-[#EAE3D9] shadow-2xl flex flex-col overflow-hidden text-slate-800 touch-manipulation"
           >
             {/* Header */}
             <div className="px-5 py-4 bg-gradient-to-r from-[#006A4E] to-[#0A4E3B] text-white flex items-center justify-between shadow-sm shrink-0">

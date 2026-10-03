@@ -251,8 +251,8 @@ export const Footer: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Bottom Legal Copyright Bar */}
-      <div className="bg-[#0A1612] py-4 border-t border-emerald-950 text-emerald-300/70 text-xs">
+      {/* 3. Bottom Legal Copyright Bar (with mobile safe-padding for floating buttons) */}
+      <div className="bg-[#0A1612] pt-4 pb-24 sm:pb-5 border-t border-emerald-950 text-emerald-300/70 text-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
           <div>
             <p>{tText(footerSettings.copyrightText)}</p>

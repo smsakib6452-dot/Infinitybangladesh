@@ -37,7 +37,7 @@ export const BackToTopButton: React.FC = () => {
           exit={{ opacity: 0, y: 16, scale: 0.8 }}
           transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
           aria-label="Back to Top"
-          className="fixed bottom-24 right-6 z-40 p-3.5 rounded-2xl bg-[#006A4E] hover:bg-[#00523C] active:bg-[#00402E] text-white shadow-warm-lg hover:shadow-warm-xl border border-emerald-600/30 transition-all cursor-pointer group flex items-center justify-center"
+          className="fixed bottom-4 left-4 sm:bottom-24 sm:right-6 z-40 p-3 sm:p-3.5 rounded-2xl bg-[#006A4E] hover:bg-[#00523C] active:bg-[#00402E] text-white shadow-warm-lg hover:shadow-warm-xl border border-emerald-600/30 transition-all cursor-pointer group flex items-center justify-center touch-manipulation active:scale-95"
         >
           <ArrowUp className="w-5 h-5 transition-transform duration-200 group-hover:-translate-y-1" />
         </motion.button>

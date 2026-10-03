@@ -1271,7 +1271,7 @@ export const INITIAL_PRESS_COVERAGE: PressCoverage[] = [
     },
     "coverageType": "newspaper",
     "publishedDate": "2025-02-02",
-    "imageUrl": "/images/winter-warmth.jpg",
+    "imageUrl": "/images/events/winter-warmth.jpg",
     "isFeatured": true,
     "status": "published"
   },
@@ -1309,7 +1309,7 @@ export const INITIAL_PRESS_COVERAGE: PressCoverage[] = [
     },
     "coverageType": "online",
     "publishedDate": "2024-11-20",
-    "imageUrl": "/images/winter-warmth.jpg",
+    "imageUrl": "/images/events/winter-warmth.jpg",
     "isFeatured": false,
     "status": "published"
   }
