@@ -1028,14 +1028,14 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
       </section>
 
       {/* 2. NAVIGATION TABS */}
-      <section id="blood-tabs-nav" className="sticky top-16 z-30 bg-white/95 backdrop-blur-md border-b border-[#EAE3D9] shadow-xs">
+      <section id="blood-tabs-nav" className="sticky top-16 z-30 bg-white/90 backdrop-blur-md border-b border-[#EAE3D9] shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-3 scroll-smooth">
               {[
                 { id: 'find-donor', label: isBn ? 'রক্তদাতা খুঁজুন ও ডিরেক্টরি' : 'Find Donors & Directory', icon: Search },
                 { id: 'become-donor', label: isBn ? 'রক্তদাতা হন' : 'Become a Donor', icon: UserPlus },
                 { id: 'update-donor', label: isBn ? 'তথ্য হালনাগাদ' : 'Update Profile', icon: Edit3 },
-                { id: 'emergency-request', label: isBn ? 'জরুরি রক্তের আবেদন' : 'Emergency Request', icon: AlertTriangle, badge: stats.activeEmergencyRequests ? `${stats.activeEmergencyRequests}` : undefined },
+                { id: 'emergency-request', label: isBn ? 'জরুরি রক্তের আবেদন' : 'Emergency Request', icon: AlertTriangle, badge: stats.activeEmergencyRequests > 0 ? `${stats.activeEmergencyRequests}` : undefined },
                 { id: 'statistics', label: isBn ? 'রক্তদান পরিসংখ্যান' : 'Statistics', icon: Activity },
                 { id: 'guidelines', label: isBn ? 'নির্দেশিকা ও তথ্য' : 'Guidelines', icon: Info }
               ].map(tab => {
@@ -1046,17 +1046,20 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
                     key={tab.id}
                     type="button"
                     onClick={() => scrollToFormSection(tab.id as any)}
-                    className={`px-4 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 cursor-pointer flex items-center gap-2 ${
+                    className={`px-4 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 cursor-pointer flex items-center gap-2 select-none ${
                       isSelected
-                        ? 'bg-[#006A4E] text-white shadow-warm-sm ring-2 ring-emerald-500/20 scale-[1.02]'
-                        : 'bg-white hover:bg-[#FAF7F2] text-slate-700 border border-[#EAE3D9]'
+                        ? 'bg-[#006A4E] text-white shadow-warm-sm ring-2 ring-emerald-500/25 scale-[1.02]'
+                        : 'bg-[#FAF7F2] hover:bg-[#F2ECE1] text-slate-700 border border-[#EAE3D9]'
                     }`}
                   >
                     <Icon className={`w-4 h-4 ${isSelected ? 'text-emerald-200' : 'text-slate-500'}`} />
                     <span>{tab.label}</span>
                     {tab.badge && (
-                      <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-black">
-                        {tab.badge}
+                      <span className="relative flex items-center justify-center ml-0.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                        <span className="relative px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black leading-none">
+                          {tab.badge}
+                        </span>
                       </span>
                     )}
                   </button>
@@ -1259,7 +1262,7 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                   {filteredDonors.slice(0, displayCount).map(donor => {
                     const donorAge = calculateAge(donor.dateOfBirth || donor.dob);
                     const genderLabel = donor.gender === 'Female' ? (isBn ? 'নারী' : 'Female') : donor.gender === 'Other' ? (isBn ? 'অন্যান্য' : 'Other') : (isBn ? 'পুরুষ' : 'Male');
@@ -1272,7 +1275,7 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
                     return (
                       <div
                         key={donor.id}
-                        className="group relative flex flex-col justify-between rounded-3xl bg-white border border-[#EAE3D9] p-5 sm:p-6 shadow-warm-xs hover:shadow-warm-md hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                        className="group relative flex flex-col justify-between h-full rounded-3xl bg-white border border-[#EAE3D9] p-5 sm:p-6 shadow-warm-xs hover:shadow-warm-md hover:-translate-y-1 transition-all duration-300 overflow-hidden"
                       >
                         {/* Top Accent Gradient Bar */}
                         <div className={`absolute top-0 inset-x-0 h-1 bg-gradient-to-r ${
@@ -1283,7 +1286,7 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
                             : 'from-sky-400 to-indigo-500'
                         }`} />
 
-                        <div className="space-y-4">
+                        <div className="flex-1 flex flex-col justify-between space-y-4">
                           {/* Top Row: Avatar + Info + Blood Group Badge */}
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-center gap-3 min-w-0">
@@ -3202,24 +3205,24 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
                         <div className="flex items-start justify-between gap-3">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-base font-black text-rose-700 font-display">
+                              <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-xl bg-gradient-to-b from-rose-500 to-rose-700 text-white text-sm font-black font-display shadow-xs">
                                 {req.bloodGroup}
                               </span>
-                              <span className="text-xs font-bold text-slate-700">
-                                ({req.unitsNeeded} {isBn ? 'ব্যাগ প্রয়োজন' : 'Units Needed'})
+                              <span className="text-xs font-bold text-slate-800">
+                                {req.unitsNeeded} {isBn ? 'ব্যাগ প্রয়োজন' : 'Bags Needed'}
                               </span>
                               <span
-                                className={`px-2 py-0.2 rounded-md text-[10px] font-extrabold uppercase ${
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                                   req.emergencyLevel === 'CRITICAL'
-                                    ? 'bg-rose-600 text-white'
-                                    : 'bg-amber-100 text-amber-900'
+                                    ? 'bg-rose-600 text-white animate-pulse'
+                                    : 'bg-amber-100 text-amber-900 border border-amber-300'
                                 }`}
                               >
                                 {req.emergencyLevel}
                               </span>
                             </div>
 
-                            <p className="text-xs font-extrabold text-slate-900">
+                            <p className="text-xs font-extrabold text-slate-900 pt-0.5">
                               {req.patientName}
                             </p>
                           </div>
