@@ -10,8 +10,8 @@ interface DonorAvatarProps {
 }
 
 /**
- * High-End Vector Silhouette for Male Donors
- * Minimalist, respectful, modern corporate healthcare aesthetic
+ * Natural Anatomical Vector Avatar for Male Donors
+ * Clean, well-proportioned modern haircut, natural neck, and shoulders
  */
 export const MaleAvatarSvg: React.FC<{ className?: string }> = ({ className = 'w-full h-full' }) => (
   <svg
@@ -22,46 +22,59 @@ export const MaleAvatarSvg: React.FC<{ className?: string }> = ({ className = 'w
     aria-hidden="true"
   >
     <defs>
-      <linearGradient id="maleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#047857" />
-        <stop offset="50%" stopColor="#065f46" />
+      <linearGradient id="maleBg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#065f46" />
+        <stop offset="60%" stopColor="#044e3b" />
         <stop offset="100%" stopColor="#022c22" />
       </linearGradient>
-      <linearGradient id="maleGlow" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
-        <stop offset="100%" stopColor="#d1fae5" stopOpacity="0.8" />
+      <linearGradient id="maleShirt" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#e2e8f0" />
+        <stop offset="100%" stopColor="#cbd5e1" />
       </linearGradient>
     </defs>
-    {/* Rich Emerald Background */}
-    <rect width="100" height="100" fill="url(#maleGrad)" />
-    
-    {/* Subtle Background Glow Circle */}
-    <circle cx="50" cy="40" r="32" fill="#ffffff" fillOpacity="0.08" />
 
-    {/* Male Hair & Head */}
-    <g fill="url(#maleGlow)">
-      {/* Modern Hairstyle Silhouette */}
-      <path d="M50 20C40 20 34 26 34 35C34 37 34.5 39 35 41C34.2 41.5 33.5 42.5 33.5 44C33.5 46 35 47.5 37 47.5C37.5 47.5 38 47.3 38.5 47C40 54 44.5 59 50 59C55.5 59 60 54 61.5 47C62 47.3 62.5 47.5 63 47.5C65 47.5 66.5 46 66.5 44C66.5 42.5 65.8 41.5 65 41C65.5 39 66 37 66 35C66 26 60 20 50 20Z" />
-      
-      {/* Neck */}
-      <path d="M44 57H56V67C56 68 53 70 50 70C47 70 44 68 44 67V57Z" />
+    {/* Background */}
+    <rect width="100" height="100" fill="url(#maleBg)" />
 
-      {/* Shoulders & Chest */}
-      <path d="M50 71C38 71 27 76 22 83C20.5 85 20 87 20 90V100H80V90C80 87 79.5 85 78 83C73 76 62 71 50 71Z" />
-    </g>
+    {/* Subtle Ambient Glow */}
+    <circle cx="50" cy="45" r="36" fill="#ffffff" fillOpacity="0.05" />
 
-    {/* Clean Collar/Shirt Accent */}
+    {/* Shoulders & Shirt */}
     <path
-      d="M50 70L42 81H58L50 70Z"
-      fill="#047857"
-      fillOpacity="0.3"
+      d="M16 100C16 85 27 75 41 73L45 77C48 80 52 80 55 77L59 73C73 75 84 85 84 100H16Z"
+      fill="url(#maleShirt)"
+    />
+
+    {/* Neck */}
+    <path
+      d="M43 53H57V76C57 78 54 81 50 81C46 81 43 78 43 76V53Z"
+      fill="#f8fafc"
+    />
+
+    {/* Ears */}
+    <circle cx="33" cy="46" r="4.5" fill="#f8fafc" />
+    <circle cx="67" cy="46" r="4.5" fill="#f8fafc" />
+
+    {/* Natural Head / Face Contour */}
+    <ellipse cx="50" cy="46" rx="16" ry="19" fill="#ffffff" />
+
+    {/* Handsome Modern Hairstyle */}
+    <path
+      d="M33 43C32 29 40 21 50 21C61 21 68 28 67 43C64 38 60 34 54 34C46 34 42 32 38 35C35 37 34 40 33 43Z"
+      fill="#032d23"
+    />
+    {/* Subtle Hair Highlight */}
+    <path
+      d="M39 25C43 23 48 22 53 23C58 24 62 26 64 30C61 27 56 25 51 25C46 25 42 26 39 25Z"
+      fill="#065f46"
+      fillOpacity="0.6"
     />
   </svg>
 );
 
 /**
- * High-End Vector Silhouette for Female Donors
- * Culturally respectful, dignified, elegant modest silhouette
+ * Natural Anatomical Vector Avatar for Female Donors
+ * Culturally respectful, dignified modest hijab silhouette with balanced curves
  */
 export const FemaleAvatarSvg: React.FC<{ className?: string }> = ({ className = 'w-full h-full' }) => (
   <svg
@@ -72,37 +85,50 @@ export const FemaleAvatarSvg: React.FC<{ className?: string }> = ({ className = 
     aria-hidden="true"
   >
     <defs>
-      <linearGradient id="femaleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <linearGradient id="femaleBg" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#0f766e" />
-        <stop offset="50%" stopColor="#065f46" />
-        <stop offset="100%" stopColor="#022c22" />
+        <stop offset="60%" stopColor="#0d5f58" />
+        <stop offset="100%" stopColor="#042f2e" />
       </linearGradient>
-      <linearGradient id="femaleGlow" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
-        <stop offset="100%" stopColor="#e6fffa" stopOpacity="0.82" />
+      <linearGradient id="femaleScarf" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#042f2e" />
+        <stop offset="100%" stopColor="#021c1b" />
+      </linearGradient>
+      <linearGradient id="femaleDress" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#ccfbf1" />
+        <stop offset="100%" stopColor="#99f6e4" />
       </linearGradient>
     </defs>
-    {/* Deep Teal-Emerald Background */}
-    <rect width="100" height="100" fill="url(#femaleGrad)" />
-    
-    {/* Soft Halo */}
-    <circle cx="50" cy="40" r="32" fill="#ffffff" fillOpacity="0.08" />
 
-    {/* Elegant Modest Silhouette (Face & Veil/Hijab Contour) */}
-    <g fill="url(#femaleGlow)">
-      {/* Face Oval */}
-      <ellipse cx="50" cy="41" rx="11" ry="14" fill="#f0fdfa" />
-      
-      {/* Elegant Draped Silhouette / Modest Veil */}
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M50 18C36 18 31 28 31 42C31 52 35 59 39 65C34 68 25 74 21 82C19.5 85 19 88 19 91V100H81V91C81 88 80.5 85 79 82C75 74 66 68 61 65C65 59 69 52 69 42C69 28 64 18 50 18ZM42 33C42 28.5 45.5 25 50 25C54.5 25 58 28.5 58 33C58 42 56 49 50 51C44 49 42 42 42 33Z"
-      />
-    </g>
+    {/* Background */}
+    <rect width="100" height="100" fill="url(#femaleBg)" />
 
-    {/* Subtle Soft Rose Gold Pin Accent for Warmth */}
-    <circle cx="50" cy="64" r="2" fill="#fb7185" fillOpacity="0.9" />
+    {/* Subtle Ambient Glow */}
+    <circle cx="50" cy="45" r="36" fill="#ffffff" fillOpacity="0.05" />
+
+    {/* Shoulders & Modest Attire */}
+    <path
+      d="M16 100C16 85 27 75 42 73L50 78L58 73C73 75 84 85 84 100H16Z"
+      fill="url(#femaleDress)"
+    />
+
+    {/* Modest Hijab Outer Contour (Natural Drape over head & neck) */}
+    <path
+      d="M50 19C34 19 30 30 30 46C30 59 36 72 43 78C47 81 53 81 57 78C64 72 70 59 70 46C70 30 66 19 50 19Z"
+      fill="url(#femaleScarf)"
+    />
+
+    {/* Face Opening (Naturally revealed face) */}
+    <ellipse cx="50" cy="46" rx="12.5" ry="15.5" fill="#ffffff" />
+
+    {/* Modest Underscarf Band Accent */}
+    <path
+      d="M38 36C42 33 46 32 50 32C54 32 58 33 62 36C60 34 56 33 50 33C45 33 41 34 38 36Z"
+      fill="#14b8a6"
+    />
+
+    {/* Scarf Pin Accent at Neck */}
+    <circle cx="50" cy="74" r="2.5" fill="#f43f5e" />
   </svg>
 );
 
