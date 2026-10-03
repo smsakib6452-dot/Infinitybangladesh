@@ -412,15 +412,21 @@ export const Navbar: React.FC = () => {
 
       {/* 3. Mobile Navigation Drawer (Editorial & Accessible) */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-2xl flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-250">
+        <div 
+          className="lg:hidden fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <div 
+            className="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-2xl flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-250 z-[101]"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Drawer Header */}
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/90">
               <BrandLogo size="sm" />
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center cursor-pointer hover:bg-slate-50"
+                className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center cursor-pointer hover:bg-slate-100 active:scale-95 transition-all touch-manipulation"
                 aria-label="Close Mobile Navigation"
               >
                 <X className="w-5 h-5" />
@@ -438,33 +444,54 @@ export const Navbar: React.FC = () => {
                 if (isDropdown) {
                   return (
                     <div key={item.id} className="space-y-1">
-                      <button
-                        type="button"
-                        onClick={() => setActiveDropdownId(prev => (prev === item.id ? null : item.id))}
-                        className={`w-full px-3.5 py-2.5 rounded-xl text-sm font-bold flex items-center justify-between transition-colors cursor-pointer ${
+                      {/* Split Dual-Action Row: Left side navigates, Right chevron expands */}
+                      <div
+                        className={`w-full rounded-xl flex items-center justify-between transition-all ${
                           isActive
                             ? isLifeLine
-                              ? 'bg-rose-50 text-rose-700'
-                              : 'bg-[#E6F3EF] text-[#006A4E]'
-                            : 'text-slate-700 hover:bg-slate-50'
+                              ? 'bg-rose-50 text-rose-700 font-bold border border-rose-100'
+                              : 'bg-[#E6F3EF] text-[#006A4E] font-bold border border-emerald-100'
+                            : 'text-slate-700 hover:bg-slate-50 border border-transparent'
                         }`}
                       >
-                        <div className="flex items-center gap-2">
-                          {isLifeLine && <Droplet className="w-4 h-4 text-rose-600 fill-rose-600" />}
-                          <span>{tText(item.label)}</span>
-                        </div>
-                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180 text-[#006A4E]' : 'text-slate-400'}`} />
-                      </button>
+                        <Link
+                          to={item.path}
+                          isExternal={item.isExternal}
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            if (isActive) window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className="flex-1 px-3.5 py-3 text-sm font-bold flex items-center gap-2 cursor-pointer touch-manipulation active:opacity-75"
+                        >
+                          {isLifeLine && <Droplet className="w-4 h-4 text-rose-600 fill-rose-600 shrink-0" />}
+                          <span className="truncate">{tText(item.label)}</span>
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveDropdownId(prev => (prev === item.id ? null : item.id));
+                          }}
+                          className="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-[#006A4E] hover:bg-black/5 rounded-r-xl transition-colors cursor-pointer touch-manipulation shrink-0"
+                          aria-label={isExpanded ? 'Submenu collapse' : 'Submenu expand'}
+                        >
+                          <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180 text-[#006A4E]' : ''}`} />
+                        </button>
+                      </div>
 
+                      {/* Dropdown Children */}
                       {isExpanded && (
-                        <div className="pl-4 pr-2 py-1 space-y-1 border-l-2 border-slate-100 ml-3">
+                        <div className="pl-3 pr-1 py-1.5 space-y-1 border-l-2 border-emerald-300 ml-3.5 animate-in slide-in-from-top-1 duration-150">
                           <Link
                             to={item.path}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="w-full px-3 py-2 rounded-lg text-xs font-bold text-[#006A4E] bg-emerald-50/50 hover:bg-[#E6F3EF] flex items-center gap-1.5 transition-colors cursor-pointer"
+                            onClick={() => {
+                              setMobileMenuOpen(false);
+                              if (isActive) window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className="w-full px-3 py-2 rounded-lg text-xs font-bold text-[#006A4E] bg-emerald-50/70 hover:bg-[#E6F3EF] flex items-center justify-between transition-colors cursor-pointer touch-manipulation active:scale-[0.98]"
                           >
-                            <span>{isBn ? 'মূল পাতা দেখুন' : 'Overview Page'}</span>
-                            <ArrowRight className="w-3 h-3" />
+                            <span>{isBn ? `${tText(item.label)} - মূল পাতা` : `${tText(item.label)} - Overview`}</span>
+                            <ArrowRight className="w-3.5 h-3.5 text-[#006A4E]" />
                           </Link>
 
                           {item.children?.filter(c => c.active !== false).map(subItem => {
@@ -473,21 +500,39 @@ export const Navbar: React.FC = () => {
                             if (isPastCommitteeSub && (item.path === 'team' || item.id === 'nav-5')) {
                               return (
                                 <div key={subItem.id} className="space-y-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => setMobilePastCommitteesOpen(prev => !prev)}
-                                    className="w-full px-3 py-2 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 flex items-center justify-between transition-colors cursor-pointer"
-                                  >
-                                    <span>{tText(subItem.label)}</span>
-                                    <ChevronDown className={`w-3 h-3 transition-transform ${mobilePastCommitteesOpen ? 'rotate-180 text-[#006A4E]' : 'text-slate-400'}`} />
-                                  </button>
+                                  <div className="flex items-center justify-between rounded-lg hover:bg-slate-50 border border-transparent">
+                                    <Link
+                                      to={subItem.path}
+                                      onClick={() => {
+                                        setMobileMenuOpen(false);
+                                        if (isItemActive(subItem.path)) window.scrollTo({ top: 0, behavior: 'smooth' });
+                                      }}
+                                      className="flex-1 px-3 py-2 text-xs font-medium text-slate-700 hover:text-[#006A4E] cursor-pointer touch-manipulation"
+                                    >
+                                      {tText(subItem.label)}
+                                    </Link>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setMobilePastCommitteesOpen(prev => !prev);
+                                      }}
+                                      className="w-10 h-8 flex items-center justify-center text-slate-400 hover:text-[#006A4E] cursor-pointer touch-manipulation shrink-0"
+                                      aria-label="Toggle past committees"
+                                    >
+                                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${mobilePastCommitteesOpen ? 'rotate-180 text-[#006A4E]' : ''}`} />
+                                    </button>
+                                  </div>
 
                                   {mobilePastCommitteesOpen && (
-                                    <div className="pl-3 py-1 space-y-1 border-l border-slate-200 ml-2">
+                                    <div className="pl-3 py-1 space-y-1 border-l border-emerald-200 ml-2.5 animate-in slide-in-from-top-1 duration-150">
                                       <Link
                                         to="team/past-committees"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className="w-full px-2.5 py-1.5 rounded text-[11px] font-bold text-[#006A4E] bg-emerald-50 block"
+                                        onClick={() => {
+                                          setMobileMenuOpen(false);
+                                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                                        }}
+                                        className="w-full px-2.5 py-1.5 rounded-md text-[11px] font-bold text-[#006A4E] bg-emerald-50 block cursor-pointer touch-manipulation"
                                       >
                                         {isBn ? 'সকল প্রাক্তন কমিটি' : 'All Past Committees'}
                                       </Link>
@@ -496,11 +541,14 @@ export const Navbar: React.FC = () => {
                                           key={pc.id}
                                           to="team/past-committees"
                                           slug={pc.slug}
-                                          onClick={() => setMobileMenuOpen(false)}
-                                          className="w-full px-2.5 py-1.5 rounded text-[11px] text-slate-600 hover:text-[#006A4E] hover:bg-slate-50 flex items-center justify-between"
+                                          onClick={() => {
+                                            setMobileMenuOpen(false);
+                                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                                          }}
+                                          className="w-full px-2.5 py-1.5 rounded-md text-[11px] text-slate-600 hover:text-[#006A4E] hover:bg-slate-50 flex items-center justify-between cursor-pointer touch-manipulation"
                                         >
                                           <span className="truncate">{tText(pc.name)}</span>
-                                          <span className="text-[9px] font-bold px-1 rounded bg-slate-100 text-slate-500">
+                                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
                                             {pc.year}
                                           </span>
                                         </Link>
@@ -511,15 +559,19 @@ export const Navbar: React.FC = () => {
                               );
                             }
 
+                            const isSubActive = isItemActive(subItem.path);
                             return (
                               <Link
                                 key={subItem.id}
                                 to={subItem.path}
-                                onClick={() => setMobileMenuOpen(false)}
-                                className={`w-full px-3 py-2 rounded-lg text-xs transition-colors block ${
-                                  isItemActive(subItem.path)
+                                onClick={() => {
+                                  setMobileMenuOpen(false);
+                                  if (isSubActive) window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                                className={`w-full px-3 py-2 rounded-lg text-xs transition-colors block cursor-pointer touch-manipulation active:scale-[0.98] ${
+                                  isSubActive
                                     ? 'bg-[#E6F3EF] text-[#006A4E] font-bold'
-                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'
                                 }`}
                               >
                                 {tText(subItem.label)}
@@ -532,30 +584,37 @@ export const Navbar: React.FC = () => {
                   );
                 }
 
+                // Normal standalone Nav Item (Home, Our Work, Contact, etc.)
                 return (
                   <Link
                     key={item.id}
                     to={item.path}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-colors ${
+                    isExternal={item.isExternal}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      if (isActive) window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className={`w-full px-3.5 py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition-all cursor-pointer touch-manipulation active:scale-[0.98] ${
                       isActive
-                        ? 'bg-[#E6F3EF] text-[#006A4E]'
-                        : 'text-slate-700 hover:bg-slate-50'
+                        ? 'bg-[#E6F3EF] text-[#006A4E] border border-emerald-100'
+                        : 'text-slate-700 hover:bg-slate-50 border border-transparent'
                     }`}
                   >
-                    {tText(item.label)}
+                    <span className="truncate">{tText(item.label)}</span>
                   </Link>
                 );
               })}
             </div>
 
             {/* Drawer Footer Actions */}
-            <div className="p-4 border-t border-slate-100 bg-slate-50/80 space-y-2.5">
+            <div className="p-4 border-t border-slate-100 bg-slate-50/90 space-y-2.5">
               {headerSettings.showLanguageSwitcher && (
                 <button
                   type="button"
-                  onClick={toggleLanguage}
-                  className="w-full py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:bg-slate-50"
+                  onClick={() => {
+                    toggleLanguage();
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:bg-slate-50 active:scale-95 transition-all touch-manipulation"
                 >
                   <Globe className="w-4 h-4 text-[#006A4E]" />
                   <span>{language === 'en' ? 'বাংলা সংস্করণ দেখুন' : 'Switch to English Version'}</span>
@@ -566,7 +625,7 @@ export const Navbar: React.FC = () => {
                 <Link
                   to={headerSettings.supportButtonUrl || 'volunteer'}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full py-3 rounded-xl btn-primary-green text-xs font-bold text-center flex items-center justify-center gap-2 shadow-warm-sm cursor-pointer"
+                  className="w-full py-3 rounded-xl btn-primary-green text-xs font-bold text-center flex items-center justify-center gap-2 shadow-warm-sm cursor-pointer active:scale-95 transition-all touch-manipulation"
                 >
                   <Heart className="w-4 h-4 text-rose-300 fill-rose-300" />
                   <span>{tText(headerSettings.supportButtonText) || (isBn ? 'আমাদের সাথে যোগ দিন' : 'Join Us')}</span>
