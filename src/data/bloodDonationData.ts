@@ -538,7 +538,7 @@ export const INITIAL_BLOOD_SETTINGS: BloodDonationSettings = {
   },
   statTotalDonorsOverride: null,
   statActiveDonorsOverride: null,
-  statImpactOverride: 0,
+  statImpactOverride: null,
   emergencyHelpline: '+880 1839-008339',
   helplineLabel: {
     en: '24/7 Helpline:',

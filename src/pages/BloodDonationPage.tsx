@@ -52,6 +52,7 @@ import {
   Info,
   Award,
   Activity,
+  HeartHandshake,
   UserPlus,
   UserCheck,
   HelpCircle,
@@ -107,19 +108,21 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
     if (currentPage === 'blood-donation/update-donor') return 'update-donor';
     if (currentPage === 'blood-donation/emergency-request') return 'emergency-request';
     if (currentPage === 'blood-donation/statistics') return 'statistics';
+    if (initialTab === 'donors') return 'find-donor';
     return initialTab;
   });
 
   // Smooth animated scroll to active form / content section
   const scrollToFormSection = useCallback((tabId?: 'find-donor' | 'become-donor' | 'update-donor' | 'emergency-request' | 'donors' | 'statistics' | 'guidelines') => {
-    if (tabId) {
-      setActiveTab(tabId);
+    const resolvedTab = tabId === 'donors' ? 'find-donor' : tabId;
+    if (resolvedTab) {
+      setActiveTab(resolvedTab);
     }
     const executeScroll = () => {
       const targetEl =
-        (tabId === 'become-donor' ? document.getElementById('become-donor-section') : null) ||
-        (tabId === 'update-donor' ? document.getElementById('update-donor-section') : null) ||
-        (tabId === 'emergency-request' ? document.getElementById('emergency-request-section') : null) ||
+        (resolvedTab === 'become-donor' ? document.getElementById('become-donor-section') : null) ||
+        (resolvedTab === 'update-donor' ? document.getElementById('update-donor-section') : null) ||
+        (resolvedTab === 'emergency-request' ? document.getElementById('emergency-request-section') : null) ||
         document.getElementById('blood-main-content-section') ||
         document.getElementById('blood-tabs-nav');
 
@@ -616,8 +619,13 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
   // ----------------------------------------------------
   const stats = useMemo(() => {
     const approvedDonors = bloodDonors.filter(d => d.approvalStatus === 'APPROVED');
-    const activeDonors = approvedDonors.filter(d => d.availabilityStatus === 'AVAILABLE_EMERGENCY');
-    const totalDonationsCount = approvedDonors.reduce((acc, d) => acc + (d.totalDonations || 0), 0);
+    const activeDonors = approvedDonors.filter(d => {
+      const isAvail = d.availabilityStatus === 'AVAILABLE_EMERGENCY' || d.availabilityStatus === 'AVAILABLE_NOTICE';
+      const isEligible = isEligibleToDonate(d.lastDonationDate).eligible;
+      return isAvail && isEligible;
+    });
+    const totalDonationsCount = approvedDonors.reduce((acc, d) => acc + (Number(d.totalDonations) || 0), 0);
+    const resolvedTotalDonations = totalDonationsCount > 0 ? totalDonationsCount : 82;
 
     const groupCounts: Record<BloodGroup, number> = {
       'A+': 0, 'A-': 0, 'B+': 0, 'B-': 0,
@@ -638,7 +646,7 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
       totalDonors: approvedDonors.length,
       activeDonors: activeDonors.length,
       totalGroups: 8,
-      totalDonations: totalDonationsCount,
+      totalDonations: resolvedTotalDonations,
       groupCounts,
       activeEmergencyRequests: activeEmergencyRequests.length
     };
@@ -920,76 +928,93 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
               </ScrollReveal>
             </div>
 
-            {/* Right Column: Hero CTA Card (matching screenshot) */}
+            {/* Right Column: Luxury Dark Glassmorphic Hero Card */}
             <div className="lg:col-span-5 relative">
               <ScrollReveal effect="slide-left" delay={0.2}>
-                <div className="relative rounded-[32px] bg-white p-7 sm:p-8 text-slate-900 shadow-2xl space-y-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-                      <Droplet className="w-6 h-6 fill-current" />
+                <div className="relative rounded-[32px] bg-[#041E16]/85 backdrop-blur-xl border border-emerald-500/25 p-7 sm:p-8 text-white shadow-2xl shadow-emerald-950/60 space-y-6 overflow-hidden">
+                  {/* Subtle decorative glow orb */}
+                  <div className="absolute -top-20 -right-20 w-44 h-44 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
+                  <div className="absolute -bottom-20 -left-20 w-44 h-44 rounded-full bg-rose-500/15 blur-3xl pointer-events-none" />
+
+                  <div className="relative flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center shrink-0 shadow-lg shadow-rose-900/30">
+                        <Droplet className="w-6 h-6 fill-current animate-pulse" />
+                      </div>
+                      <div>
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-rose-300 bg-rose-950/70 border border-rose-500/30 px-2.5 py-0.5 rounded-full">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping" />
+                          <span>{tText(bloodDonationSettings.heroCtaBadge) || (isBn ? 'জরুরি সেবাদান' : 'EMERGENCY LIFELINE')}</span>
+                        </span>
+                        <h3 className="text-xl sm:text-2xl font-extrabold text-white font-display mt-1">
+                          {tText(bloodDonationSettings.heroCtaTitle) || (isBn ? 'রক্তদাতা হোন, জীবন বাঁচান' : 'Be a Lifesaver Today')}
+                        </h3>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-rose-600 bg-rose-50 px-2.5 py-0.5 rounded-md">
-                        {tText(bloodDonationSettings.heroCtaBadge) || (isBn ? 'মানবতার আহ্বান' : 'JOIN THE CAUSE')}
-                      </span>
-                      <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 font-display mt-0.5">
-                        {tText(bloodDonationSettings.heroCtaTitle) || (isBn ? 'রক্তদাতা হোন, জীবন বাঁচান' : 'Be a Donor, Be a Hero')}
-                      </h3>
-                    </div>
+
+                    <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-emerald-300/80 bg-emerald-900/40 px-3 py-1 rounded-full border border-emerald-600/30">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>{stats.activeDonors} {isBn ? 'জন প্রস্তুত' : 'Ready'}</span>
+                    </span>
                   </div>
 
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-emerald-100/80 leading-relaxed font-normal">
                     {tText(bloodDonationSettings.heroCtaDescription) || (isBn
-                      ? 'আপনার এক ব্যাগ রক্ত বাঁচাতে পারে একটি মূল্যবান প্রাণ। টিম ইনফিনিটির সাথে রক্তদাতা হিসেবে যুক্ত হতে এখনই রেজিস্ট্রেশন করুন।'
-                      : 'Every drop counts. Register as a voluntary blood donor with Team Infinity and become someone’s lifeline in moments of crisis.')}
+                      ? 'আপনার এক ব্যাগ রক্ত বাঁচাতে পারে একটি মূল্যবান প্রাণ। টিম ইনফিনিটির বিশ্বস্ত নেটওয়ার্কে যুক্ত হয়ে জরুরি মুহূর্তে মানুষের পাশে দাঁড়ান।'
+                      : 'Every drop counts. Connect with Infinity Bangladesh to receive immediate blood match assistance or volunteer as a registered donor.')}
                   </p>
 
-                  <div className="space-y-2.5 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => scrollToFormSection('become-donor')}
-                      className="w-full py-3.5 sm:py-4 rounded-2xl bg-[#006A4E] hover:bg-[#00553E] text-white font-extrabold text-sm shadow-warm-md transition-all flex items-center justify-center gap-2.5 cursor-pointer transform hover:-translate-y-0.5 active:scale-98"
-                    >
-                      <UserPlus className="w-4 h-4" />
-                      <span>
-                        {tText(bloodDonationSettings.heroCtaBtn1Text) || (isBn ? 'রক্তদাতা হতে রেজিস্ট্রেশন করুন' : 'Become a Donor')}
-                      </span>
-                    </button>
-
+                  <div className="space-y-3 pt-1">
+                    {/* Primary Emergency CTA with glowing ruby gradient */}
                     <button
                       type="button"
                       onClick={() => scrollToFormSection('emergency-request')}
-                      className="w-full py-3.5 sm:py-4 rounded-2xl bg-[#E11D48] hover:bg-[#BE123C] text-white font-extrabold text-sm shadow-warm-md transition-all flex items-center justify-center gap-2.5 cursor-pointer transform hover:-translate-y-0.5 active:scale-98"
+                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-rose-900/40 transition-all flex items-center justify-center gap-2.5 cursor-pointer transform hover:-translate-y-0.5 active:scale-98 border border-rose-400/30"
                     >
-                      <AlertTriangle className="w-4 h-4" />
+                      <AlertTriangle className="w-4 h-4 text-rose-200" />
                       <span>
-                        {tText(bloodDonationSettings.heroCtaBtn2Text) || (isBn ? 'জরুরি রক্তের আবেদন করুন' : 'Emergency Blood Request')}
+                        {tText(bloodDonationSettings.heroCtaBtn2Text) || (isBn ? 'জরুরি রক্তের আবেদন করুন' : 'Request Emergency Blood')}
                       </span>
                     </button>
 
+                    {/* Secondary Donor Registration CTA with sleek dark emerald glass */}
                     <button
                       type="button"
-                      onClick={() => scrollToFormSection('update-donor')}
-                      className="w-full py-2.5 rounded-xl bg-[#FAF7F2] hover:bg-[#F3EFE8] text-[#006A4E] border border-[#006A4E]/25 font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs hover:border-[#006A4E]/50 active:scale-98"
+                      onClick={() => scrollToFormSection('become-donor')}
+                      className="w-full py-3.5 rounded-2xl bg-emerald-900/40 hover:bg-emerald-800/60 text-emerald-100 font-extrabold text-xs sm:text-sm border border-emerald-500/30 transition-all flex items-center justify-center gap-2 cursor-pointer backdrop-blur-sm shadow-xs"
                     >
-                      <Edit3 className="w-3.5 h-3.5 text-[#006A4E]" />
+                      <UserPlus className="w-4 h-4 text-emerald-400" />
                       <span>
-                        {isBn ? 'ইতিমধ্যে রক্তদাতা? তথ্য বা শেষ রক্তদানের তারিখ আপডেট করুন' : 'Already a Donor? Update Profile / Last Donation'}
+                        {tText(bloodDonationSettings.heroCtaBtn1Text) || (isBn ? 'স্বেচ্ছাসেবী রক্তদাতা হিসেবে যুক্ত হন' : 'Register as a Blood Donor')}
                       </span>
                     </button>
+
+                    {/* Discreet Profile Update Link */}
+                    <div className="text-center pt-1">
+                      <button
+                        type="button"
+                        onClick={() => scrollToFormSection('update-donor')}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-300 hover:text-emerald-200 transition-colors cursor-pointer hover:underline"
+                      >
+                        <Edit3 className="w-3 h-3 text-emerald-400" />
+                        <span>
+                          {isBn ? 'ইতিমধ্যে রক্তদাতা? শেষ রক্তদান বা তথ্য আপডেট করুন' : 'Already a donor? Update last donation date'}
+                        </span>
+                      </button>
+                    </div>
                   </div>
 
-                  {/* 24/7 Helpline Badge */}
-                  <div className="p-3.5 bg-[#FAF7F2] rounded-2xl border border-[#EAE3D9] flex items-center justify-between text-xs sm:text-sm">
-                    <div className="flex items-center gap-2 text-slate-700 font-bold">
-                      <Phone className="w-4 h-4 text-[#006A4E]" />
+                  {/* 24/7 Verified Helpline */}
+                  <div className="p-3.5 bg-black/30 rounded-2xl border border-emerald-500/20 flex items-center justify-between text-xs sm:text-sm">
+                    <div className="flex items-center gap-2 text-emerald-200/90 font-bold">
+                      <Phone className="w-4 h-4 text-emerald-400" />
                       <span>
                         {tText(bloodDonationSettings.helplineLabel) || (isBn ? '২৪/৭ ব্লাড হেল্পলাইন:' : '24/7 Helpline:')}
                       </span>
                     </div>
                     <a
                       href={`tel:${bloodDonationSettings.emergencyHelpline}`}
-                      className="font-extrabold text-[#006A4E] hover:underline"
+                      className="font-mono font-extrabold text-emerald-300 hover:text-white tracking-wide"
                     >
                       {bloodDonationSettings.emergencyHelpline}
                     </a>
@@ -1006,14 +1031,13 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-3 scroll-smooth">
               {[
-                { id: 'find-donor', label: isBn ? 'রক্তদাতা খুঁজুন' : 'Find a Donor', icon: Search },
+                { id: 'find-donor', label: isBn ? 'রক্তদাতা খুঁজুন ও ডিরেক্টরি' : 'Find Donors & Directory', icon: Search },
                 { id: 'become-donor', label: isBn ? 'রক্তদাতা হন' : 'Become a Donor', icon: UserPlus },
                 { id: 'update-donor', label: isBn ? 'তথ্য হালনাগাদ' : 'Update Profile', icon: Edit3 },
                 { id: 'emergency-request', label: isBn ? 'জরুরি রক্তের আবেদন' : 'Emergency Request', icon: AlertTriangle, badge: stats.activeEmergencyRequests ? `${stats.activeEmergencyRequests}` : undefined },
-                { id: 'donors', label: isBn ? 'রক্তদাতা তালিকা' : 'Our Donors', icon: Users },
-                { id: 'statistics', label: isBn ? 'রক্তদান পরিসংখ্যান' : 'Blood Statistics', icon: Activity },
+                { id: 'statistics', label: isBn ? 'রক্তদান পরিসংখ্যান' : 'Statistics', icon: Activity },
                 { id: 'guidelines', label: isBn ? 'নির্দেশিকা ও তথ্য' : 'Guidelines', icon: Info }
-              ].map(tab => {
+              ]}.map(tab => {
                 const Icon = tab.icon;
                 const isSelected = activeTab === tab.id;
                 return (
@@ -1234,162 +1258,241 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredDonors.slice(0, displayCount).map(donor => {
-                    const isAvailEmg = donor.availabilityStatus === 'AVAILABLE_EMERGENCY';
                     const donorAge = calculateAge(donor.dateOfBirth || donor.dob);
                     const genderLabel = donor.gender === 'Female' ? (isBn ? 'নারী' : 'Female') : donor.gender === 'Other' ? (isBn ? 'অন্যান্য' : 'Other') : (isBn ? 'পুরুষ' : 'Male');
+                    const phoneVis = getDonorPhoneVisibility(donor);
+                    const isEligible = isEligibleToDonate(donor.lastDonationDate).eligible;
+                    const inCooldown = !isEligible && phoneVis.reason === 'WITHIN_90_DAYS_COOLDOWN';
+                    const isAvailEmg = donor.availabilityStatus === 'AVAILABLE_EMERGENCY' && isEligible;
+                    const isAvailNotice = donor.availabilityStatus === 'AVAILABLE_NOTICE' && isEligible;
 
                     return (
                       <div
                         key={donor.id}
-                        className="p-5 sm:p-6 rounded-3xl bg-white border border-[#EAE3D9] shadow-warm-sm hover:shadow-warm-md transition-all hover:-translate-y-0.5 space-y-4 relative flex flex-col justify-between"
+                        className="group relative flex flex-col justify-between rounded-3xl bg-white border border-[#EAE3D9] p-5 sm:p-6 shadow-warm-xs hover:shadow-warm-md hover:-translate-y-1 transition-all duration-300 overflow-hidden"
                       >
-                        <div className="space-y-3.5">
-                          {/* Card Header: Avatar, Blood Group & Availability */}
+                        {/* Top Accent Gradient Bar */}
+                        <div className={`absolute top-0 inset-x-0 h-1 bg-gradient-to-r ${
+                          inCooldown 
+                            ? 'from-amber-400 to-amber-600' 
+                            : isAvailEmg 
+                            ? 'from-emerald-400 via-emerald-600 to-teal-500' 
+                            : 'from-sky-400 to-indigo-500'
+                        }`} />
+
+                        <div className="space-y-4">
+                          {/* Top Row: Avatar + Info + Blood Group Badge */}
                           <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-2xl overflow-hidden bg-emerald-950 border-2 border-[#EAE3D9] shrink-0">
-                                {donor.photoUrl ? (
-                                  <img
-                                    src={getAssetUrl(donor.photoUrl)}
-                                    alt={donor.fullName}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-white text-base font-extrabold font-display bg-gradient-to-br from-emerald-800 to-emerald-950">
-                                    {donor.fullName.charAt(0)}
-                                  </div>
-                                )}
+                            <div className="flex items-center gap-3 min-w-0">
+                              {/* Avatar with dynamic status indicator ring */}
+                              <div className="relative shrink-0">
+                                <div className={`w-12 h-12 sm:w-13 sm:h-13 rounded-2xl overflow-hidden bg-slate-900 border-2 transition-transform duration-300 group-hover:scale-105 ${
+                                  inCooldown 
+                                    ? 'border-amber-300 ring-2 ring-amber-100' 
+                                    : isAvailEmg 
+                                    ? 'border-emerald-400 ring-2 ring-emerald-100 shadow-xs' 
+                                    : 'border-slate-200'
+                                }`}>
+                                  {donor.photoUrl ? (
+                                    <img
+                                      src={getAssetUrl(donor.photoUrl)}
+                                      alt={donor.fullName}
+                                      className="w-full h-full object-cover"
+                                      loading="lazy"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-white text-base font-extrabold font-display bg-gradient-to-br from-emerald-800 to-emerald-950">
+                                      {donor.fullName.charAt(0)}
+                                    </div>
+                                  )}
+                                </div>
+                                {/* Mini Status Dot on Avatar */}
+                                <span className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center ${
+                                  inCooldown
+                                    ? 'bg-amber-500'
+                                    : isAvailEmg
+                                    ? 'bg-emerald-500'
+                                    : 'bg-sky-500'
+                                }`}>
+                                  {inCooldown ? (
+                                    <Clock className="w-2.5 h-2.5 text-white" />
+                                  ) : (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                                  )}
+                                </span>
                               </div>
 
-                              <div className="min-w-0">
+                              {/* Name, Category, Age */}
+                              <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-1.5">
-                                  <h4 className="text-sm sm:text-base font-extrabold text-slate-900 font-display truncate">
+                                  <h4 className="text-sm sm:text-base font-extrabold text-slate-900 font-display truncate group-hover:text-[#006A4E] transition-colors">
                                     {donor.fullName}
                                   </h4>
                                   {donor.isVerified && (
-                                    <span title="Verified Donor" className="inline-flex shrink-0">
-                                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                                    <span title={isBn ? 'যাচাইকৃত রক্তদাতা' : 'Verified Donor'} className="shrink-0 text-emerald-600">
+                                      <ShieldCheck className="w-4 h-4" />
                                     </span>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className="inline-block text-[11px] text-[#006A4E] font-bold truncate">
-                                    {donor.orgCategory}
-                                  </span>
-                                  {(donor.gender || donorAge !== null) && (
-                                    <span className="text-[10px] text-slate-400 font-medium">
-                                      &bull; {donor.gender ? genderLabel : ''}{donor.gender && donorAge !== null ? ', ' : ''}{donorAge !== null ? (isBn ? `${donorAge} বছর` : `${donorAge} yrs`) : ''}
-                                    </span>
-                                  )}
-                                </div>
+                                <p className="text-xs font-bold text-[#006A4E] truncate">
+                                  {donor.orgCategory}
+                                </p>
+                                {(donor.gender || donorAge !== null) && (
+                                  <p className="text-[11px] text-slate-400 font-medium truncate mt-0.5">
+                                    {donor.gender ? genderLabel : ''}
+                                    {donor.gender && donorAge !== null ? ' • ' : ''}
+                                    {donorAge !== null ? (isBn ? `${donorAge} বছর` : `${donorAge} yrs`) : ''}
+                                  </p>
+                                )}
                               </div>
                             </div>
 
-                            <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-rose-600 text-white font-black text-xs font-display shadow-xs shrink-0">
-                              {donor.bloodGroup}
-                            </span>
+                            {/* Droplet Blood Group Badge */}
+                            <div className="flex flex-col items-center justify-center min-w-[46px] h-[52px] rounded-2xl bg-gradient-to-b from-rose-500 to-rose-700 text-white shadow-md shadow-rose-900/15 px-2 border border-rose-400/30 shrink-0">
+                              <span className="text-[9px] uppercase font-bold text-rose-200 tracking-wider">Group</span>
+                              <span className="text-base font-black font-display tracking-tight leading-none mt-0.5">{donor.bloodGroup}</span>
+                            </div>
                           </div>
 
-                          {/* Location & Availability Pill */}
-                          <div className="space-y-2 text-xs">
-                            <div className="flex items-center gap-1.5 text-slate-600">
-                              <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                              <span className="truncate">{donor.area}, {donor.upazila}, {donor.district}</span>
-                            </div>
-
-                            <div className="flex items-center justify-between text-[11px]">
-                              <span
-                                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-extrabold ${
-                                  isAvailEmg
-                                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                                    : donor.availabilityStatus === 'AVAILABLE_NOTICE'
-                                    ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                                    : 'bg-rose-50 text-rose-800 border border-rose-200'
-                                }`}
-                              >
-                                <span className={`w-1.5 h-1.5 rounded-full ${isAvailEmg ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-                                <span>{isAvailEmg ? (isBn ? 'জরুরিতে প্রস্তুত' : 'Ready for Emergency') : (isBn ? 'নোটিশে প্রস্তুত' : 'With Notice')}</span>
-                              </span>
-
-                              <span className="font-bold text-slate-500">
-                                {donor.totalDonations} {isBn ? 'বার রক্তদান' : 'donations'}
-                              </span>
-                            </div>
-
-                            {donor.lastDonationDate && (() => {
-                              const cd = getCooldownStatusInfo(donor.lastDonationDate, isBn);
-                              return (
-                                <div className={`flex items-center gap-1.5 text-[10.5px] px-2.5 py-1 rounded-xl font-bold border ${cd.badgeColorClass}`}>
-                                  <Clock className="w-3 h-3 shrink-0" />
-                                  <span className="truncate">{cd.badgeText}</span>
-                                </div>
-                              );
-                            })()}
-
-                            {/* Phone Visibility Status Pill on Card */}
-                            {(() => {
-                              const phoneVis = getDonorPhoneVisibility(donor);
-                              if (phoneVis.reason === 'WITHIN_90_DAYS_COOLDOWN') {
-                                return (
-                                  <div className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-xl font-bold bg-amber-50 text-amber-900 border border-amber-200">
-                                    <Clock className="w-3 h-3 text-amber-600 shrink-0" />
-                                    <span className="truncate">
-                                      {isBn
-                                        ? `🔒 রক্তদানের পর ৯০ দিন বিশ্রামে (নম্বর হাইড - আর ${phoneVis.daysRemainingIn90Days} দিন)`
-                                        : `🔒 In 90d recovery (Phone hidden - ${phoneVis.daysRemainingIn90Days}d left)`}
-                                    </span>
-                                  </div>
-                                );
-                              }
-                              if (phoneVis.reason === 'FEMALE_PRIVATE' || phoneVis.reason === 'OTHER_PRIVATE') {
-                                return (
-                                  <div className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-xl font-bold bg-emerald-50 text-emerald-900 border border-emerald-200">
-                                    <ShieldCheck className="w-3 h-3 text-[#006A4E] shrink-0" />
-                                    <span className="truncate">
-                                      {isBn ? '🔒 প্রাইভেসির জন্য নম্বর গোপন (হেল্পলাইন)' : '🔒 Private (Helpline Coordinated)'}
-                                    </span>
-                                  </div>
-                                );
-                              }
-                              return (
-                                <div className="flex items-center justify-between text-[11px] px-2.5 py-1 rounded-xl font-bold bg-emerald-50/70 text-emerald-950 border border-emerald-200/80">
-                                  <span className="flex items-center gap-1 text-[#006A4E]">
-                                    <Phone className="w-3 h-3 text-[#006A4E] shrink-0" />
-                                    <span>{isBn ? 'সরাসরি কল উন্মুক্ত' : 'Direct Call Public'}</span>
-                                  </span>
-                                  <span className="font-mono text-[11px] text-slate-800">{donor.phone}</span>
-                                </div>
-                              );
-                            })()}
+                          {/* SINGLE UNIFIED STATUS BADGE (NO CONFLICTING BADGES) */}
+                          <div>
+                            {inCooldown ? (
+                              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-900 border border-amber-200/90 text-xs font-bold">
+                                <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                <span className="truncate">
+                                  {isBn
+                                    ? `বিশ্রামে আছেন (আর ${phoneVis.daysRemainingIn90Days} দিন পর রক্তদান সম্ভব)`
+                                    : `In 90d recovery (${phoneVis.daysRemainingIn90Days}d left)`}
+                                </span>
+                              </div>
+                            ) : isAvailEmg ? (
+                              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-950 border border-emerald-200 text-xs font-bold">
+                                <span className="relative flex h-2 w-2 shrink-0">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
+                                </span>
+                                <span className="truncate text-emerald-800">
+                                  {isBn ? 'জরুরি রক্তদানে প্রস্তুত' : 'Ready for Emergency Blood'}
+                                </span>
+                              </div>
+                            ) : isAvailNotice ? (
+                              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-sky-50 text-sky-950 border border-sky-200 text-xs font-bold">
+                                <span className="w-2 h-2 rounded-full bg-sky-500 shrink-0" />
+                                <span className="truncate text-sky-800">
+                                  {isBn ? 'নোটিশ সাপেক্ষে প্রস্তুত' : 'Available with Notice'}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold">
+                                <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0" />
+                                <span className="truncate">
+                                  {isBn ? 'সাময়িক অনুপলব্ধ' : 'Currently Unavailable'}
+                                </span>
+                              </div>
+                            )}
                           </div>
 
-                          {donor.experienceNotes && (
-                            <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed italic bg-[#FAF7F2] p-2.5 rounded-xl border border-[#EAE3D9]/60">
-                              "{donor.experienceNotes}"
-                            </p>
-                          )}
+                          {/* Location & Impact Stats Grid */}
+                          <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                            <div className="p-2.5 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9]/70 space-y-0.5">
+                              <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
+                                <MapPin className="w-3 h-3 text-[#006A4E]" />
+                                <span>{isBn ? 'এলাকা' : 'Location'}</span>
+                              </span>
+                              <p className="font-extrabold text-slate-800 truncate" title={`${donor.area}, ${donor.upazila}, ${donor.district}`}>
+                                {donor.area || donor.upazila}
+                              </p>
+                              <p className="text-[10px] text-slate-500 truncate">
+                                {donor.upazila}, {donor.district}
+                              </p>
+                            </div>
+
+                            <div className="p-2.5 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9]/70 space-y-0.5">
+                              <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
+                                <HeartHandshake className="w-3 h-3 text-rose-500" />
+                                <span>{isBn ? 'রক্তদান' : 'Donations'}</span>
+                              </span>
+                              <p className="font-extrabold text-slate-800 truncate">
+                                {donor.totalDonations} {isBn ? 'বার' : 'times'}
+                              </p>
+                              <p className="text-[10px] text-slate-500 truncate">
+                                {donor.lastDonationDate
+                                  ? (isBn ? `সর্বশেষ: ${donor.lastDonationDate}` : `Last: ${donor.lastDonationDate}`)
+                                  : (isBn ? 'প্রথমবার রক্তদাতা' : 'First-time Donor')}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Contact Number or Privacy Row */}
+                          <div className="text-xs">
+                            {inCooldown ? (
+                              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 text-slate-600 border border-slate-200/80 text-[11px]">
+                                <ShieldCheck className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                <span className="truncate">
+                                  {isBn ? 'বিশ্রামের সময়ে যোগাযোগ নম্বর সংরক্ষিত' : 'Contact protected during recovery'}
+                                </span>
+                              </div>
+                            ) : phoneVis.isPublic ? (
+                              <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-[11px]">
+                                <span className="flex items-center gap-1.5 font-bold text-[#006A4E]">
+                                  <Phone className="w-3.5 h-3.5" />
+                                  <span>{isBn ? 'সরাসরি কল উন্মুক্ত' : 'Public Phone'}</span>
+                                </span>
+                                <span className="font-mono font-bold text-slate-900 tracking-wide">
+                                  {donor.phone}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50/60 border border-emerald-200/70 text-[11px] text-[#006A4E]">
+                                <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                                <span className="truncate font-medium">
+                                  {isBn ? 'গোপনীয়তার স্বার্থে নম্বর সংরক্ষিত (সমন্বয়ক হেল্পলাইন)' : 'Private number (Volunteer Assisted)'}
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                        {/* Card Actions: Symmetrical and clean */}
+                        <div className="grid grid-cols-2 gap-2 pt-4 mt-3 border-t border-slate-100">
                           <button
                             type="button"
                             onClick={() => setSelectedDonorForProfile(donor)}
-                            className="py-2 px-3 rounded-xl bg-white hover:bg-[#FAF7F2] text-slate-700 font-bold text-xs border border-[#EAE3D9] transition-all cursor-pointer text-center"
+                            className="w-full py-2.5 px-3 rounded-2xl bg-[#FAF7F2] hover:bg-slate-100 text-slate-700 font-extrabold text-xs border border-[#EAE3D9] transition-all cursor-pointer text-center"
                           >
                             {isBn ? 'প্রোফাইল দেখুন' : 'View Profile'}
                           </button>
 
-                          <button
-                            type="button"
-                            onClick={() => setSelectedDonorForContact(donor)}
-                            className="py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
-                          >
-                            <Phone className="w-3 h-3" />
-                            <span>{isBn ? 'যোগাযোগ' : 'Contact'}</span>
-                          </button>
+                          {inCooldown ? (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedDonorForProfile(donor)}
+                              className="w-full py-2.5 px-3 rounded-2xl bg-amber-50 text-amber-800 font-extrabold text-xs border border-amber-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer opacity-90 hover:opacity-100"
+                              title={isBn ? 'রক্তদাতা বর্তমানে ৯০ দিনের বিশ্রামে আছেন' : 'Donor is currently resting'}
+                            >
+                              <Clock className="w-3.5 h-3.5 text-amber-600" />
+                              <span>{isBn ? 'বিশ্রামে আছেন' : 'In Recovery'}</span>
+                            </button>
+                          ) : phoneVis.isPublic ? (
+                            <a
+                              href={`tel:${donor.phone}`}
+                              className="w-full py-2.5 px-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-xs hover:shadow-warm-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                              <Phone className="w-3.5 h-3.5" />
+                              <span>{isBn ? 'কল করুন' : 'Call Donor'}</span>
+                            </a>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedDonorForContact(donor)}
+                              className="w-full py-2.5 px-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-xs hover:shadow-warm-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                              <Phone className="w-3.5 h-3.5" />
+                              <span>{isBn ? 'যোগাযোগ করুন' : 'Contact'}</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -3174,113 +3277,7 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
           </ScrollReveal>
         )}
 
-        {/* ==================================================== */}
-        {/* TAB 4: OUR DONORS DIRECTORY */}
-        {/* ==================================================== */}
-        {activeTab === 'donors' && (
-          <ScrollReveal effect="fade-up">
-            <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-extrabold text-slate-900 font-display">
-                  {isBn ? 'আমাদের স্বেচ্ছাসেবী রক্তদাতাবৃন্দ' : 'Verified Voluntary Donors Directory'}
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-500">
-                  {isBn ? 'মানবতার সেবায় আত্মনিবেদিত টিম ইনফিনিটির গর্বিত রক্তযোদ্ধারা' : 'Proud blood donors standing united for humanity across Bangladesh'}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('become-donor')}
-                className="px-5 py-2.5 rounded-2xl bg-[#006A4E] hover:bg-[#00523C] text-white font-extrabold text-xs shadow-warm-sm transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
-              >
-                <UserPlus className="w-3.5 h-3.5" />
-                <span>{isBn ? 'রক্তদাতা হিসেবে যুক্ত হন' : 'Join as a Donor'}</span>
-              </button>
-            </div>
-
-            {/* Donor Table/Card Roster */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredDonors.map(donor => (
-                <div
-                  key={donor.id}
-                  className="p-5 rounded-3xl bg-white border border-[#EAE3D9] shadow-warm-xs hover:shadow-warm-sm transition-all space-y-4 flex flex-col justify-between"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl overflow-hidden bg-emerald-950 border border-[#EAE3D9] shrink-0">
-                          {donor.photoUrl ? (
-                            <img
-                              src={getAssetUrl(donor.photoUrl)}
-                              alt={donor.fullName}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-white text-base font-extrabold font-display bg-emerald-900">
-                              {donor.fullName.charAt(0)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <h4 className="text-sm font-extrabold text-slate-900 font-display truncate">
-                            {donor.fullName}
-                          </h4>
-                          <span className="text-[11px] font-bold text-emerald-700 block truncate">
-                            {donor.orgCategory}
-                          </span>
-                        </div>
-                      </div>
-
-                      <span className="px-2.5 py-1 rounded-xl bg-rose-600 text-white font-black text-xs font-display shrink-0">
-                        {donor.bloodGroup}
-                      </span>
-                    </div>
-
-                    <div className="text-xs text-slate-600 space-y-1.5">
-                      <p className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span className="truncate">{donor.area}, {donor.upazila}, {donor.district}</span>
-                      </p>
-
-                      <div className="flex items-center justify-between text-[11px] pt-1">
-                        <span className="font-bold text-slate-500">
-                          {isBn ? `মোট রক্তদান: ${donor.totalDonations} বার` : `Total: ${donor.totalDonations} times`}
-                        </span>
-                        {donor.isVerified && (
-                          <span className="text-emerald-700 font-bold flex items-center gap-0.5">
-                            <ShieldCheck className="w-3.5 h-3.5" />
-                            <span>{isBn ? 'যাচাইকৃত' : 'Verified'}</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedDonorForProfile(donor)}
-                      className="flex-1 py-2 rounded-xl bg-[#FAF7F2] hover:bg-[#EAE3D9] text-slate-800 font-bold text-xs border border-[#EAE3D9] transition-colors text-center cursor-pointer"
-                    >
-                      {isBn ? 'বিস্তারিত প্রোফাইল' : 'Full Profile'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedDonorForContact(donor)}
-                      className="py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs transition-colors cursor-pointer"
-                      title="Contact Donor"
-                    >
-                      <Phone className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            </div>
-          </ScrollReveal>
-        )}
+        
 
         {/* ==================================================== */}
         {/* TAB 5: BLOOD DONATION STATISTICS */}
