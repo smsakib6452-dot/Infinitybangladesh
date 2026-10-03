@@ -134,49 +134,198 @@ export const AboutPage: React.FC<AboutPageProps> = ({ initialTab = 'overview' })
           </ScrollReveal>
 
           {/* Pillars of Action */}
-          <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
-            <StaggerItem className="p-6 sm:p-7 rounded-3xl bg-white border border-[#EAE3D9] space-y-3 shadow-warm-sm hover:shadow-warm-md transition-all hover:-translate-y-1">
-              <div className="w-12 h-12 rounded-2xl bg-[#E6F3EF] text-[#006A4E] flex items-center justify-center font-bold">
-                <Heart className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 font-display">
-                {isBn ? 'মানবিক মর্যাদা রক্ষা' : 'Human Dignity First'}
+          <div className="space-y-4 pt-6">
+            <div className="text-center space-y-1.5 max-w-xl mx-auto">
+              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 font-display">
+                {isBn ? 'আমাদের তিনটি মূল ভিত্তি' : 'Our Three Ethical Pillars'}
               </h3>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                {isBn
-                  ? 'সহায়তা প্রদান কোনো অনুগ্রহ নয়, বরং মানুষের অধিকার। তাই ছবি তোলার নামে উপকারভোগীকে অমর্যাদা করা আমাদের নীতিবিরুদ্ধ।'
-                  : 'Aid is a human right, not a favor. We strictly protect beneficiary privacy and avoid humiliating public photography.'}
+              <p className="text-xs text-slate-500">
+                {isBn ? 'যে তিনটি মূলনীতির ওপর ইনফিনিটি বাংলাদেশের সকল মানবিক কার্যক্রম প্রতিষ্ঠিত।' : 'The core ethical pillars guiding every initiative of Team Infinity.'}
               </p>
-            </StaggerItem>
+            </div>
 
-            <StaggerItem className="p-6 sm:p-7 rounded-3xl bg-white border border-[#EAE3D9] space-y-3 shadow-warm-sm hover:shadow-warm-md transition-all hover:-translate-y-1">
-              <div className="w-12 h-12 rounded-2xl bg-[#E6F3EF] text-[#006A4E] flex items-center justify-center font-bold">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 font-display">
-                {isBn ? 'শতভাগ প্রকাশ্য স্বচ্ছতা' : 'Radical Transparency'}
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                {isBn
-                  ? 'সংগৃহীত প্রতিটি অর্থের সদ্ব্যবহার নিশ্চিত করে বিস্তারিত হিসাব ও বিতরণ রিপোর্ট জনসমক্ষে প্রকাশ করা হয়।'
-                  : 'Every single donation is documented and verified through regular audit reports and public expense records.'}
-              </p>
-            </StaggerItem>
+            <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+              <StaggerItem className="p-6 sm:p-7 rounded-3xl bg-white/95 backdrop-blur-xs border border-[#EAE3D9] space-y-4 shadow-warm-sm hover:shadow-warm-lg transition-all duration-300 hover:-translate-y-1.5 relative overflow-hidden group">
+                <div className="w-10 h-1 bg-gradient-to-r from-[#006A4E] to-emerald-400 rounded-full" />
+                <div className="w-12 h-12 rounded-2xl bg-[#E6F3EF] text-[#006A4E] border border-[#C2E2D7] flex items-center justify-center font-bold shadow-xs group-hover:scale-105 transition-transform">
+                  <Heart className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-lg font-bold text-slate-900 font-display">
+                    {isBn ? 'মানবিক মর্যাদা রক্ষা' : 'Human Dignity First'}
+                  </h4>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    {isBn
+                      ? 'সহায়তা প্রদান কোনো অনুগ্রহ নয়, বরং মানুষের অধিকার। তাই ছবি তোলার নামে উপকারভোগীকে অমর্যাদা করা আমাদের নীতিবিরুদ্ধ।'
+                      : 'Aid is a human right, not a favor. We strictly protect beneficiary privacy and avoid humiliating public photography.'}
+                  </p>
+                </div>
+              </StaggerItem>
 
-            <StaggerItem className="p-6 sm:p-7 rounded-3xl bg-white border border-[#EAE3D9] space-y-3 shadow-warm-sm hover:shadow-warm-md transition-all hover:-translate-y-1">
-              <div className="w-12 h-12 rounded-2xl bg-[#E6F3EF] text-[#006A4E] flex items-center justify-center font-bold">
-                <Users className="w-6 h-6" />
+              <StaggerItem className="p-6 sm:p-7 rounded-3xl bg-white/95 backdrop-blur-xs border border-[#EAE3D9] space-y-4 shadow-warm-sm hover:shadow-warm-lg transition-all duration-300 hover:-translate-y-1.5 relative overflow-hidden group">
+                <div className="w-10 h-1 bg-gradient-to-r from-[#006A4E] to-emerald-400 rounded-full" />
+                <div className="w-12 h-12 rounded-2xl bg-[#E6F3EF] text-[#006A4E] border border-[#C2E2D7] flex items-center justify-center font-bold shadow-xs group-hover:scale-105 transition-transform">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-lg font-bold text-slate-900 font-display">
+                    {isBn ? 'শতভাগ প্রকাশ্য স্বচ্ছতা' : 'Radical Transparency'}
+                  </h4>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    {isBn
+                      ? 'সংগৃহীত প্রতিটি অর্থের সদ্ব্যবহার নিশ্চিত করে বিস্তারিত হিসাব ও বিতরণ রিপোর্ট জনসমক্ষে প্রকাশ করা হয়।'
+                      : 'Every single donation is documented and verified through regular audit reports and public expense records.'}
+                  </p>
+                </div>
+              </StaggerItem>
+
+              <StaggerItem className="p-6 sm:p-7 rounded-3xl bg-white/95 backdrop-blur-xs border border-[#EAE3D9] space-y-4 shadow-warm-sm hover:shadow-warm-lg transition-all duration-300 hover:-translate-y-1.5 relative overflow-hidden group">
+                <div className="w-10 h-1 bg-gradient-to-r from-[#006A4E] to-emerald-400 rounded-full" />
+                <div className="w-12 h-12 rounded-2xl bg-[#E6F3EF] text-[#006A4E] border border-[#C2E2D7] flex items-center justify-center font-bold shadow-xs group-hover:scale-105 transition-transform">
+                  <Users className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-lg font-bold text-slate-900 font-display">
+                    {isBn ? 'স্বেচ্ছাসেবী তারুণ্য' : 'Youth Leadership'}
+                  </h4>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    {isBn
+                      ? 'দেশের সচেতন তরুণ প্রজন্মকে ইতিবাচক সামাজিক কর্মকাণ্ডে সম্পৃক্ত করে দক্ষ ও দায়িত্বশীল নাগরিক হিসেবে গড়ে তোলা।'
+                      : 'Empowering students and young professionals to lead humanitarian drives with high ethical standards.'}
+                  </p>
+                </div>
+              </StaggerItem>
+            </StaggerGroup>
+          </div>
+
+          {/* 11-Year Journey Milestone Timeline */}
+          <div className="pt-10 sm:pt-14 space-y-8">
+            <div className="text-center space-y-3 max-w-2xl mx-auto">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-[#E6F3EF] text-[#00523C] border border-[#C2E2D7]">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>{isBn ? '১১ বছরের মানবিক পথচলা' : '11-Year Journey (2015 – 2026)'}</span>
               </div>
-              <h3 className="text-lg font-bold text-slate-900 font-display">
-                {isBn ? 'স্বেচ্ছাসেবী তারুণ্য' : 'Youth Leadership'}
+              <h3 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-display">
+                {isBn ? 'ঐতিহাসিক মাইলফলক ও মানবতার অভিযাত্রা' : 'Key Milestones of Compassion'}
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                 {isBn
-                  ? 'দেশের সচেতন তরুণ প্রজন্মকে ইতিবাচক সামাজিক কর্মকাণ্ডে সম্পৃক্ত করে দক্ষ ও দায়িত্বশীল নাগরিক হিসেবে গড়ে তোলা।'
-                  : 'Empowering students and young professionals to lead humanitarian drives with high ethical standards.'}
+                  ? '২০১৫ সালে হাটহাজারীর একদল স্বপ্নবান তরুণের হাত ধরে শুরু হওয়া ক্ষুদ্র উদ্যোগ আজ দেশজুড়ে এক বিশ্বাসযোগ্য মানবিক প্ল্যাটফর্ম।'
+                  : 'From grassroots initiatives in 2015 to nationwide crisis responses, trace the milestone chapters of Team Infinity.'}
               </p>
-            </StaggerItem>
-          </StaggerGroup>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
+              {[
+                {
+                  year: '2015',
+                  title: { bn: 'যাত্রার আনুষ্ঠানিক সূচনা', en: 'Foundation & First Step' },
+                  location: { bn: 'হাটহাজারী, চট্টগ্রাম', en: 'Hathazari, Chattogram' },
+                  desc: {
+                    bn: 'সমাজের সুবিধাবঞ্চিত শিশুদের মুখে হাসি ফোটানোর স্বপ্ন নিয়ে একদল তরুণ শিক্ষার্থীর হাত ধরে ইনফিনিটি বাংলাদেশের জন্ম।',
+                    en: 'Founded in Hathazari by passionate youth dedicated to uplifting underprivileged children and distressed families.'
+                  },
+                  tag: { bn: 'প্রতিষ্ঠা', en: 'Founded' },
+                  icon: Sparkles
+                },
+                {
+                  year: '2018',
+                  title: { bn: 'শীতবস্ত্র ও শিক্ষা সহায়তা বিস্তার', en: 'Winter Relief & Education Drives' },
+                  location: { bn: 'প্রান্তিক জনপদ', en: 'Grassroots Communities' },
+                  desc: {
+                    bn: 'তীব্র শীতে অসহায় প্রবীণ ও শিশুদের উষ্ণ কম্বল এবং অসচ্ছল শিক্ষার্থীদের শিক্ষাসামগ্রী পৌঁছে দেওয়ার স্থায়ী কর্মসূচি শুরু।',
+                    en: 'Expanded grassroots winter warmth packages and stationery support for marginalized rural students.'
+                  },
+                  tag: { bn: 'সম্প্রসারণ', en: 'Expansion' },
+                  icon: Heart
+                },
+                {
+                  year: '2020',
+                  title: { bn: 'কোভিড-১৯ দুর্যোগ সহায়তা মিশন', en: 'COVID-19 Pandemic Response' },
+                  location: { bn: 'জরুরি এলাকা', en: 'Emergency Relief' },
+                  desc: {
+                    bn: 'মহামারীর ক্রান্তিলগ্নে দিনমজুর ও কর্মহীন পরিবারের ঘরে ঘরে নীরবে পৌঁছে দেওয়া হয় জরুরি খাদ্যসামগ্রী ও সুরক্ষা কিট।',
+                    en: 'Provided emergency grocery rations and essential sanitation supplies to daily-wage workers during lockdowns.'
+                  },
+                  tag: { bn: 'জরুরি ত্রাণ', en: 'Emergency Aid' },
+                  icon: ShieldCheck
+                },
+                {
+                  year: '2022',
+                  title: { bn: 'ইনফিনিটি লাইফলাইন রক্তদান নেটওয়ার্ক', en: 'Infinity Blood Lifeline Network' },
+                  location: { bn: 'সারাদেশে', en: 'Nationwide' },
+                  desc: {
+                    bn: 'জরুরি রক্তের প্রয়োজনে মুমূর্ষু রোগীর পাশে দাঁড়াতে তরুণ রক্তদাতাদের সমন্বয়ে গড়ে ওঠে এক নির্ভরযোগ্য রক্তদান পরিবার।',
+                    en: 'Launched dedicated voluntary blood donation network connecting donors with patients in emergency critical care.'
+                  },
+                  tag: { bn: 'লাইফলাইন', en: 'Blood Network' },
+                  icon: Calendar
+                },
+                {
+                  year: '2024',
+                  title: { bn: 'পূর্বাঞ্চলীয় ভয়াবহ বন্যা পুনর্বাসন', en: 'Eastern Flood Rescue & Rebuild' },
+                  location: { bn: 'ফেনী, নোয়াখালী ও কুমিল্লা', en: 'Feni, Noakhali & Cumilla' },
+                  desc: {
+                    bn: 'আকস্মিক বন্যায় পানিবন্দী হাজারো মানুষের মাঝে শুকনো খাবার, বিশুদ্ধ পানি, স্যালাইন ও গৃহনির্মাণ সামগ্রী বিতরণ।',
+                    en: 'Mobilized massive ground rescue, clean drinking water, medical kits, and post-flood rehabilitation drives.'
+                  },
+                  tag: { bn: 'পুনর্বাসন', en: 'Rehabilitation' },
+                  icon: Users
+                },
+                {
+                  year: '2026',
+                  title: { bn: 'ডিজিটাল রূপান্তর ও তারুণ্যের ঐক্য', en: 'Digital Platform & Verified Impact' },
+                  location: { bn: 'বাংলাদেশ', en: 'Across Bangladesh' },
+                  desc: {
+                    bn: '১০০% স্বচ্ছতা, জবাবদিহিতা ও আধুনিক ডিজিটাল প্ল্যাটফর্মের মাধ্যমে দেশজুড়ে মানবিক তারুণ্যকে এক পতাকাতলে আনয়ন।',
+                    en: 'Uniting conscious youth nationwide with transparent digital governance, audited groundwork, and zero waste.'
+                  },
+                  tag: { bn: 'বর্তমান ও ভবিষ্যৎ', en: 'Present & Beyond' },
+                  icon: Award
+                }
+              ].map((item, idx) => {
+                const IconComp = item.icon;
+                return (
+                  <div
+                    key={idx}
+                    className="relative bg-white/95 backdrop-blur-xs rounded-3xl border border-[#EAE3D9] p-6 sm:p-7 shadow-warm-sm hover:shadow-warm-lg hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between space-y-4 group hover:border-[#006A4E]/40"
+                  >
+                    {/* Top Bar: Year & Tag */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#006A4E] to-[#004835] text-white flex items-center justify-center font-bold font-display text-sm shadow-xs border border-white/20">
+                          {item.year}
+                        </div>
+                        <span className="text-[10px] sm:text-xs font-extrabold px-2.5 py-1 rounded-full bg-[#E6F3EF] text-[#00523C] border border-[#C2E2D7]">
+                          {isBn ? item.tag.bn : item.tag.en}
+                        </span>
+                      </div>
+
+                      <div className="w-8 h-8 rounded-xl bg-[#FAF7F2] border border-[#EAE3D9] text-[#006A4E] flex items-center justify-center group-hover:scale-110 group-hover:bg-[#006A4E] group-hover:text-white transition-all">
+                        <IconComp className="w-4 h-4" />
+                      </div>
+                    </div>
+
+                    {/* Milestone Title & Location */}
+                    <div className="space-y-1.5">
+                      <h4 className="text-base sm:text-lg font-bold text-slate-900 font-display group-hover:text-[#006A4E] transition-colors">
+                        {isBn ? item.title.bn : item.title.en}
+                      </h4>
+                      <p className="text-[11px] font-medium text-emerald-800 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-[#006A4E] shrink-0" />
+                        <span>{isBn ? item.location.bn : item.location.en}</span>
+                      </p>
+                    </div>
+
+                    {/* Description */}
+                    <p className="text-xs text-slate-600 leading-relaxed font-normal pt-2 border-t border-slate-100">
+                      {isBn ? item.desc.bn : item.desc.en}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 
