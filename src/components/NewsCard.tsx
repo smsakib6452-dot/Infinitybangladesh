@@ -13,8 +13,8 @@ export const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
   const { isBn, tText } = useLanguage();
 
   return (
-    <article className="group bg-white rounded-3xl border border-[#EAE3D9] overflow-hidden shadow-warm-sm hover:shadow-warm-lg motion-card-hover transition-all duration-300 flex flex-col w-full">
-      <Link to="news/detail" slug={article.slug} className="block relative aspect-16/9 overflow-hidden bg-slate-100">
+    <article className="group bg-white rounded-3xl border border-[#EAE3D9] overflow-hidden shadow-warm-sm hover:shadow-warm-lg motion-card-hover transition-all duration-300 flex flex-col justify-between w-full h-full">
+      <Link to="news/detail" slug={article.slug} className="block relative aspect-16/9 overflow-hidden bg-slate-100 shrink-0">
         <img
           src={getAssetUrl(article.imageUrl)}
           alt={tText(article.title)}
@@ -41,7 +41,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
           </div>
 
           <Link to="news/detail" slug={article.slug} className="block group/title">
-            <h3 className="text-lg font-bold text-slate-900 group-hover/title:text-[#006A4E] transition-colors line-clamp-2 font-display">
+            <h3 className="text-lg font-bold text-slate-900 group-hover/title:text-[#006A4E] transition-colors line-clamp-2 font-display leading-snug">
               {tText(article.title)}
             </h3>
           </Link>
@@ -51,8 +51,8 @@ export const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
           </p>
         </div>
 
-        {/* Tags and Action */}
-        <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+        {/* Tags and Action - Pinned uniformly */}
+        <div className="pt-4 border-t border-slate-100 flex items-center justify-between mt-auto">
           <div className="flex items-center gap-1 text-[11px] text-slate-400 truncate max-w-[60%]">
             <Tag className="w-3 h-3 text-amber-600 shrink-0" />
             <span className="truncate">{article.tags.join(', ')}</span>
@@ -61,7 +61,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
           <Link
             to="news/detail"
             slug={article.slug}
-            className="text-xs sm:text-sm font-bold text-[#006A4E] hover:text-[#00523C] inline-flex items-center gap-1 cursor-pointer"
+            className="text-xs sm:text-sm font-bold text-[#006A4E] hover:text-[#00523C] inline-flex items-center gap-1 cursor-pointer transition-colors"
           >
             <span>{isBn ? 'পড়ুন' : 'Read Full Story'}</span>
             <ArrowRight className="w-4 h-4 group-arrow-hover" />

@@ -136,19 +136,19 @@ export const MediaCoveragePage: React.FC = () => {
             </p>
           </div>
         ) : (
-          <StaggerGroup className="flex flex-wrap justify-center gap-6 sm:gap-8">
+          <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch">
             {filteredItems.map(item => (
               <StaggerItem
                 key={item.id}
-                className="w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.35rem)] max-w-sm"
+                className="h-full flex"
               >
-                <article className="group bg-white rounded-3xl border border-[#EAE3D9] overflow-hidden shadow-warm-sm hover:shadow-warm-xl transition-all duration-300 flex flex-col hover:-translate-y-1 h-full">
+                <article className="group bg-white rounded-3xl border border-[#EAE3D9] overflow-hidden shadow-warm-sm hover:shadow-warm-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 h-full w-full">
                   {/* Feature Image Header */}
                   <a
                     href={item.articleUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block relative aspect-[16/10] overflow-hidden bg-slate-100"
+                    className="block relative aspect-[16/10] overflow-hidden bg-slate-100 shrink-0"
                   >
                     <img
                       src={getAssetUrl(item.imageUrl || '/images/infinity-cover-hero.jpg')}
@@ -171,50 +171,50 @@ export const MediaCoveragePage: React.FC = () => {
                     )}
                   </a>
 
-                {/* Card Content Body */}
-                <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
-                  <div className="space-y-3">
-                    {/* Publisher Outlet & Date */}
-                    <div className="flex items-center justify-between text-xs text-slate-500 border-b border-slate-100 pb-3">
-                      <span className="font-extrabold text-[#006A4E] text-xs uppercase tracking-wider">
-                        {item.outletName}
-                      </span>
-                      <div className="flex items-center gap-1 text-[11px] text-slate-400">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>{item.publishedDate}</span>
+                  {/* Card Content Body */}
+                  <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                    <div className="space-y-3">
+                      {/* Publisher Outlet & Date */}
+                      <div className="flex items-center justify-between text-xs text-slate-500 border-b border-slate-100 pb-3">
+                        <span className="font-extrabold text-[#006A4E] text-xs uppercase tracking-wider">
+                          {item.outletName}
+                        </span>
+                        <div className="flex items-center gap-1 text-[11px] text-slate-400">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>{item.publishedDate}</span>
+                        </div>
                       </div>
+
+                      {/* Headline */}
+                      <a
+                        href={item.articleUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block group/title"
+                      >
+                        <h3 className="font-extrabold text-base sm:text-lg text-slate-900 font-display leading-snug group-hover/title:text-[#006A4E] transition-colors">
+                          {isBn ? item.title.bn : item.title.en}
+                        </h3>
+                      </a>
+
+                      {/* Excerpt */}
+                      <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
+                        {isBn ? item.excerpt.bn : item.excerpt.en}
+                      </p>
                     </div>
 
-                    {/* Headline */}
-                    <a
-                      href={item.articleUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block group/title"
-                    >
-                      <h3 className="font-extrabold text-base sm:text-lg text-slate-900 font-display leading-snug group-hover/title:text-[#006A4E] transition-colors">
-                        {isBn ? item.title.bn : item.title.en}
-                      </h3>
-                    </a>
-
-                    {/* Excerpt */}
-                    <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
-                      {isBn ? item.excerpt.bn : item.excerpt.en}
-                    </p>
-                  </div>
-
-                  {/* External Read Button (target="_blank") */}
-                  <div className="pt-3 border-t border-slate-100">
-                    <a
-                      href={item.articleUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full py-2.5 px-4 rounded-xl bg-[#FAF7F2] hover:bg-[#006A4E] text-[#006A4E] hover:text-white border border-[#EAE3D9] hover:border-transparent text-xs font-bold transition-all flex items-center justify-center gap-2 group/btn cursor-pointer"
-                    >
-                      <span>{isBn ? 'মূল প্রতিবেদন পড়ুন / দেখুন' : 'Read Full Article / Report'}</span>
-                      <ExternalLink className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
-                    </a>
-                  </div>
+                    {/* External Read Button (target="_blank") */}
+                    <div className="pt-3 border-t border-slate-100 mt-auto">
+                      <a
+                        href={item.articleUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2.5 px-4 rounded-xl bg-[#FAF7F2] hover:bg-[#006A4E] text-[#006A4E] hover:text-white border border-[#EAE3D9] hover:border-transparent text-xs font-bold transition-all flex items-center justify-center gap-2 group/btn cursor-pointer shadow-2xs"
+                      >
+                        <span>{isBn ? 'মূল প্রতিবেদন পড়ুন / দেখুন' : 'Read Full Article / Report'}</span>
+                        <ExternalLink className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
+                      </a>
+                    </div>
                   </div>
                 </article>
               </StaggerItem>

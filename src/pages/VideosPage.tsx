@@ -273,7 +273,7 @@ export const VideosPage: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className="flex flex-wrap justify-center gap-6 sm:gap-8 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch">
             {filteredVideos.map((item) => {
               const detection = detectAndNormalizeMedia(item.videoUrl || '');
               const displayThumbnail = item.thumbnailUrl || detection.thumbnailUrl || DEFAULT_VIDEO_THUMBNAIL;
@@ -284,11 +284,11 @@ export const VideosPage: React.FC = () => {
               return (
                 <div
                   key={item.id}
-                  className="group bg-white rounded-3xl border border-[#EAE3D9] overflow-hidden shadow-warm-sm hover:shadow-warm-lg transition-all duration-300 flex flex-col cursor-pointer transform hover:-translate-y-1 w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.35rem)] max-w-sm"
+                  className="group bg-white rounded-3xl border border-[#EAE3D9] overflow-hidden shadow-warm-sm hover:shadow-warm-lg transition-all duration-300 flex flex-col justify-between cursor-pointer transform hover:-translate-y-1 w-full h-full"
                   onClick={() => setSelectedVideo(item)}
                 >
                   {/* Thumbnail with Play Overlay (Balanced Uniform Aspect Ratio) */}
-                  <div className="relative aspect-video bg-slate-950 overflow-hidden flex items-center justify-center">
+                  <div className="relative aspect-video bg-slate-950 overflow-hidden flex items-center justify-center shrink-0">
                     {isPortrait ? (
                       <>
                         {/* Ambient blurred backdrop for vertical videos */}
@@ -353,7 +353,7 @@ export const VideosPage: React.FC = () => {
                   {/* Video Info */}
                   <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between space-y-4">
                     <div className="space-y-2">
-                      <h3 className="font-bold text-base sm:text-lg text-slate-900 group-hover:text-[#006A4E] transition-colors line-clamp-2 font-display">
+                      <h3 className="font-bold text-base sm:text-lg text-slate-900 group-hover:text-[#006A4E] transition-colors line-clamp-2 font-display leading-snug">
                         {videoTitle}
                       </h3>
                       {videoDesc && (
@@ -363,7 +363,7 @@ export const VideosPage: React.FC = () => {
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between text-xs text-slate-500 pt-3 border-t border-slate-100">
+                    <div className="flex items-center justify-between text-xs text-slate-500 pt-3 border-t border-slate-100 mt-auto">
                       <span className="flex items-center gap-1.5 font-medium">
                         <Calendar className="w-3.5 h-3.5 text-[#006A4E]" />
                         <span>{item.date || 'Recent'}</span>

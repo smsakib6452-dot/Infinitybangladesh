@@ -61,13 +61,22 @@ export const NewsPage: React.FC = () => {
       </ScrollReveal>
 
       {/* News Grid */}
-      <StaggerGroup className="flex flex-wrap justify-center gap-8">
-        {filteredNews.map(article => (
-          <StaggerItem key={article.id} className="w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.35rem)] max-w-sm flex">
-            <NewsCard article={article} />
-          </StaggerItem>
-        ))}
-      </StaggerGroup>
+      {filteredNews.length === 0 ? (
+        <div className="text-center py-16 p-6 bg-white rounded-3xl border border-[#EAE3D9] space-y-3 shadow-warm-xs">
+          <BookOpen className="w-10 h-10 text-slate-300 mx-auto" />
+          <p className="font-bold text-slate-700">
+            {isBn ? 'এই ক্যাটাগরিতে কোনো সংবাদ নেই।' : 'No news articles found for this category.'}
+          </p>
+        </div>
+      ) : (
+        <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch">
+          {filteredNews.map(article => (
+            <StaggerItem key={article.id} className="h-full flex">
+              <NewsCard article={article} />
+            </StaggerItem>
+          ))}
+        </StaggerGroup>
+      )}
     </div>
   );
 };

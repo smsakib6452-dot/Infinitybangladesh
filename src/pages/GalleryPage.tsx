@@ -298,7 +298,7 @@ export const GalleryPage: React.FC = () => {
           </p>
         </div>
       ) : (
-        <StaggerGroup className="flex flex-wrap justify-center gap-4 sm:gap-6">
+        <StaggerGroup className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 items-stretch">
           {filteredPhotos.map((photo, index) => {
             const photoTitle = tText(photo.title) || 'Infinity Bangladesh Photo';
             const photoCaption = tText(photo.caption);
@@ -306,13 +306,13 @@ export const GalleryPage: React.FC = () => {
             return (
               <StaggerItem
                 key={photo.id}
-                className="w-full sm:w-[calc(50%-0.75rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.15rem)] max-w-xs"
+                className="h-full flex"
               >
                 <div
                   onClick={() => setSelectedImageIndex(index)}
-                  className="group bg-white rounded-3xl border border-[#EAE3D9] overflow-hidden shadow-warm-sm hover:shadow-warm-md transition-all cursor-pointer flex flex-col transform hover:-translate-y-1 h-full"
+                  className="group bg-white rounded-3xl border border-[#EAE3D9] overflow-hidden shadow-warm-sm hover:shadow-warm-md transition-all cursor-pointer flex flex-col justify-between transform hover:-translate-y-1 h-full w-full"
                 >
-                  <div className="relative aspect-4/3 overflow-hidden bg-slate-900">
+                  <div className="relative aspect-4/3 overflow-hidden bg-slate-900 shrink-0">
                     <img
                       src={getAssetUrl(photo.imageUrl)}
                       alt={photoTitle}
@@ -337,7 +337,7 @@ export const GalleryPage: React.FC = () => {
                     <h4 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-[#006A4E] transition-colors line-clamp-1 font-display">
                       {photoTitle}
                     </h4>
-                    <div className="flex items-center justify-between text-[11px] text-slate-500">
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 mt-auto pt-1">
                       <span className="truncate max-w-[70%]">{photoCaption}</span>
                       <span>{photo.date || 'Recent'}</span>
                     </div>
