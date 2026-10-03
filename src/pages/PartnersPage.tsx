@@ -98,13 +98,13 @@ export const PartnersPage: React.FC = () => {
         </ScrollReveal>
 
         {/* Partners Grid */}
-        <StaggerGroup className="flex flex-wrap justify-center gap-8">
+        <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch">
           {filteredPartners.map((partner) => {
             const Icon = getPartnerIcon(partner.type);
             return (
               <StaggerItem
                 key={partner.id}
-                className="bg-white rounded-3xl border border-[#EAE3D9] p-6 sm:p-8 space-y-6 shadow-warm-sm hover:shadow-warm-md hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.35rem)] max-w-sm"
+                className="bg-white rounded-3xl border border-[#EAE3D9] p-6 sm:p-8 space-y-6 shadow-warm-sm hover:shadow-warm-md hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group w-full h-full"
               >
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">

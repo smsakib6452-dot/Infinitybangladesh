@@ -38,8 +38,8 @@ export const TransparencyPage: React.FC = () => {
       <VerifiedOrganizationPledge />
 
       {/* Ethical Code of Transparency */}
-      <div className="flex flex-wrap justify-center gap-6">
-        <div className="p-6 sm:p-7 bg-white rounded-3xl border border-[#EAE3D9] space-y-3 shadow-warm-sm hover:-translate-y-1 transition-all w-full md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)] max-w-sm flex flex-col justify-between">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+        <div className="p-6 sm:p-7 bg-white rounded-3xl border border-[#EAE3D9] space-y-3 shadow-warm-sm hover:-translate-y-1 transition-all w-full flex flex-col justify-between">
           <div className="space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-[#E6F3EF] text-[#006A4E] flex items-center justify-center font-bold">
               <Scale className="w-6 h-6" />
@@ -55,7 +55,7 @@ export const TransparencyPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-6 sm:p-7 bg-white rounded-3xl border border-[#EAE3D9] space-y-3 shadow-warm-sm hover:-translate-y-1 transition-all w-full md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)] max-w-sm flex flex-col justify-between">
+        <div className="p-6 sm:p-7 bg-white rounded-3xl border border-[#EAE3D9] space-y-3 shadow-warm-sm hover:-translate-y-1 transition-all w-full flex flex-col justify-between">
           <div className="space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-[#E6F3EF] text-[#006A4E] flex items-center justify-center font-bold">
               <Eye className="w-6 h-6" />
@@ -71,7 +71,7 @@ export const TransparencyPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-6 sm:p-7 bg-white rounded-3xl border border-[#EAE3D9] space-y-3 shadow-warm-sm hover:-translate-y-1 transition-all w-full md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)] max-w-sm flex flex-col justify-between">
+        <div className="p-6 sm:p-7 bg-white rounded-3xl border border-[#EAE3D9] space-y-3 shadow-warm-sm hover:-translate-y-1 transition-all w-full flex flex-col justify-between">
           <div className="space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-[#E6F3EF] text-[#006A4E] flex items-center justify-center font-bold">
               <ShieldCheck className="w-6 h-6" />
@@ -114,9 +114,9 @@ export const TransparencyPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
           {filteredReports.map(report => (
-            <div key={report.id} className="w-full md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)] max-w-sm flex">
+            <div key={report.id} className="w-full flex h-full">
               <ReportCard report={report} />
             </div>
           ))}

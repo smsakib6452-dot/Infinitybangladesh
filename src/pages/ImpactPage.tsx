@@ -29,9 +29,9 @@ export const ImpactPage: React.FC = () => {
       </ScrollReveal>
 
       {/* Metrics Grid */}
-      <StaggerGroup className="flex flex-wrap justify-center gap-6">
+      <StaggerGroup className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
         {metrics.map(m => (
-          <StaggerItem key={m.id} className="w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(25%-1.15rem)] max-w-xs flex">
+          <StaggerItem key={m.id} className="w-full flex h-full">
             <ImpactCounter key={m.id} metric={m} />
           </StaggerItem>
         ))}
@@ -58,9 +58,9 @@ export const ImpactPage: React.FC = () => {
           </p>
         </ScrollReveal>
 
-        <StaggerGroup className="flex flex-wrap justify-center gap-8">
+        <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
           {stories.map(story => (
-            <StaggerItem key={story.id} className="w-full md:w-[calc(50%-1rem)] max-w-lg flex">
+            <StaggerItem key={story.id} className="w-full flex h-full">
               <StoryCard story={story} />
             </StaggerItem>
           ))}
