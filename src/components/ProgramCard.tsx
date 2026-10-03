@@ -72,14 +72,23 @@ export const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
       </div>
 
       {/* Footer Action - Pinned uniformly to bottom */}
-      <div className="pt-6 mt-auto">
+      <div className="pt-5 mt-auto border-t border-slate-100/80 flex items-center justify-between gap-3">
         <Link
           to="programs/detail"
           slug={program.slug}
           className="text-xs sm:text-sm font-bold text-[#006A4E] hover:text-[#00523C] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
         >
-          <span>{isBn ? 'কর্মসূচির সম্পূর্ণ বিবরণ' : 'Explore Program Details'}</span>
+          <span>{isBn ? 'সম্পূর্ণ বিবরণ' : 'Explore Details'}</span>
           <ArrowRight className="w-4 h-4 group-arrow-hover" />
+        </Link>
+
+        <Link
+          to="donate"
+          className="px-3 py-1.5 rounded-xl bg-[#E6F3EF] hover:bg-[#006A4E] text-[#006A4E] hover:text-white transition-all inline-flex items-center gap-1.5 text-xs font-bold cursor-pointer shadow-2xs"
+          title="Support this program"
+        >
+          <Heart className="w-3.5 h-3.5 fill-current" />
+          <span>{isBn ? 'সহায়তা' : 'Support'}</span>
         </Link>
       </div>
     </div>

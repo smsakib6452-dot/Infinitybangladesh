@@ -25,9 +25,14 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, featured =
     completed: isBn ? 'সম্পন্ন' : 'Completed'
   };
 
+  const targetNum = campaign.targetAmountBDT ? parseFloat(campaign.targetAmountBDT.replace(/[^0-9.]/g, '')) : 0;
+  const raisedNum = campaign.raisedAmountBDT ? parseFloat(campaign.raisedAmountBDT.replace(/[^0-9.]/g, '')) : 0;
+  const hasFundingProgress = !isNaN(targetNum) && targetNum > 0 && !isNaN(raisedNum);
+  const fundingPercent = hasFundingProgress ? Math.min(100, Math.round((raisedNum / targetNum) * 100)) : 0;
+
   return (
     <div
-      className={`group bg-white rounded-3xl border border-[#EAE3D9] overflow-hidden shadow-warm-sm hover:shadow-warm-lg motion-card-hover transition-all duration-300 flex flex-col w-full ${
+      className={`group bg-white rounded-3xl border border-[#EAE3D9] overflow-hidden shadow-warm-sm hover:shadow-warm-lg motion-card-hover transition-all duration-300 flex flex-col justify-between w-full h-full ${
         featured ? 'ring-2 ring-[#006A4E]/30' : ''
       }`}
     >
@@ -35,7 +40,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, featured =
       <Link
         to="campaigns/detail"
         slug={campaign.slug}
-        className="block relative aspect-16/10 overflow-hidden bg-slate-100"
+        className="block relative aspect-16/10 overflow-hidden bg-slate-100 shrink-0"
       >
         <OptimizedImage
           src={campaign.imageUrl}
@@ -45,12 +50,12 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, featured =
           aspectRatio="16/10"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent" />
 
         {/* Status Badge & Category */}
         <div className="absolute top-3 left-3 flex items-center gap-2">
           <span
-            className={`px-2.5 py-0.5 rounded-full text-xs font-bold border backdrop-blur-xs ${
+            className={`px-2.5 py-0.5 rounded-full text-xs font-bold border backdrop-blur-xs shadow-xs ${
               statusColors[campaign.status]
             }`}
           >
@@ -63,11 +68,11 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, featured =
 
         {/* Date & Location Overlay */}
         <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-white/95 font-medium">
-          <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1 drop-shadow-xs">
             <Calendar className="w-3.5 h-3.5 text-amber-300" />
             {campaign.date}
           </span>
-          <span className="flex items-center gap-1 truncate max-w-[50%]">
+          <span className="flex items-center gap-1 truncate max-w-[50%] drop-shadow-xs">
             <MapPin className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
             <span className="truncate">{tText(campaign.location)}</span>
           </span>
@@ -78,7 +83,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, featured =
       <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between space-y-4">
         <div className="space-y-2">
           <Link to="campaigns/detail" slug={campaign.slug} className="block group/title">
-            <h3 className="text-lg sm:text-xl font-bold text-slate-900 group-hover/title:text-[#006A4E] transition-colors line-clamp-2 font-display">
+            <h3 className="text-lg sm:text-xl font-bold text-slate-900 group-hover/title:text-[#006A4E] transition-colors line-clamp-2 font-display leading-snug">
               {tText(campaign.title)}
             </h3>
           </Link>
@@ -87,14 +92,34 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, featured =
           </p>
         </div>
 
-        {/* Beneficiaries Note */}
-        <div className="pt-2 border-t border-slate-100 text-xs text-slate-500">
-          <strong className="text-slate-700">{isBn ? 'উপকারভোগী:' : 'Beneficiaries:'}</strong>{' '}
-          <span className="line-clamp-1">{tText(campaign.beneficiaries)}</span>
+        {/* Middle Meta / Beneficiaries / Funding */}
+        <div className="space-y-3 pt-3 border-t border-slate-100">
+          {hasFundingProgress && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs font-semibold">
+                <span className="text-slate-600">{isBn ? 'সংগৃহীত:' : 'Raised:'} ৳{raisedNum.toLocaleString('en-IN')}</span>
+                <span className="text-[#006A4E] font-extrabold">{fundingPercent}%</span>
+              </div>
+              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-[#006A4E] to-emerald-500 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${fundingPercent}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Beneficiaries Note */}
+          {campaign.beneficiaries && (
+            <div className="text-xs text-slate-500 flex items-center justify-between">
+              <span className="text-slate-700 font-semibold">{isBn ? 'উপকারভোগী:' : 'Beneficiaries:'}</span>
+              <span className="font-medium text-slate-800 line-clamp-1 truncate max-w-[65%] text-right">{tText(campaign.beneficiaries)}</span>
+            </div>
+          )}
         </div>
 
-        {/* Card Footer Actions */}
-        <div className="pt-2 flex items-center justify-between gap-3">
+        {/* Card Footer Actions - Always aligned */}
+        <div className="pt-3 border-t border-slate-100/70 flex items-center justify-between gap-3 mt-auto">
           <Link
             to="campaigns/detail"
             slug={campaign.slug}
@@ -106,7 +131,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, featured =
 
           <Link
             to="donate"
-            className="px-3 py-1.5 rounded-xl bg-[#E6F3EF] hover:bg-[#006A4E] text-[#006A4E] hover:text-white transition-all inline-flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+            className="px-3.5 py-1.5 rounded-xl bg-[#E6F3EF] hover:bg-[#006A4E] text-[#006A4E] hover:text-white transition-all inline-flex items-center gap-1.5 text-xs font-bold cursor-pointer shadow-2xs"
             title="Support this campaign"
           >
             <Heart className="w-3.5 h-3.5 fill-current" />

@@ -183,14 +183,14 @@ export const ProgramDetailPage: React.FC = () => {
               </button>
             </div>
 
-            <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
               {editions.map(ed => {
                 const edHighlights = getEventHighlights(ed.id);
 
                 return (
                   <StaggerItem
                     key={ed.id}
-                    className="bg-white rounded-3xl border border-slate-200/90 overflow-hidden shadow-warm-sm hover:shadow-warm-lg transition-all duration-300 flex flex-col group"
+                    className="bg-white rounded-3xl border border-slate-200/90 overflow-hidden shadow-warm-sm hover:shadow-warm-lg transition-all duration-300 flex flex-col justify-between group h-full"
                   >
                     {/* Cover Photo */}
                     <div className="relative aspect-16/10 overflow-hidden bg-slate-100">
@@ -248,7 +248,7 @@ export const ProgramDetailPage: React.FC = () => {
                       {/* Navigation CTA */}
                       <button
                         onClick={() => navigate('programs/event-detail', program.slug, ed.slug)}
-                        className="w-full py-2.5 px-4 rounded-xl bg-slate-50 hover:bg-[#006A4E] text-slate-800 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer group-hover:bg-[#006A4E] group-hover:text-white"
+                        className="w-full py-2.5 px-4 rounded-xl bg-slate-50 hover:bg-[#006A4E] text-slate-800 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer group-hover:bg-[#006A4E] group-hover:text-white mt-auto"
                       >
                         <span>{isBn ? 'আসরের গল্প ও হাইলাইটস দেখুন' : 'Explore Edition Story & Media'}</span>
                         <span>→</span>
@@ -268,9 +268,9 @@ export const ProgramDetailPage: React.FC = () => {
           <h3 className="text-2xl font-extrabold text-slate-900 font-display">
             {isBn ? 'এই কর্মসূচির আওতায় পরিচালিত ক্যাম্পেইন' : 'Campaigns Under This Program'}
           </h3>
-          <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
             {relatedCampaigns.map(c => (
-              <StaggerItem key={c.id}>
+              <StaggerItem key={c.id} className="h-full flex">
                 <CampaignCard campaign={c} />
               </StaggerItem>
             ))}

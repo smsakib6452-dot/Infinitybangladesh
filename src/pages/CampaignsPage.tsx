@@ -92,7 +92,7 @@ export const CampaignsPage: React.FC = () => {
       {/* Grid of campaigns */}
       {filteredCampaigns.length === 0 ? (
         <ScrollReveal effect="fade-up" delay={0.2}>
-          <div className="text-center py-16 p-6 bg-white rounded-3xl border border-[#EAE3D9] space-y-2">
+          <div className="text-center py-16 p-6 bg-white rounded-3xl border border-[#EAE3D9] space-y-3 shadow-warm-xs">
             <Flag className="w-10 h-10 text-slate-300 mx-auto" />
             <p className="font-bold text-slate-700">
               {isBn ? 'এই ক্যাটাগরিতে কোনো ক্যাম্পেইন নেই।' : 'No campaigns found for this filter.'}
@@ -100,9 +100,9 @@ export const CampaignsPage: React.FC = () => {
           </div>
         </ScrollReveal>
       ) : (
-        <StaggerGroup className="flex flex-wrap justify-center gap-8">
+        <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch">
           {filteredCampaigns.map(campaign => (
-            <StaggerItem key={campaign.id} className="w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.35rem)] max-w-sm flex">
+            <StaggerItem key={campaign.id} className="h-full flex">
               <CampaignCard campaign={campaign} />
             </StaggerItem>
           ))}

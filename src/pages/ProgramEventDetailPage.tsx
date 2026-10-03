@@ -328,18 +328,18 @@ export const ProgramEventDetailPage: React.FC = () => {
             </div>
 
             {highlights.length > 0 ? (
-              <StaggerGroup className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <StaggerGroup className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                 {highlights.map((item, hIdx) => {
                   const isVideo = item.media.type === 'video' || item.media.mimeType?.includes('video') || Boolean(item.media.embedUrl);
                   const captionText = item.customCaption ? tText(item.customCaption) : item.media.caption || item.media.altText;
 
                   return (
-                    <StaggerItem key={item.id}>
+                    <StaggerItem key={item.id} className="h-full flex">
                       <div
                         onClick={() => setActiveMediaIndex(hIdx)}
-                        className="group bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-warm-sm hover:shadow-warm-lg transition-all duration-300 cursor-pointer flex flex-col h-full"
+                        className="group bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-warm-sm hover:shadow-warm-lg transition-all duration-300 cursor-pointer flex flex-col justify-between h-full w-full"
                       >
-                        <div className="relative aspect-4/3 overflow-hidden bg-slate-900">
+                        <div className="relative aspect-4/3 overflow-hidden bg-slate-900 shrink-0">
                           <img
                             src={getAssetUrl(item.media.thumbnailUrl || item.media.url)}
                             alt={item.customAlt || item.media.altText || 'Highlight'}
@@ -362,12 +362,19 @@ export const ProgramEventDetailPage: React.FC = () => {
                           )}
                         </div>
 
-                        {captionText && (
+                        {captionText ? (
                           <div className="p-4 flex-1 flex flex-col justify-between">
                             <p className="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed line-clamp-2">
                               {captionText}
                             </p>
                             <div className="text-[11px] text-[#006A4E] font-bold mt-2 flex items-center gap-1">
+                              <span>{isVideo ? (isBn ? 'ভিডিও দেখুন' : 'Watch Video') : (isBn ? 'বড় করে দেখুন' : 'View Full Image')}</span>
+                              <ChevronRight className="w-3 h-3" />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="p-4 flex-1 flex flex-col justify-end">
+                            <div className="text-[11px] text-[#006A4E] font-bold flex items-center gap-1">
                               <span>{isVideo ? (isBn ? 'ভিডিও দেখুন' : 'Watch Video') : (isBn ? 'বড় করে দেখুন' : 'View Full Image')}</span>
                               <ChevronRight className="w-3 h-3" />
                             </div>

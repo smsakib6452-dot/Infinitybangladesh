@@ -197,6 +197,52 @@ export const CampaignDetailPage: React.FC = () => {
               </p>
             </div>
 
+            {/* Target & Funding Progress if available */}
+            {(() => {
+              const targetNum = campaign.targetAmountBDT ? parseFloat(campaign.targetAmountBDT.replace(/[^0-9.]/g, '')) : 0;
+              const raisedNum = campaign.raisedAmountBDT ? parseFloat(campaign.raisedAmountBDT.replace(/[^0-9.]/g, '')) : 0;
+              const hasFunding = !isNaN(targetNum) && targetNum > 0 && !isNaN(raisedNum);
+              const pct = hasFunding ? Math.min(100, Math.round((raisedNum / targetNum) * 100)) : 0;
+
+              if (!hasFunding) return null;
+
+              return (
+                <div className="p-4 bg-[#FAF7F2] rounded-2xl border border-[#EAE3D9] space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                    <span>{isBn ? 'তহবিল লক্ষ্য:' : 'Goal:'} ৳{targetNum.toLocaleString('en-IN')}</span>
+                    <span className="text-[#006A4E] font-extrabold">{pct}%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-[#006A4E] to-emerald-500 h-full rounded-full transition-all duration-500"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-500 text-right">
+                    {isBn ? 'সংগৃহীত:' : 'Raised:'} ৳{raisedNum.toLocaleString('en-IN')}
+                  </p>
+                </div>
+              );
+            })()}
+
+            {/* Beneficiaries & Volunteers Stats if available */}
+            {((campaign.beneficiariesCount && Number(campaign.beneficiariesCount) > 0) || (campaign.volunteersCount && Number(campaign.volunteersCount) > 0)) && (
+              <div className="grid grid-cols-2 gap-2 text-center">
+                {Boolean(campaign.beneficiariesCount && Number(campaign.beneficiariesCount) > 0) && (
+                  <div className="p-3 bg-[#FAF7F2] rounded-2xl border border-[#EAE3D9]">
+                    <div className="text-base font-extrabold text-[#006A4E]">{campaign.beneficiariesCount}+</div>
+                    <div className="text-[11px] font-medium text-slate-600">{isBn ? 'উপকারভোগী' : 'Beneficiaries'}</div>
+                  </div>
+                )}
+                {Boolean(campaign.volunteersCount && Number(campaign.volunteersCount) > 0) && (
+                  <div className="p-3 bg-[#FAF7F2] rounded-2xl border border-[#EAE3D9]">
+                    <div className="text-base font-extrabold text-amber-600">{campaign.volunteersCount}+</div>
+                    <div className="text-[11px] font-medium text-slate-600">{isBn ? 'স্বেচ্ছাসেবী' : 'Volunteers'}</div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="space-y-3 pt-2">
               <Link
                 to="donate"
@@ -236,7 +282,7 @@ export const CampaignDetailPage: React.FC = () => {
           <h3 className="text-2xl font-extrabold text-slate-900 font-display">
             {isBn ? 'অন্যান্য ক্যাম্পেইনসমূহ' : 'Other Active Initiatives'}
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
             {otherCampaigns.map(c => (
               <CampaignCard key={c.id} campaign={c} />
             ))}

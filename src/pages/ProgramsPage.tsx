@@ -24,9 +24,9 @@ export const ProgramsPage: React.FC = () => {
         />
       </ScrollReveal>
 
-      <StaggerGroup className="flex flex-wrap justify-center gap-8">
+      <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch">
         {programs.map(p => (
-          <StaggerItem key={p.id} className="w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.35rem)] max-w-sm flex">
+          <StaggerItem key={p.id} className="h-full flex">
             <ProgramCard program={p} />
           </StaggerItem>
         ))}
