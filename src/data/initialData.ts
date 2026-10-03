@@ -3057,8 +3057,8 @@ export const INITIAL_FAQS: FAQItem[] = [
       en: 'What is the procedure for donating via bKash, Nagad, or Bank Transfer?'
     },
     answer: {
-      bn: 'আপনি আমাদের অফিসিয়াল ডোনেশন পেজে গিয়ে বিকাশ (মার্চেন্ট/পার্সোনাল: 01886-224424), নগদ (পার্সোনাল: 01726-224424) অথবা আমাদের ব্যাংক অ্যাকাউন্টে অনুদান পাঠাতে পারেন। অনুদান প্রেরণের পর ট্রানজেকশন আইডি (TrxID) দিয়ে ডোনেশন ফর্মটি পূরণ করলে স্বয়ংক্রিয় ভেরিফাইড মানি রিসিট প্রদান করা হয়।',
-      en: 'You can send donations directly via our official bKash (01886-224424), Nagad (01726-224424), or Bank Accounts detailed on our Donate page. Submitting your Transaction ID (TrxID) generates an instant verified receipt.'
+      bn: 'আপনি আমাদের অফিসিয়াল ডোনেশন পেজে গিয়ে বিকাশ ও নগদ (অফিসিয়াল নম্বর: 01839-008339) অথবা আমাদের ব্যাংক অ্যাকাউন্টে অনুদান পাঠাতে পারেন। অনুদান প্রেরণের পর ট্রানজেকশন আইডি (TrxID) দিয়ে ডোনেশন ফর্মটি পূরণ করলে স্বয়ংক্রিয় ভেরিফাইড মানি রিসিট প্রদান করা হয়।',
+      en: 'You can send donations directly via our official bKash / Nagad (01839-008339), or Bank Accounts detailed on our Donate page. Submitting your Transaction ID (TrxID) generates an instant verified receipt.'
     },
     category: 'Donations',
     displayOrder: 3,
@@ -3085,8 +3085,8 @@ export const INITIAL_FAQS: FAQItem[] = [
       en: 'How can one find blood donors in a medical emergency?'
     },
     answer: {
-      bn: 'আমাদের ওয়েবসাইটের "ব্লাড ডোনেশন" পেজে গিয়ে আপনার কাঙ্ক্ষিত রক্তের গ্রুপ এবং জেলা নির্বাচন করলেই সক্রিয় রক্তদাতাদের তালিকা পেয়ে যাবেন। এ ছাড়া সরাসরি আমাদের ২৪/৭ জরুরি রক্ত সেবা হটলাইনে (01886-224424) যোগাযোগ করলে আমাদের সমন্বয়করা দ্রুত রক্তদাতা ম্যানেজ করে দেন।',
-      en: 'Visit our dedicated Blood Donation page, filter by blood group and district, and instantly contact verified available donors. Alternatively, call our 24/7 emergency blood helpline at 01886-224424 for rapid coordinator dispatch.'
+      bn: 'আমাদের ওয়েবসাইটের "ব্লাড ডোনেশন" পেজে গিয়ে আপনার কাঙ্ক্ষিত রক্তের গ্রুপ এবং জেলা নির্বাচন করলেই সক্রিয় রক্তদাতাদের তালিকা পেয়ে যাবেন। এ ছাড়া সরাসরি আমাদের ২৪/৭ জরুরি রক্ত সেবা হটলাইনে (01839-008339) যোগাযোগ করলে আমাদের সমন্বয়করা দ্রুত রক্তদাতা ম্যানেজ করে দেন।',
+      en: 'Visit our dedicated Blood Donation page, filter by blood group and district, and instantly contact verified available donors. Alternatively, call our 24/7 emergency blood helpline at 01839-008339 for rapid coordinator dispatch.'
     },
     category: 'Blood Bank',
     displayOrder: 5,
@@ -3141,8 +3141,8 @@ export const INITIAL_FAQS: FAQItem[] = [
       en: 'Where is Infinity Bangladesh headquartered and what is the official helpline?'
     },
     answer: {
-      bn: 'ইনফিনিটি বাংলাদেশের প্রধান সমন্বয় কার্যালয় ফেনী, বাংলাদেশে অবস্থিত। যেকোনো প্রশ্ন, সহযোগিতা বা যোগাযোগের জন্য আমাদের ২৪/৭ হটলাইন 01886-224424 ও 01726-224424 নম্বরে সরাসরি কল করতে পারেন অথবা info@infinitybangladesh.org-এ ইমেইল পাঠাতে পারেন।',
-      en: 'Infinity Bangladesh\'s central hub is located in Feni, Bangladesh. You can reach our 24/7 hotline at 01886-224424 / 01726-224424, or email info@infinitybangladesh.org.'
+      bn: 'ইনফিনিটি বাংলাদেশের প্রধান সমন্বয় কার্যালয় হাটহাজারী, চট্টগ্রাম, বাংলাদেশে অবস্থিত। যেকোনো প্রশ্ন, সহযোগিতা বা যোগাযোগের জন্য আমাদের ২৪/৭ হটলাইন 01839-008339 নম্বরে সরাসরি কল করতে পারেন অথবা smsakib6452@gmail.com-এ ইমেইল পাঠাতে পারেন।',
+      en: 'Infinity Bangladesh\'s central hub is located in Hathazari, Chattogram, Bangladesh. You can reach our 24/7 hotline at 01839-008339, or email smsakib6452@gmail.com.'
     },
     category: 'Contact',
     displayOrder: 9,

@@ -77,17 +77,17 @@ const KNOWLEDGE_BASE: KnowledgeIntent[] = [
   {
     id: 'blood-emergency',
     keywords: [
-      'রক্ত লাগবে', 'জরুরি রক্ত', 'রক্ত প্রয়োজন', 'রক্ত প্রয়োজন', 'ব্লাড', 'blood request', 'need blood',
-      'rokto lagbe', 'emergency blood', 'রোগীর জন্য রক্ত', 'প্লাটিলেট', 'ব্লাড লাগবে'
+      'রক্ত লাগবে', 'জরুরি রক্ত', 'রক্ত প্রয়োজন', 'রক্ত দরকার', 'blood request', 'need blood',
+      'rokto lagbe', 'emergency blood', 'রোগীর জন্য রক্ত', 'প্লাটিলেট', 'ব্লাড লাগবে', 'জরুরি ব্লাড'
     ],
-    responseBn: 'জরুরি রক্তের জন্য আপনি সরাসরি আমাদের "জরুরি রক্তের আবেদন" ফর্মটি পূরণ করে রিকুয়েস্ট পোস্ট করতে পারেন। আমাদের সমন্বয়ক ও রক্তদাতারা তাৎক্ষণিক যোগাযোগ করবেন। এ ছাড়া আমাদের ২৪/৭ জরুরি ব্লাড হটলাইনে (01886-224424) সরাসরি কল করতে পারেন।',
-    responseEn: 'For urgent blood requirements, post an instant request via our Emergency Blood Request form. Our coordinators and nearby donors respond immediately. You can also dial our 24/7 hotline at 01886-224424.',
+    responseBn: 'জরুরি রক্তের জন্য আপনি সরাসরি আমাদের "জরুরি রক্তের আবেদন" ফর্মটি পূরণ করে রিকুয়েস্ট পোস্ট করতে পারেন। আমাদের সমন্বয়ক ও রক্তদাতারা তাৎক্ষণিক যোগাযোগ করবেন। এ ছাড়া আমাদের ২৪/৭ জরুরি ব্লাড হটলাইনে (01839-008339) সরাসরি কল করতে পারেন।',
+    responseEn: 'For urgent blood requirements, post an instant request via our Emergency Blood Request form. Our coordinators and nearby donors respond immediately. You can also dial our 24/7 hotline at 01839-008339.',
     actionCard: {
       title: 'জরুরি রক্তের আবেদন ফর্ম',
       subtitle: 'রক্তের গ্রুপ ও জেলা দিয়ে তাৎক্ষণিক রিকুয়েস্ট পোস্ট করুন',
       badge: 'জরুরি সেবা',
       pageRoute: 'blood-donation/emergency-request',
-      phoneCall: '01886224424',
+      phoneCall: '01839008339',
       buttonLabel: 'জরুরি রক্তের ফর্ম পূরণ করুন',
       variant: 'crimson'
     }
@@ -98,7 +98,7 @@ const KNOWLEDGE_BASE: KnowledgeIntent[] = [
     id: 'blood-donor-register',
     keywords: [
       'রক্ত দিতে চাই', 'রক্তদাতা হতে চাই', 'ডোনার হতে চাই', 'donor registration', 'become donor',
-      'rokto dibo', 'donor form', 'রক্তদান ফর্ম', 'রক্তদাতা নিবন্ধন'
+      'rokto dibo', 'donor form', 'রক্তদান ফর্ম', 'রক্তদাতা নিবন্ধন', 'ডোনার নিবন্ধন'
     ],
     responseBn: 'রক্তদাতা হিসেবে তালিকাভুক্ত হতে আমাদের রক্তদান পেজের "রক্তদাতা নিবন্ধন" ফর্মটি পূরণ করুন। ১৮ বছর বা তার বেশি বয়সী এবং ন্যূনতম ৪৮ কেজি ওজনের যে কেউ রক্তদাতা হতে পারেন। আপনার তথ্যের সর্বোচ্চ গোপনীয়তা রক্ষা করা হয় এবং চাইলে যেকোনো সময় প্রোফাইল কুলডাউনে রাখা যায়।',
     responseEn: 'To register as a life-saving blood donor, complete our Blood Donor Registration form. Any healthy individual aged 18+ weighing at least 48kg can register. Your privacy is safeguarded with full pause and cooldown controls.',
@@ -117,7 +117,7 @@ const KNOWLEDGE_BASE: KnowledgeIntent[] = [
     id: 'blood-find',
     keywords: [
       'রক্তদাতা খুঁজছি', 'রক্তদাতা তালিকা', 'রক্তদাতা ডিরেক্টরি', 'ব্লাড গ্রুপ', 'donor search', 'find donor',
-      'blood list', 'a+', 'b+', 'o+', 'ab+', 'a-', 'b-', 'o-', 'ab-', 'রক্তের গ্রুপ'
+      'blood list', 'a+', 'b+', 'o+', 'ab+', 'a-', 'b-', 'o-', 'ab-', 'রক্তের গ্রুপ', 'ব্লাড ডোনার', 'ব্লাড ডোনেশন'
     ],
     responseBn: 'আমাদের ওয়েবসাইটের "ব্লাড ডোনেশন" ডিরেক্টরিতে গিয়ে আপনার কাঙ্ক্ষিত রক্তের গ্রুপ এবং জেলা নির্বাচন করলেই সক্রিয় ও ভেরিফাইড রক্তদাতাদের তালিকা পেয়ে যাবেন। সরাসরি তাদের কল অথবা এসএমএস করা সম্ভব।',
     responseEn: 'Browse our Blood Donation Directory, filter by blood group and district, and contact verified active donors directly via phone or SMS.',
@@ -193,16 +193,16 @@ const KNOWLEDGE_BASE: KnowledgeIntent[] = [
     id: 'contact',
     keywords: [
       'যোগাযোগ', 'ফোন', 'ঠিকানা', 'অফিস', 'হটলাইন', 'ইমেইল', 'contact', 'phone', 'address', 'office',
-      'helpline', 'email', 'thikana', 'feni', 'ফেনী', 'কোথায়', 'সরাসরি কথা'
+      'helpline', 'email', 'thikana', 'hathazari', 'chattogram', 'হাটহাজারী', 'চট্টগ্রাম', 'কোথায়', 'সরাসরি কথা'
     ],
-    responseBn: 'ইনফিনিটি বাংলাদেশের কেন্দ্রীয় সমন্বয় কার্যালয় ফেনী, বাংলাদেশে অবস্থিত। যেকোনো প্রশ্ন, সহযোগিতা বা ক্যাম্পেইনের তথ্যের জন্য আমাদের ২৪/৭ হটলাইন 01886-224424 ও 01726-224424 নম্বরে সরাসরি কল করতে পারেন অথবা info@infinitybangladesh.org-এ ইমেইল পাঠাতে পারেন। অনলাইনে ফর্ম পূরণ করেও বার্তা পাঠাতে পারেন।',
-    responseEn: 'Infinity Bangladesh is headquartered in Feni, Bangladesh. You can contact our 24/7 helplines at 01886-224424 / 01726-224424, email info@infinitybangladesh.org, or send an inquiry via our Contact page form.',
+    responseBn: 'ইনফিনিটি বাংলাদেশের কেন্দ্রীয় সমন্বয় কার্যালয় হাটহাজারী, চট্টগ্রাম, বাংলাদেশে অবস্থিত। যেকোনো প্রশ্ন, সহযোগিতা বা ক্যাম্পেইনের তথ্যের জন্য আমাদের ২৪/৭ হটলাইন 01839-008339 নম্বরে সরাসরি কল করতে পারেন অথবা smsakib6452@gmail.com-এ ইমেইল পাঠাতে পারেন। অনলাইনে ফর্ম পূরণ করেও বার্তা পাঠাতে পারেন।',
+    responseEn: 'Infinity Bangladesh is headquartered in Hathazari, Chattogram, Bangladesh. You can contact our 24/7 helpline at 01839-008339, email smsakib6452@gmail.com, or send an inquiry via our Contact page form.',
     actionCard: {
       title: 'যোগাযোগ ও সরাসরি সাপোর্ট কেন্দ্র',
-      subtitle: 'প্রধান কার্যালয়: ফেনী, বাংলাদেশ | হটলাইন: 01886-224424',
+      subtitle: 'কেন্দ্রীয় কার্যালয়: হাটহাজারী, চট্টগ্রাম | হটলাইন: 01839-008339',
       badge: '২৪/৭ সাপোর্ট',
       pageRoute: 'contact',
-      phoneCall: '01886224424',
+      phoneCall: '01839008339',
       buttonLabel: 'যোগাযোগ পেজে যান',
       variant: 'slate'
     }
@@ -355,7 +355,39 @@ export const InfinityAgentBot: React.FC = () => {
   const matchIntent = (query: string): KnowledgeIntent | null => {
     const cleanQuery = query.toLowerCase().trim();
 
-    // Check for exact keyword hits
+    // 1. Specific Blood Intent Disambiguation
+    if (
+      cleanQuery.includes('রক্ত দিতে') ||
+      cleanQuery.includes('রক্তদাতা হতে') ||
+      cleanQuery.includes('ডোনার হতে') ||
+      cleanQuery.includes('become donor') ||
+      cleanQuery.includes('donor reg') ||
+      cleanQuery.includes('ডোনার নিবন্ধন')
+    ) {
+      return KNOWLEDGE_BASE.find(i => i.id === 'blood-donor-register') || null;
+    }
+    if (
+      cleanQuery.includes('রক্তদাতা খুঁজ') ||
+      cleanQuery.includes('রক্ত খুঁজ') ||
+      cleanQuery.includes('donor search') ||
+      cleanQuery.includes('find donor') ||
+      cleanQuery.includes('donor list') ||
+      cleanQuery.includes('ডিরেক্টরি')
+    ) {
+      return KNOWLEDGE_BASE.find(i => i.id === 'blood-find') || null;
+    }
+    if (
+      cleanQuery.includes('জরুরি রক্ত') ||
+      cleanQuery.includes('রক্ত লাগবে') ||
+      cleanQuery.includes('রক্ত প্রয়োজন') ||
+      cleanQuery.includes('রক্ত দরকার') ||
+      cleanQuery.includes('need blood') ||
+      cleanQuery.includes('emergency blood')
+    ) {
+      return KNOWLEDGE_BASE.find(i => i.id === 'blood-emergency') || null;
+    }
+
+    // 2. Check for exact keyword hits
     for (const intent of KNOWLEDGE_BASE) {
       for (const kw of intent.keywords) {
         if (cleanQuery.includes(kw.toLowerCase())) {
@@ -364,9 +396,9 @@ export const InfinityAgentBot: React.FC = () => {
       }
     }
 
-    // Secondary heuristic checks
+    // 3. Secondary heuristic checks
     if (cleanQuery.includes('রক্ত') || cleanQuery.includes('blood') || cleanQuery.includes('rokto')) {
-      return KNOWLEDGE_BASE.find(i => i.id === 'blood-emergency') || null;
+      return KNOWLEDGE_BASE.find(i => i.id === 'blood-find') || null;
     }
     if (cleanQuery.includes('টাকা') || cleanQuery.includes('দান') || cleanQuery.includes('donate')) {
       return KNOWLEDGE_BASE.find(i => i.id === 'donate') || null;
@@ -408,7 +440,7 @@ export const InfinityAgentBot: React.FC = () => {
           actionCard: matched.actionCard,
           quickPrompts: [
             isBn ? '📋 স্বেচ্ছাসেবক আবেদন ফর্ম' : '📋 Volunteer Form',
-            isBn ? '🩸 জরুরি রক্ত সহায়তা' : '🩸 Blood Assistance',
+            isBn ? '🩸 রক্তদাতা ডিরেক্টরি' : '🩸 Donor Directory',
             isBn ? '💳 অনুদান পোর্টাল' : '💳 Donation Portal'
           ]
         };
@@ -418,20 +450,20 @@ export const InfinityAgentBot: React.FC = () => {
           id: `bot-${Date.now()}`,
           sender: 'bot',
           text: isBn
-            ? 'আপনার প্রশ্নের সরাসরি সুনির্দিষ্ট উত্তর দিতে আমি সংশ্লিষ্ট তথ্যগুলো নিচে যুক্ত করেছি। আপনি সরাসরি যেকোনো ফর্ম পূরণ করতে পারেন অথবা জরুরি প্রয়োজনে আমাদের ২৪/৭ হেল্পলাইনে (01886-224424) সরাসরি কল দিতে পারেন।'
-            : 'To best assist you, here are the direct access forms and navigators. You can also reach our 24/7 emergency coordinator helpline at 01886-224424 directly.',
+            ? 'আপনার প্রশ্নের সরাসরি সুনির্দিষ্ট উত্তর দিতে আমি সংশ্লিষ্ট তথ্যগুলো নিচে যুক্ত করেছি। আপনি সরাসরি যেকোনো ফর্ম পূরণ করতে পারেন অথবা জরুরি প্রয়োজনে আমাদের ২৪/৭ হেল্পলাইনে (01839-008339) সরাসরি কল দিতে পারেন।'
+            : 'To best assist you, here are the direct access forms and navigators. You can also reach our 24/7 emergency coordinator helpline at 01839-008339 directly.',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           actionCard: {
             title: 'যোগাযোগ ও সহায়তা ডেস্ক',
-            subtitle: '২৪/৭ সার্বক্ষণিক হটলাইন: 01886-224424 | ইমেইল: info@infinitybangladesh.org',
+            subtitle: '২৪/৭ সার্বক্ষণিক হটলাইন: 01839-008339 | কেন্দ্রীয় কার্যালয়: হাটহাজারী, চট্টগ্রাম',
             badge: 'হেল্পডেস্ক',
             pageRoute: 'contact',
-            phoneCall: '01886224424',
+            phoneCall: '01839008339',
             buttonLabel: 'যোগাযোগ পেজে যান',
             variant: 'slate'
           },
           quickPrompts: [
-            isBn ? '🩸 জরুরি রক্ত প্রয়োজন' : '🩸 Emergency Blood',
+            isBn ? '🩸 রক্তদাতা ডিরেক্টরি' : '🩸 Donor Directory',
             isBn ? '📋 স্বেচ্ছাসেবক আবেদন ফর্ম' : '📋 Volunteer Application',
             isBn ? '💳 অনুদান দেওয়ার নিয়ম' : '💳 How to Donate'
           ]

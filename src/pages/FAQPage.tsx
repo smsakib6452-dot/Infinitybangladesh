@@ -153,11 +153,11 @@ export const FAQPage: React.FC = () => {
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <a
-              href="tel:01886224424"
+              href="tel:01839008339"
               className="px-5 py-2.5 rounded-2xl bg-[#006A4E] hover:bg-[#00523C] text-white text-xs font-bold transition-all shadow-warm-xs inline-flex items-center gap-2 cursor-pointer"
             >
               <Phone className="w-4 h-4" />
-              <span>01886-224424</span>
+              <span>01839-008339</span>
             </a>
 
             <Link

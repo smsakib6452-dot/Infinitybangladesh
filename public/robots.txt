@@ -1,8 +1,21 @@
-# Robots.txt for Infinity Bangladesh (Team Infinity — United for Humanity)
+# Robots.txt for Infinity Bangladesh — United for Humanity
+# Official Platform: https://infinitybangladesh.vercel.app
+
 User-agent: *
 Allow: /
-Disallow: /#/admin
 Disallow: /admin
+Disallow: /#/admin
 
-# Sitemap location
+# Specific search crawlers welcome
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+# Canonical Sitemap
 Sitemap: https://infinitybangladesh.vercel.app/sitemap.xml
+Host: https://infinitybangladesh.vercel.app
