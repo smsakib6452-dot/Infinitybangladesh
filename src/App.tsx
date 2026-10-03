@@ -11,6 +11,7 @@ import { ScrollProgressBar } from './components/motion/ScrollProgressBar';
 import { BackToTopButton } from './components/motion/BackToTopButton';
 import { PageTransition } from './components/motion/PageTransition';
 import { CustomCursor } from './components/motion/CustomCursor';
+import { InfinityAgentBot } from './components/InfinityAgentBot';
 
 import { lazyWithRetry } from './lib/utils/lazyWithRetry';
 
@@ -190,6 +191,9 @@ const AppContent: React.FC = () => {
 
       {/* Back To Top Action Button */}
       <BackToTopButton />
+
+      {/* Infinity Agent AI Chatbot & Navigator */}
+      <InfinityAgentBot />
     </div>
   );
 };

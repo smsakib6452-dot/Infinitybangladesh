@@ -3021,7 +3021,134 @@ export const INITIAL_DONATIONS: DonationRecord[] = [
   }
 ];
 
-export const INITIAL_FAQS: FAQItem[] = [];
+export const INITIAL_FAQS: FAQItem[] = [
+  {
+    id: 'faq-1',
+    question: {
+      bn: 'ইনফিনিটি বাংলাদেশ কী ধরনের সংগঠন এবং এর মূল দর্শন কী?',
+      en: 'What kind of organization is Infinity Bangladesh and what is its core philosophy?'
+    },
+    answer: {
+      bn: 'ইনফিনিটি বাংলাদেশ একটি সম্পূর্ণ অরাজনৈতিক, অলাভজনক এবং যুব-নেতৃত্বাধীন মানবকল্যাণমূলক সংগঠন (প্রতিষ্ঠা: ২০১৫ সাল)। আমাদের মূল দর্শন—সামাজিক ন্যায়বিচার প্রতিষ্ঠা, আর্তমানবতার সেবা, সুবিধাবঞ্চিত মানুষের পাশে দাঁড়ানো এবং তরুণ প্রজন্মকে গঠনমূলক সামাজিক উন্নয়নে উজ্জীবিত করা।',
+      en: 'Infinity Bangladesh is a completely non-political, non-profit, youth-driven humanitarian organization established in 2015. Our core mission is upholding human dignity, providing emergency relief, and mobilizing youth leadership for sustainable social transformation.'
+    },
+    category: 'General',
+    displayOrder: 1,
+    active: true
+  },
+  {
+    id: 'faq-2',
+    question: {
+      bn: 'অনুদানের ১০০% অর্থ কীভাবে সরাসরি উপকারভোগীর কাছে পৌঁছায় (১০০% চ্যারিটি নীতি)?',
+      en: 'How does 100% of the donated money directly reach beneficiaries (100% Charity Model)?'
+    },
+    answer: {
+      bn: 'ইনফিনিটি বাংলাদেশ কঠোরভাবে ১০০% চ্যারিটি মডেল অনুসরণ করে। দাতাদের প্রদত্ত অনুদানের প্রতিটি পয়সা সরাসরি মাঠপর্যায়ে উপকারভোগীদের খাদ্য, বস্ত্র, চিকিৎসা ও পুনর্বাসনে ব্যয় হয়। সংগঠনের প্রশাসনিক ও সাংগঠনিক খরচ কার্যনির্বাহী পরিষদ এবং স্বেচ্ছাসেবকদের নিজস্ব অনুদান থেকে নির্বাহ করা হয়; জনসাধারণের অনুদান থেকে কোনো প্রশাসনিক খরচ কাটা হয় না।',
+      en: 'Infinity Bangladesh strictly operates on a 100% public donation model. Every penny from donors is channeled directly into food, clothing, medical relief, and rehabilitation on the ground. Operational overheads are independently borne by our executive members and volunteers.'
+    },
+    category: 'Donations',
+    displayOrder: 2,
+    active: true
+  },
+  {
+    id: 'faq-3',
+    question: {
+      bn: 'বিকাশ, নগদ বা ব্যাংকের মাধ্যমে অনুদান পাঠানোর সঠিক নিয়ম কী?',
+      en: 'What is the procedure for donating via bKash, Nagad, or Bank Transfer?'
+    },
+    answer: {
+      bn: 'আপনি আমাদের অফিসিয়াল ডোনেশন পেজে গিয়ে বিকাশ (মার্চেন্ট/পার্সোনাল: 01886-224424), নগদ (পার্সোনাল: 01726-224424) অথবা আমাদের ব্যাংক অ্যাকাউন্টে অনুদান পাঠাতে পারেন। অনুদান প্রেরণের পর ট্রানজেকশন আইডি (TrxID) দিয়ে ডোনেশন ফর্মটি পূরণ করলে স্বয়ংক্রিয় ভেরিফাইড মানি রিসিট প্রদান করা হয়।',
+      en: 'You can send donations directly via our official bKash (01886-224424), Nagad (01726-224424), or Bank Accounts detailed on our Donate page. Submitting your Transaction ID (TrxID) generates an instant verified receipt.'
+    },
+    category: 'Donations',
+    displayOrder: 3,
+    active: true
+  },
+  {
+    id: 'faq-4',
+    question: {
+      bn: 'স্বেচ্ছাসেবক হিসেবে নিবন্ধনের যোগ্যতা, দায়িত্ব ও সনদপত্র (Certificate) পাওয়ার নিয়ম কী?',
+      en: 'What are the eligibility criteria, responsibilities, and certificate rules for volunteers?'
+    },
+    answer: {
+      bn: 'যেকোনো সহানুভূতিশীল শিক্ষার্থী বা তরুণ আমাদের ৮-ধাপের অনলাইন ফর্ম পূরণ করে আবেদন করতে পারেন। আবেদন পর্যালোচনার পর ইন্টারভিউ ও ওরিয়েন্টেশনের মাধ্যমে মনোনীত করা হয়। সক্রিয়ভাবে ক্যাম্পেইনে অংশ নেওয়ার পর প্রাতিষ্ঠানিক অভিজ্ঞতা সনদপত্র (Certificate of Recognition) প্রদান করা হয়।',
+      en: 'Any compassionate student or young citizen can apply via our 8-step online volunteer application form. Successful inductees complete an orientation and receive an official Certificate of Recognition for dedicated field service.'
+    },
+    category: 'Volunteering',
+    displayOrder: 4,
+    active: true
+  },
+  {
+    id: 'faq-5',
+    question: {
+      bn: 'জরুরি রক্তের প্রয়োজন হলে কীভাবে দ্রুত রক্তদাতা পাওয়া যাবে?',
+      en: 'How can one find blood donors in a medical emergency?'
+    },
+    answer: {
+      bn: 'আমাদের ওয়েবসাইটের "ব্লাড ডোনেশন" পেজে গিয়ে আপনার কাঙ্ক্ষিত রক্তের গ্রুপ এবং জেলা নির্বাচন করলেই সক্রিয় রক্তদাতাদের তালিকা পেয়ে যাবেন। এ ছাড়া সরাসরি আমাদের ২৪/৭ জরুরি রক্ত সেবা হটলাইনে (01886-224424) যোগাযোগ করলে আমাদের সমন্বয়করা দ্রুত রক্তদাতা ম্যানেজ করে দেন।',
+      en: 'Visit our dedicated Blood Donation page, filter by blood group and district, and instantly contact verified available donors. Alternatively, call our 24/7 emergency blood helpline at 01886-224424 for rapid coordinator dispatch.'
+    },
+    category: 'Blood Bank',
+    displayOrder: 5,
+    active: true
+  },
+  {
+    id: 'faq-6',
+    question: {
+      bn: 'রক্তদাতা হিসেবে কীভাবে নাম তালিকাভুক্ত করব এবং তথ্য গোপনীয়তা বজায় থাকবে কি?',
+      en: 'How can I register as a blood donor and is donor privacy protected?'
+    },
+    answer: {
+      bn: 'রক্তদান পেজের "রক্তদাতা হিসেবে নিবন্ধন করুন" ফর্মে গিয়ে প্রয়োজনীয় তথ্য দিলেই আপনি নিবন্ধিত হবেন। আপনার ফোন নম্বর ও ব্যক্তিগত তথ্য আমাদের কঠোর ডেটা প্রোটেকশন নীতির আওতায় সুরক্ষিত থাকে এবং আপনি চাইলে যেকোনো সময় নিজের প্রোফাইল অফলাইন বা কুলডাউনে রাখতে পারবেন।',
+      en: 'Register via the "Register as Blood Donor" form. Your personal details are guarded by strict privacy controls, with self-service cooldown and pause options whenever you are unavailable.'
+    },
+    category: 'Blood Bank',
+    displayOrder: 6,
+    active: true
+  },
+  {
+    id: 'faq-7',
+    question: {
+      bn: 'ক্যাম্পেইন অডিট ও বাৎসরিক খরচের হিসাব সাধারণ মানুষ কীভাবে দেখতে পারবে?',
+      en: 'How can the public access annual financial summaries and campaign audit reports?'
+    },
+    answer: {
+      bn: 'আমাদের ওয়েবসাইটের "স্বচ্ছতা ও অডিট (Transparency)" পেজে প্রতি বছরের নিরপেক্ষ অডিট রিপোর্ট, ভাউচার সারাংশ এবং প্রতিটি মৌসুমী ক্যাম্পেইনের ব্যয়ের পূর্ণাঙ্গ বিবরণী উন্মুক্তভাবে পিডিএফ আকারে ডাউনলোডের জন্য সংরক্ষিত থাকে।',
+      en: 'Every annual audit log, receipt compilation, and field expenditure report is publicly published in downloadable PDF format on our Transparency & Governance page.'
+    },
+    category: 'Transparency',
+    displayOrder: 7,
+    active: true
+  },
+  {
+    id: 'faq-8',
+    question: {
+      bn: 'সংগঠনের বর্তমান কেন্দ্রীয় নেতৃত্ব ও কার্যনির্বাহী পরিষদে কারা রয়েছেন?',
+      en: 'Who currently leads the organization and serves on the Executive Committee?'
+    },
+    answer: {
+      bn: 'ইনফিনিটি বাংলাদেশ একটি গণতান্ত্রিক ও গঠনতান্ত্রিক কাঠামোয় পরিচালিত হয়। আমাদের ওয়েবসাইটের "কমিটি ও নেতৃত্ব" পেজে বর্তমান সভাপতি, সাধারণ সম্পাদকসহ পূর্ণাঙ্গ কার্যনির্বাহী পরিষদ, স্থায়ী কমিটি এবং উপদেষ্টা পরিষদের পরিচিতি বিস্তারিত দেওয়া রয়েছে।',
+      en: 'Infinity Bangladesh is democratically governed. Our Committee & Leadership page features comprehensive profiles of the President, General Secretary, Executive Board, and Advisory Council.'
+    },
+    category: 'Leadership',
+    displayOrder: 8,
+    active: true
+  },
+  {
+    id: 'faq-9',
+    question: {
+      bn: 'ইনফিনিটি বাংলাদেশের কেন্দ্রীয় কার্যালয় কোথায় এবং যোগাযোগের হটলাইন কী?',
+      en: 'Where is Infinity Bangladesh headquartered and what is the official helpline?'
+    },
+    answer: {
+      bn: 'ইনফিনিটি বাংলাদেশের প্রধান সমন্বয় কার্যালয় ফেনী, বাংলাদেশে অবস্থিত। যেকোনো প্রশ্ন, সহযোগিতা বা যোগাযোগের জন্য আমাদের ২৪/৭ হটলাইন 01886-224424 ও 01726-224424 নম্বরে সরাসরি কল করতে পারেন অথবা info@infinitybangladesh.org-এ ইমেইল পাঠাতে পারেন।',
+      en: 'Infinity Bangladesh\'s central hub is located in Feni, Bangladesh. You can reach our 24/7 hotline at 01886-224424 / 01726-224424, or email info@infinitybangladesh.org.'
+    },
+    category: 'Contact',
+    displayOrder: 9,
+    active: true
+  }
+];
 
 export const INITIAL_COMMITTEES: Committee[] = [
   {
