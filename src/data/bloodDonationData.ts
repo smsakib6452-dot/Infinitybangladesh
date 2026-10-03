@@ -76,12 +76,12 @@ export function cleanBloodDonor(d: any): BloodDonor {
   const area = toSafeString(d.area, '');
   const detailedAddress = toSafeString(d.detailedAddress, '');
   let orgCategory = toSafeString(d.orgCategory, 'Open Voluntary Blood Donor');
-  if (orgCategory === 'Infinity Bangladesh Volunteer') {
+  if (orgCategory === 'Infinity Bangladesh Volunteer' || orgCategory === 'Executive Committee' || orgCategory === 'Standing Committee') {
     orgCategory = 'Infinity Bangladesh Member';
   } else if (orgCategory === 'External Blood Donor') {
     orgCategory = 'Open Voluntary Blood Donor';
   }
-  const committeePosition = d.committeePosition ? toSafeString(d.committeePosition, '') : undefined;
+  const committeePosition = d.committeePosition ? toSafeString(d.committeePosition, '') : (d.orgCategory === 'Executive Committee' || d.orgCategory === 'Standing Committee' ? d.orgCategory : undefined);
   const fullName = toSafeString(d.fullName, '');
   const phone = toSafeString(d.phone, '');
   const email = toSafeString(d.email, '');
@@ -448,33 +448,13 @@ export const DEFAULT_DONOR_CATEGORIES: DonorCategoryOption[] = [
     isDefault: true
   },
   {
-    id: 'cat-exec',
-    name: {
-      en: 'Executive Committee',
-      bn: 'কার্যনির্বাহী পরিষদ'
-    },
-    badgeColor: '#D97706',
-    displayOrder: 2,
-    isDefault: true
-  },
-  {
-    id: 'cat-standing',
-    name: {
-      en: 'Standing Committee',
-      bn: 'স্থায়ী কমিটি'
-    },
-    badgeColor: '#2563EB',
-    displayOrder: 3,
-    isDefault: true
-  },
-  {
     id: 'cat-member',
     name: {
       en: 'Infinity Bangladesh Member',
-      bn: 'ইনফিনিটি বাংলাদেশ পরিবারের সদস্য'
+      bn: 'ইনফিনিটি বাংলাদেশ সদস্য'
     },
     badgeColor: '#006A4E',
-    displayOrder: 4,
+    displayOrder: 2,
     isDefault: true
   }
 ];
@@ -576,8 +556,8 @@ export const INITIAL_BLOOD_DONORS: BloodDonor[] = [
     upazila: 'Hathazari',
     area: 'Hathazari College Gate',
     detailedAddress: 'Hasmat Ali Chowdhury Bari',
-    orgCategory: 'Executive Committee',
-    committeePosition: undefined,
+    orgCategory: 'Infinity Bangladesh Member',
+    committeePosition: 'Executive Member',
     availabilityStatus: 'AVAILABLE_EMERGENCY',
     lastDonationDate: '2025-07-12',
     totalDonations: 6,
@@ -627,8 +607,8 @@ export const INITIAL_BLOOD_DONORS: BloodDonor[] = [
     upazila: 'Hathazari',
     area: 'Hathazari',
     detailedAddress: 'Rangipara',
-    orgCategory: 'Executive Committee',
-    committeePosition: undefined,
+    orgCategory: 'Infinity Bangladesh Member',
+    committeePosition: 'Executive Member',
     availabilityStatus: 'AVAILABLE_EMERGENCY',
     lastDonationDate: '2026-03-07',
     totalDonations: 10,

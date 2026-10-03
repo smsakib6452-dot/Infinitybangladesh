@@ -1337,7 +1337,12 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
                                   )}
                                 </div>
                                 <p className="text-xs font-bold text-[#006A4E] truncate">
-                                  {donor.orgCategory}
+                                  {isBn
+                                    ? (donor.orgCategory === 'Open Voluntary Blood Donor'
+                                        ? 'উন্মুক্ত স্বেচ্ছাসেবী রক্তদাতা'
+                                        : 'ইনফিনিটি বাংলাদেশ সদস্য')
+                                    : donor.orgCategory}
+                                  {donor.committeePosition && ` • ${donor.committeePosition}`}
                                 </p>
                                 {(donor.gender || donorAge !== null) && (
                                   <p className="text-[11px] text-slate-400 font-medium truncate mt-0.5">

@@ -580,70 +580,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const stored = getStoredOrDefault<DonorCategoryOption[]>('donorCategories', DEFAULT_DONOR_CATEGORIES);
     if (!Array.isArray(stored) || stored.length === 0) return DEFAULT_DONOR_CATEGORIES;
 
-    // Check if stored categories contain outdated names or old order
-    const hasOutdated = stored.some(c => {
+    // Migrate stored categories to the 2 streamlined public options
+    const hasLegacy = stored.some(c => {
       const en = typeof c.name === 'object' ? c.name.en : c.name;
-      return en === 'Infinity Bangladesh Volunteer' || en === 'External Blood Donor' || (en === 'External Blood Donor' && c.displayOrder !== 1);
-    });
+      return c.id === 'cat-exec' || c.id === 'cat-standing' || en === 'Executive Committee' || en === 'Standing Committee' || en === 'Infinity Bangladesh Volunteer' || en === 'External Blood Donor';
+    }) || stored.length > 2;
 
-    if (hasOutdated) {
-      const migrated = stored.map(c => {
-        const en = typeof c.name === 'object' ? c.name.en : c.name;
-        if (en === 'External Blood Donor' || c.id === 'cat-ext' || c.id === 'cat-open') {
-          return {
-            ...c,
-            id: 'cat-open',
-            name: { en: 'Open Voluntary Blood Donor', bn: 'উন্মুক্ত স্বেচ্ছাসেবী রক্তদাতা' },
-            badgeColor: '#E11D48',
-            displayOrder: 1,
-            isDefault: true
-          };
-        }
-        if (en === 'Executive Committee' || c.id === 'cat-exec') {
-          return {
-            ...c,
-            id: 'cat-exec',
-            name: { en: 'Executive Committee', bn: 'কার্যনির্বাহী পরিষদ' },
-            badgeColor: '#D97706',
-            displayOrder: 2,
-            isDefault: true
-          };
-        }
-        if (en === 'Standing Committee' || c.id === 'cat-standing' || c.id === 'cat-1787889544113') {
-          return {
-            ...c,
-            id: 'cat-standing',
-            name: { en: 'Standing Committee', bn: 'স্থায়ী কমিটি' },
-            badgeColor: '#2563EB',
-            displayOrder: 3,
-            isDefault: true
-          };
-        }
-        if (en === 'Infinity Bangladesh Volunteer' || c.id === 'cat-vol' || c.id === 'cat-member') {
-          return {
-            ...c,
-            id: 'cat-member',
-            name: { en: 'Infinity Bangladesh Member', bn: 'ইনফিনিটি বাংলাদেশ পরিবারের সদস্য' },
-            badgeColor: '#006A4E',
-            displayOrder: 4,
-            isDefault: true
-          };
-        }
-        return c;
-      });
-
-      const catIds = new Set(migrated.map(m => m.id));
-      DEFAULT_DONOR_CATEGORIES.forEach(def => {
-        if (!catIds.has(def.id)) {
-          migrated.push(def);
-        }
-      });
-
-      migrated.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+    if (hasLegacy) {
       try {
-        localStorage.setItem(`${STORAGE_PREFIX}donorCategories`, JSON.stringify(migrated));
+        localStorage.setItem(`${STORAGE_PREFIX}donorCategories`, JSON.stringify(DEFAULT_DONOR_CATEGORIES));
       } catch {}
-      return migrated;
+      return DEFAULT_DONOR_CATEGORIES;
     }
 
     return [...stored].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
@@ -1434,9 +1381,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
               district: d.district,
               upazila: d.upazila,
               area: d.area,
-              detailedAddress: d.detailed_address,
-              orgCategory: d.org_category || 'General Voluntary Donor',
-              committeePosition: d.committee_position,
+              orgCategory: (d.org_category === 'Executive Committee' || d.org_category === 'Standing Committee' || d.org_category === 'Infinity Bangladesh Volunteer')
+                ? 'Infinity Bangladesh Member'
+                : (d.org_category || 'Open Voluntary Blood Donor'),
+              committeePosition: d.committee_position || ((d.org_category === 'Executive Committee' || d.org_category === 'Standing Committee') ? d.org_category : undefined),
               availabilityStatus: d.availability_status || 'AVAILABLE_EMERGENCY',
               lastDonationDate: d.last_donation_date || undefined,
               totalDonations: Number(d.total_donations) || 0,
