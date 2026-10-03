@@ -51,6 +51,7 @@ interface KnowledgeIntent {
   responseBn: string;
   responseEn: string;
   actionCard?: BotActionCard;
+  quickPrompts?: string[];
 }
 
 const KNOWLEDGE_BASE: KnowledgeIntent[] = [
@@ -351,11 +352,550 @@ export const InfinityAgentBot: React.FC = () => {
     }
   }, [isOpen, messages, scrollToBottom]);
 
+interface CommitteeMemberProfile {
+  serial: number;
+  nameBn: string;
+  nameEn: string;
+  positionBn: string;
+  positionEn: string;
+  category: 'presidential' | 'vicePresidential' | 'secretariat' | 'jointSecretariat' | 'organizing' | 'finance' | 'secretaries' | 'standing';
+  aliases: string[];
+}
+
+const EXECUTIVE_COMMITTEE_2026: CommitteeMemberProfile[] = [
+  { serial: 1, nameBn: 'মোঃ শহিদুল আলম সাকিব', nameEn: 'MD. SHAHIDUL ALAM SAKIB', positionBn: 'সভাপতি', positionEn: 'President', category: 'presidential', aliases: ['সাকিব', 'শহিদুল', 'sakib', 'shakib', 'shahidul', 'shohidul', 'shahidul alam'] },
+  { serial: 2, nameBn: 'মোহাম্মদ ইসমাইল', nameEn: 'MOHAMMAD ISMAIL', positionBn: 'সিনিয়র সহ-সভাপতি', positionEn: 'Senior Vice President', category: 'vicePresidential', aliases: ['ইসমাইল', 'ismail', 'mohammad ismail'] },
+  { serial: 3, nameBn: 'জয়নুল আবেদীন', nameEn: 'JOINUL ABEDIN', positionBn: 'সহ-সভাপতি', positionEn: 'Vice President', category: 'vicePresidential', aliases: ['জয়নুল', 'joinul', 'zoynul', 'joynul abedin'] },
+  { serial: 4, nameBn: 'সোহেল আকরাম সবুজ', nameEn: 'SOHEL AKRAM SOBUJ', positionBn: 'সহ-সভাপতি', positionEn: 'Vice President', category: 'vicePresidential', aliases: ['সবুজ', 'সোহেল', 'sobuj', 'sohel', 'sohel akram'] },
+  { serial: 5, nameBn: 'সেলিমুর রহমান অপি', nameEn: 'SALIMUR RAHMAN OPI', positionBn: 'সাধারণ সম্পাদক', positionEn: 'General Secretary', category: 'secretariat', aliases: ['অপি', 'সেলিমুর', 'opi', 'salimur', 'salimur rahman'] },
+  { serial: 6, nameBn: 'এনায়েত উল্লাহ ফরহাদ', nameEn: 'ANAYET ULLAH FARHAD', positionBn: 'যুগ্ম সাধারণ সম্পাদক', positionEn: 'Joint General Secretary', category: 'jointSecretariat', aliases: ['ফরহাদ', 'farhad', 'anayet'] },
+  { serial: 7, nameBn: 'মোঃ নিয়াজ উদ্দিন সাকিব', nameEn: 'MD. NIAJ UDDIN SAKIB', positionBn: 'যুগ্ম সাধারণ সম্পাদক', positionEn: 'Joint General Secretary', category: 'jointSecretariat', aliases: ['নিয়াজ', 'niaj', 'niaz'] },
+  { serial: 8, nameBn: 'রিয়াজ উদ্দিন', nameEn: 'REAZ UDDIN', positionBn: 'যুগ্ম সাধারণ সম্পাদক', positionEn: 'Joint General Secretary', category: 'jointSecretariat', aliases: ['রিয়াজ', 'reaz', 'riaz'] },
+  { serial: 9, nameBn: 'শাহাদাত ইসলাম', nameEn: 'SHAHADAT ISLAM', positionBn: 'যুগ্ম সাধারণ সম্পাদক', positionEn: 'Joint General Secretary', category: 'jointSecretariat', aliases: ['শাহাদাত ইসলাম', 'shahadat islam'] },
+  { serial: 10, nameBn: 'কায়সার আহমেদ ইরফান', nameEn: 'KAISAR AHMED IRFAN', positionBn: 'যুগ্ম সাধারণ সম্পাদক', positionEn: 'Joint General Secretary', category: 'jointSecretariat', aliases: ['ইরফান', 'irfan'] },
+  { serial: 11, nameBn: 'মোঃ আরফাত', nameEn: 'MD ARFAT', positionBn: 'সাংগঠনিক সম্পাদক', positionEn: 'Organizing Secretary', category: 'organizing', aliases: ['আরফাত', 'arfat', 'arafat', 'md arfat'] },
+  { serial: 12, nameBn: 'মোঃ ইসমাইল নুর সাকিব', nameEn: 'MD. ISMAIL NUR SAKIB', positionBn: 'যুগ্ম সাংগঠনিক সম্পাদক', positionEn: 'Joint Organizing Secretary', category: 'organizing', aliases: ['ইসমাইল নুর', 'ismail nur'] },
+  { serial: 13, nameBn: 'কায়সার আহমেদ অভি', nameEn: 'KAISAR AHMED OVI', positionBn: 'যুগ্ম সাংগঠনিক সম্পাদক', positionEn: 'Joint Organizing Secretary', category: 'organizing', aliases: ['অভি', 'ovi', 'kaisar ovi'] },
+  { serial: 14, nameBn: 'মোঃ শাহাদাত আলম', nameEn: 'MD SHAHADAD ALAM', positionBn: 'অর্থ সম্পাদক', positionEn: 'Finance Secretary', category: 'finance', aliases: ['শাহাদাত আলম', 'shahadat alam'] },
+  { serial: 15, nameBn: 'মুনমুন বণিক', nameEn: 'MUNMUN BANIK', positionBn: 'যুগ্ম অর্থ সম্পাদক', positionEn: 'Joint Finance Secretary', category: 'finance', aliases: ['মুনমুন', 'munmun'] },
+  { serial: 16, nameBn: 'মোঃ মেহেদী হাসান', nameEn: 'MD MEHEDI HASAN', positionBn: 'যুগ্ম অর্থ সম্পাদক', positionEn: 'Joint Finance Secretary', category: 'finance', aliases: ['মেহেদী', 'mehedi'] },
+  { serial: 17, nameBn: 'সানজিদা শারমিন', nameEn: 'SHANZIDA SHARMIN', positionBn: 'ছাত্রী বিষয়ক সম্পাদক', positionEn: 'Student Affairs Secretary (Female)', category: 'secretaries', aliases: ['সানজিদা', 'shanzida', 'sanjida'] },
+  { serial: 18, nameBn: 'সুমাইয়া ইমরোজ', nameEn: 'SUMAYA IMROZ', positionBn: 'যুগ্ম ছাত্রী বিষয়ক সম্পাদক', positionEn: 'Joint Student Affairs Secretary (Female)', category: 'secretaries', aliases: ['সুমাইয়া', 'sumaya'] },
+  { serial: 19, nameBn: 'দীপা শীল', nameEn: 'DIPA SHIL', positionBn: 'যুগ্ম ছাত্রী বিষয়ক সম্পাদক', positionEn: 'Joint Student Affairs Secretary (Female)', category: 'secretaries', aliases: ['দীপা', 'dipa'] },
+  { serial: 20, nameBn: 'মোঃ রমজান', nameEn: 'MD RAMJAN', positionBn: 'প্রচার সম্পাদক', positionEn: 'Publicity Secretary', category: 'secretaries', aliases: ['রমজান', 'ramjan', 'romjan'] },
+  { serial: 21, nameBn: 'রিফাত শরীফ', nameEn: 'REFAT SHARIF', positionBn: 'যুগ্ম প্রচার সম্পাদক', positionEn: 'Joint Publicity Secretary', category: 'secretaries', aliases: ['রিফাত', 'refat', 'rifat'] },
+  { serial: 22, nameBn: 'সুস্মিতা রানী নাথ', nameEn: 'SUSMITA RANI NATH', positionBn: 'যুগ্ম প্রচার সম্পাদক', positionEn: 'Joint Publicity Secretary', category: 'secretaries', aliases: ['সুস্মিতা', 'susmita', 'sushmita'] },
+  { serial: 23, nameBn: 'তানভীর রানা রিয়াদ', nameEn: 'TANVIR RANA RIYAD', positionBn: 'দপ্তর সম্পাদক', positionEn: 'Office Secretary', category: 'secretaries', aliases: ['তানভীর', 'রিয়াদ', 'tanvir', 'riyad'] },
+  { serial: 24, nameBn: 'জয় নাথ', nameEn: 'JOY NATH', positionBn: 'সাংস্কৃতিক সম্পাদক', positionEn: 'Cultural Secretary', category: 'secretaries', aliases: ['জয়', 'জয় নাথ', 'joy'] },
+  { serial: 25, nameBn: 'রকিবুল করিম', nameEn: 'RAKIBUL KARIM', positionBn: 'ত্রাণ ও দুর্যোগ বিষয়ক সম্পাদক', positionEn: 'Relief and Disaster Affairs Secretary', category: 'secretaries', aliases: ['রকিবুল', 'rakibul'] },
+  { serial: 26, nameBn: 'তানজিত হোসেন', nameEn: 'TANJIT HOSSEN', positionBn: 'ক্রীড়া সম্পাদক', positionEn: 'Sports Secretary', category: 'secretaries', aliases: ['তানজিত', 'tanjit'] },
+  { serial: 27, nameBn: 'আজিজুর রহমান', nameEn: 'AZIZUR RAHMAN', positionBn: 'সমাজকল্যাণ সম্পাদক', positionEn: 'Social Welfare Secretary', category: 'secretaries', aliases: ['আজিজুর', 'azizur'] }
+];
+
+const STANDING_COMMITTEE_CENTRAL: CommitteeMemberProfile[] = [
+  { serial: 1, nameBn: 'সাকিব আল করিম', nameEn: 'Sakib Al Karim', positionBn: 'চেয়ারম্যান', positionEn: 'Chairman', category: 'standing', aliases: ['সাকিব আল করিম', 'sakib al karim', 'standing chairman'] },
+  { serial: 2, nameBn: 'তামিমুল হাসিব রিমাদ', nameEn: 'Tamimul Hasib Rimad', positionBn: 'ভাইস-চেয়ারম্যান', positionEn: 'Vice-Chairman', category: 'standing', aliases: ['রিমাদ', 'তামিমুল', 'rimad', 'tamimul'] },
+  { serial: 3, nameBn: 'সিফাত সাত্তার', nameEn: 'Shifat Sattar', positionBn: 'ভাইস-চেয়ারম্যান', positionEn: 'Vice-Chairman', category: 'standing', aliases: ['সিফাত', 'সিফাত সাত্তার', 'shifat', 'sifat'] },
+  { serial: 4, nameBn: 'ইশতিয়াক আহমেদ', nameEn: 'Ishtiaqe Ahmed', positionBn: 'সদস্য', positionEn: 'Member', category: 'standing', aliases: ['ইশতিয়াক', 'ishtiaqe', 'ishtiak'] },
+  { serial: 5, nameBn: 'চৈতি দেবী পিয়া', nameEn: 'Chaity Debi Piya', positionBn: 'সদস্য', positionEn: 'Member', category: 'standing', aliases: ['চৈতি', 'পিয়া', 'chaity', 'piya'] },
+  { serial: 6, nameBn: 'রাকিব আহমেদ', nameEn: 'Rakib Ahmed', positionBn: 'সদস্য', positionEn: 'Member', category: 'standing', aliases: ['রাকিব আহমেদ', 'rakib ahmed'] },
+  { serial: 7, nameBn: 'মোঃ আশরাফুল ইসলাম', nameEn: 'Md Ashraful Islam', positionBn: 'সদস্য', positionEn: 'Member', category: 'standing', aliases: ['আশরাফুল', 'ashraful'] },
+  { serial: 8, nameBn: 'তানভীর হায়দার রাকিব', nameEn: 'Tanveer Haidar Rakib', positionBn: 'সদস্য', positionEn: 'Member', category: 'standing', aliases: ['তানভীর হায়দার', 'tanveer haidar'] },
+  { serial: 9, nameBn: 'মোঃ এরশাদ', nameEn: 'Md Arshad', positionBn: 'সদস্য', positionEn: 'Member', category: 'standing', aliases: ['এরশাদ', 'arshad', 'ershad'] }
+];
+
+const resolveLeadershipQuery = (cleanQuery: string): KnowledgeIntent | null => {
+  // 1. President Query (handles 'committe er sovapoti ke', 'president ke', 'shovapoti k', 'sobapoti', 'সভাপতি')
+  const isPresidentQuery =
+    /(\b|^)(sovapoti|shovapoti|sobapoti|shobhapoti|sabapoti|shabapoti|president|presidant|সভাপতি|প্রেসিডেন্ট|প্রেসিডেনট)(\b|$)/.test(cleanQuery) ||
+    cleanQuery.includes('sovapoti') ||
+    cleanQuery.includes('shovapoti') ||
+    cleanQuery.includes('sobapoti') ||
+    cleanQuery.includes('সভাপতি') ||
+    cleanQuery.includes('president');
+
+  const isViceQuery =
+    cleanQuery.includes('soho') ||
+    cleanQuery.includes('shoho') ||
+    cleanQuery.includes('vice') ||
+    cleanQuery.includes('senior') ||
+    cleanQuery.includes('সিনিয়র') ||
+    cleanQuery.includes('সহ');
+
+  if (isPresidentQuery && !isViceQuery) {
+    return {
+      id: 'leadership-president',
+      keywords: [],
+      responseBn:
+        'ইনফিনিটি বাংলাদেশ কার্যনির্বাহী পরিষদ (২০২৬)-এর সভাপতি হলেন **মোঃ শহিদুল আলম সাকিব (MD. SHAHIDUL ALAM SAKIB)**।\n\n' +
+        'তিনি ২০১৫ সালে প্রতিষ্ঠিত এই মানবিক সংগঠনের নেতৃত্ব ও সার্বিক কার্যক্রম পরিচালনা করছেন।\n\n' +
+        '📌 **সভাপতি পরিষদ:**\n' +
+        '• **সভাপতি:** মোঃ শহিদুল আলম সাকিব\n' +
+        '• **সিনিয়র সহ-সভাপতি:** মোহাম্মদ ইসমাইল\n' +
+        '• **সহ-সভাপতি:** জয়নুল আবেদীন ও সোহেল আকরাম সবুজ',
+      responseEn:
+        'The President of Infinity Bangladesh Executive Committee (2026) is **MD. SHAHIDUL ALAM SAKIB**.\n\n' +
+        '📌 **Presidential Leadership:**\n' +
+        '• President: MD. SHAHIDUL ALAM SAKIB\n' +
+        '• Senior Vice President: MOHAMMAD ISMAIL\n' +
+        '• Vice Presidents: JOINUL ABEDIN & SOHEL AKRAM SOBUJ',
+      actionCard: {
+        title: 'কার্যনির্বাহী পরিষদ — সভাপতি পরিষদ',
+        subtitle: 'সভাপতি: মোঃ শহিদুল আলম সাকিব | পোর্টফোলিও দেখুন',
+        badge: 'সভাপতি পরিষদ',
+        pageRoute: 'team/executive-committee',
+        buttonLabel: 'কমিটি প্রোফাইল দেখুন',
+        variant: 'emerald'
+      },
+      quickPrompts: ['👥 সাধারণ সম্পাদক কে?', '🏛️ কেন্দ্রীয় স্থায়ী কমিটি', '📋 পূর্ণাঙ্গ কমিটি তালিকা']
+    };
+  }
+
+  // 2. General Secretary Query (handles 'shadharon shompodok ke', 'gs ke', 'general secretary', 'সাধারণ সম্পাদক')
+  const isGsQuery =
+    /(\b|^)(gs|gen\s*sec|general\s*secretary|shadharon|sadharon|shompodok|sompodok|সাধারণ\s*সম্পাদক|সেক্রেটারি)(\b|$)/.test(cleanQuery) ||
+    cleanQuery.includes('shadharon') ||
+    cleanQuery.includes('sadharon') ||
+    cleanQuery.includes('সাধারণ সম্পাদক') ||
+    cleanQuery.includes('general secretary') ||
+    cleanQuery.includes('gs ke') ||
+    cleanQuery.includes('gs k') ||
+    cleanQuery.includes('shompodok ke') ||
+    cleanQuery.includes('sompodok ke') ||
+    cleanQuery.includes('সম্পাদক কে');
+
+  const isJointGsQuery =
+    cleanQuery.includes('jugmo') ||
+    cleanQuery.includes('joint') ||
+    cleanQuery.includes('যুগ্ম');
+
+  if (isGsQuery && !isJointGsQuery) {
+    return {
+      id: 'leadership-gs',
+      keywords: [],
+      responseBn:
+        'ইনফিনিটি বাংলাদেশ কার্যনির্বাহী পরিষদ (২০২৬)-এর সাধারণ সম্পাদক হলেন **সেলিমুর রহমান অপি (SALIMUR RAHMAN OPI)**।\n\n' +
+        '📌 **সচিবালয় ও যুগ্ম সাধারণ সম্পাদক পরিষদ:**\n' +
+        '• **সাধারণ সম্পাদক:** সেলিমুর রহমান অপি\n' +
+        '• **যুগ্ম সাধারণ সম্পাদকবৃন্দ (৫ জন):** এনায়েত উল্লাহ ফরহাদ, মোঃ নিয়াজ উদ্দিন সাকিব, রিয়াজ উদ্দিন, শাহাদাত ইসলাম, কায়সার আহমেদ ইরফান।',
+      responseEn:
+        'The General Secretary of Infinity Bangladesh Executive Committee (2026) is **SALIMUR RAHMAN OPI**.\n\n' +
+        '📌 **Secretariat & Joint General Secretaries:**\n' +
+        '• General Secretary: SALIMUR RAHMAN OPI\n' +
+        '• Joint General Secretaries (5 members): ANAYET ULLAH FARHAD, MD. NIAJ UDDIN SAKIB, REAZ UDDIN, SHAHADAT ISLAM, KAISAR AHMED IRFAN.',
+      actionCard: {
+        title: 'কার্যনির্বাহী পরিষদ — সাধারণ সম্পাদক ও সচিবালয়',
+        subtitle: 'সাধারণ সম্পাদক: সেলিমুর রহমান অপি ও সচিবালয় পরিষদ',
+        badge: 'সচিবালয়',
+        pageRoute: 'team/executive-committee',
+        buttonLabel: 'কমিটি প্রোফাইল দেখুন',
+        variant: 'emerald'
+      },
+      quickPrompts: ['👑 সভাপতি কে?', '🏛️ স্থায়ী কমিটির চেয়ারম্যান কে?', '📋 পূর্ণাঙ্গ কমিটি তালিকা']
+    };
+  }
+
+  // 3. Standing Committee Chairman Query
+  if (
+    cleanQuery.includes('chairman') ||
+    cleanQuery.includes('cheyarman') ||
+    cleanQuery.includes('cheyarmen') ||
+    cleanQuery.includes('chairmen') ||
+    cleanQuery.includes('চেয়ারম্যান') ||
+    cleanQuery.includes('স্থায়ী কমিটি প্রধান') ||
+    cleanQuery.includes('স্থায়ী কমিটি প্রধান')
+  ) {
+    return {
+      id: 'leadership-chairman',
+      keywords: [],
+      responseBn:
+        'ইনফিনিটি বাংলাদেশ কেন্দ্রীয় স্থায়ী কমিটির চেয়ারম্যান হলেন **সাকিব আল করিম (Sakib Al Karim)**।\n\n' +
+        '📌 **স্থায়ী কমিটি নেতৃত্ব:**\n' +
+        '• **চেয়ারম্যান:** সাকিব আল করিম\n' +
+        '• **ভাইস-চেয়ারম্যান:** তামিমুল হাসিব রিমাদ ও সিফাত সাত্তার\n\n' +
+        'কেন্দ্রীয় স্থায়ী কমিটি ইনফিনিটি বাংলাদেশের প্রাতিষ্ঠানিক নীতি নির্ধারণ ও দীর্ঘমেয়াদী দিকনির্দেশনা প্রদান করে।',
+      responseEn:
+        'The Chairman of Infinity Bangladesh Central Standing Committee is **Sakib Al Karim**.\n\n' +
+        '📌 **Standing Committee Leadership:**\n' +
+        '• Chairman: Sakib Al Karim\n' +
+        '• Vice-Chairmen: Tamimul Hasib Rimad & Shifat Sattar',
+      actionCard: {
+        title: 'কেন্দ্রীয় স্থায়ী কমিটি — চেয়ারম্যান পরিষদ',
+        subtitle: 'চেয়ারম্যান: সাকিব আল করিম | স্থায়ী কমিটির নীতি পরিষদ',
+        badge: 'স্থায়ী কমিটি',
+        pageRoute: 'team/standing-committees',
+        buttonLabel: 'স্থায়ী কমিটি দেখুন',
+        variant: 'emerald'
+      },
+      quickPrompts: ['👑 সভাপতি কে?', '👥 সাধারণ সম্পাদক কে?', '📋 পূর্ণাঙ্গ কমিটি তালিকা']
+    };
+  }
+
+  // 4. Vice President Query
+  if (
+    cleanQuery.includes('vice president') ||
+    cleanQuery.includes('senior vp') ||
+    cleanQuery.includes('soho sovapoti') ||
+    cleanQuery.includes('shohoshovapoti') ||
+    cleanQuery.includes('shoho shovapoti') ||
+    cleanQuery.includes('সহ সভাপতি') ||
+    cleanQuery.includes('সহ-সভাপতি') ||
+    cleanQuery.includes('সিনিয়র সহ-সভাপতি') ||
+    cleanQuery.includes('vp ke') ||
+    cleanQuery.includes('vp k')
+  ) {
+    return {
+      id: 'leadership-vp',
+      keywords: [],
+      responseBn:
+        'ইনফিনিটি বাংলাদেশ কার্যনির্বাহী পরিষদ (২০২৬)-এর সহ-সভাপতি পরিষদ:\n\n' +
+        '• **সিনিয়র সহ-সভাপতি:** মোহাম্মদ ইসমাইল (MOHAMMAD ISMAIL)\n' +
+        '• **সহ-সভাপতি:** জয়নুল আবেদীন (JOINUL ABEDIN)\n' +
+        '• **সহ-সভাপতি:** সোহেল আকরাম সবুজ (SOHEL AKRAM SOBUJ)',
+      responseEn:
+        'Infinity Bangladesh Vice Presidential Leadership (2026):\n\n' +
+        '• Senior Vice President: MOHAMMAD ISMAIL\n' +
+        '• Vice President: JOINUL ABEDIN\n' +
+        '• Vice President: SOHEL AKRAM SOBUJ',
+      actionCard: {
+        title: 'কার্যনির্বাহী পরিষদ — সহ-সভাপতি পরিষদ',
+        subtitle: 'সিনিয়র সহ-সভাপতি ও সহ-সভাপতিদের পরিচিতি',
+        badge: 'সহ-সভাপতি পরিষদ',
+        pageRoute: 'team/executive-committee',
+        buttonLabel: 'কমিটি পেজে দেখুন',
+        variant: 'emerald'
+      }
+    };
+  }
+
+  // 5. Joint General Secretary Query
+  if (
+    cleanQuery.includes('joint gs') ||
+    cleanQuery.includes('jgs') ||
+    cleanQuery.includes('joint general') ||
+    cleanQuery.includes('jugmo shadharon') ||
+    cleanQuery.includes('যুগ্ম সাধারণ সম্পাদক') ||
+    cleanQuery.includes('যুগ্ম সম্পাদক')
+  ) {
+    return {
+      id: 'leadership-jgs',
+      keywords: [],
+      responseBn:
+        'ইনফিনিটি বাংলাদেশ কার্যনির্বাহী পরিষদের নির্বাচিত ৫ জন যুগ্ম সাধারণ সম্পাদক:\n\n' +
+        '১. **এনায়েত উল্লাহ ফরহাদ (ANAYET ULLAH FARHAD)**\n' +
+        '২. **মোঃ নিয়াজ উদ্দিন সাকিব (MD. NIAJ UDDIN SAKIB)**\n' +
+        '৩. **রিয়াজ উদ্দিন (REAZ UDDIN)**\n' +
+        '৪. **শাহাদাত ইসলাম (SHAHADAT ISLAM)**\n' +
+        '৫. **কায়সার আহমেদ ইরফান (KAISAR AHMED IRFAN)**',
+      responseEn:
+        'Infinity Bangladesh Joint General Secretaries (5 elected members):\n\n' +
+        '1. ANAYET ULLAH FARHAD\n' +
+        '2. MD. NIAJ UDDIN SAKIB\n' +
+        '3. REAZ UDDIN\n' +
+        '4. SHAHADAT ISLAM\n' +
+        '5. KAISAR AHMED IRFAN',
+      actionCard: {
+        title: 'যুগ্ম সাধারণ সম্পাদক পরিষদ (২০২৬)',
+        subtitle: '৫ জন নির্বাচিত যুগ্ম সাধারণ সম্পাদকের প্রোফাইল',
+        badge: 'সচিবালয়',
+        pageRoute: 'team/executive-committee',
+        buttonLabel: 'কমিটি পেজে দেখুন',
+        variant: 'emerald'
+      }
+    };
+  }
+
+  // 6. Organizing Secretary Query
+  if (
+    cleanQuery.includes('organizing') ||
+    cleanQuery.includes('organizational') ||
+    cleanQuery.includes('shongothonik') ||
+    cleanQuery.includes('songothonik') ||
+    cleanQuery.includes('সাংগঠনিক')
+  ) {
+    return {
+      id: 'leadership-org',
+      keywords: [],
+      responseBn:
+        'ইনফিনিটি বাংলাদেশ সাংগঠনিক পরিষদ:\n\n' +
+        '• **সাংগঠনিক সম্পাদক:** মোঃ আরফাত (MD ARFAT)\n' +
+        '• **যুগ্ম সাংগঠনিক সম্পাদক:** মোঃ ইসমাইল নুর সাকিব\n' +
+        '• **যুগ্ম সাংগঠনিক সম্পাদক:** কায়সার আহমেদ অভি',
+      responseEn:
+        'Infinity Bangladesh Organizing Leadership:\n\n' +
+        '• Organizing Secretary: MD ARFAT\n' +
+        '• Joint Organizing Secretaries: MD. ISMAIL NUR SAKIB & KAISAR AHMED OVI',
+      actionCard: {
+        title: 'সাংগঠনিক পরিষদ (২০২৬)',
+        subtitle: 'সাংগঠনিক সম্পাদক মোঃ আরফাত ও যুগ্ম সাংগঠনিক সম্পাদকবৃন্দ',
+        badge: 'সাংগঠনিক বিভাগ',
+        pageRoute: 'team/executive-committee',
+        buttonLabel: 'কমিটি পেজে দেখুন',
+        variant: 'emerald'
+      }
+    };
+  }
+
+  // 7. Finance Secretary Query
+  if (
+    cleanQuery.includes('finance') ||
+    cleanQuery.includes('ortho shompodok') ||
+    cleanQuery.includes('orthe shompodok') ||
+    cleanQuery.includes('অর্থ সম্পাদক') ||
+    cleanQuery.includes('কোষাধ্যক্ষ')
+  ) {
+    return {
+      id: 'leadership-finance',
+      keywords: [],
+      responseBn:
+        'ইনফিনিটি বাংলাদেশ অর্থ ও হিসাব বিভাগ:\n\n' +
+        '• **অর্থ সম্পাদক:** মোঃ শাহাদাত আলম (MD SHAHADAD ALAM)\n' +
+        '• **যুগ্ম অর্থ সম্পাদক:** মুনমুন বণিক (MUNMUN BANIK)\n' +
+        '• **যুগ্ম অর্থ সম্পাদক:** মোঃ মেহেদী হাসান (MD MEHEDI HASAN)',
+      responseEn:
+        'Infinity Bangladesh Finance & Accounts:\n\n' +
+        '• Finance Secretary: MD SHAHADAD ALAM\n' +
+        '• Joint Finance Secretaries: MUNMUN BANIK & MD MEHEDI HASAN',
+      actionCard: {
+        title: 'অর্থ ও হিসাব বিভাগ (২০২৬)',
+        subtitle: 'অর্থ সম্পাদক মোঃ শাহাদাত আলম ও যুগ্ম অর্থ সম্পাদকবৃন্দ',
+        badge: 'অর্থ বিভাগ',
+        pageRoute: 'team/executive-committee',
+        buttonLabel: 'কমিটি পেজে দেখুন',
+        variant: 'emerald'
+      }
+    };
+  }
+
+  // 8. Specialized Secretariats
+  if (cleanQuery.includes('chatri') || cleanQuery.includes('student affairs') || cleanQuery.includes('ছাত্রী')) {
+    return {
+      id: 'leadership-student-female',
+      keywords: [],
+      responseBn:
+        'ইনফিনিটি বাংলাদেশ ছাত্রী বিষয়ক বিভাগ:\n\n' +
+        '• **ছাত্রী বিষয়ক সম্পাদক:** সানজিদা শারমিন (SHANZIDA SHARMIN)\n' +
+        '• **যুগ্ম ছাত্রী বিষয়ক সম্পাদক:** সুমাইয়া ইমরোজ ও দীপা শীল',
+      responseEn:
+        'Student Affairs Secretariats (Female):\n• Secretary: SHANZIDA SHARMIN\n• Joint Secretaries: SUMAYA IMROZ & DIPA SHIL',
+      actionCard: {
+        title: 'ছাত্রী বিষয়ক বিভাগ (২০২৬)',
+        subtitle: 'সানজিদা শারমিন সহ ছাত্রী বিষয়ক সম্পাদক পরিষদ',
+        pageRoute: 'team/executive-committee',
+        buttonLabel: 'কমিটি পেজে দেখুন',
+        variant: 'emerald'
+      }
+    };
+  }
+
+  if (cleanQuery.includes('prochar') || cleanQuery.includes('publicity') || cleanQuery.includes('প্রচার')) {
+    return {
+      id: 'leadership-publicity',
+      keywords: [],
+      responseBn:
+        'ইনফিনিটি বাংলাদেশ প্রচার ও জনসংযোগ বিভাগ:\n\n' +
+        '• **প্রচার সম্পাদক:** মোঃ রমজান (MD RAMJAN)\n' +
+        '• **যুগ্ম প্রচার সম্পাদক:** রিফাত শরীফ ও সুস্মিতা রানী নাথ',
+      responseEn:
+        'Publicity & Media Secretariats:\n• Secretary: MD RAMJAN\n• Joint Secretaries: REFAT SHARIF & SUSMITA RANI NATH',
+      actionCard: {
+        title: 'প্রচার বিভাগ (২০২৬)',
+        subtitle: 'মোঃ রমজান সহ প্রচার সম্পাদক পরিষদ',
+        pageRoute: 'team/executive-committee',
+        buttonLabel: 'কমিটি পেজে দেখুন',
+        variant: 'emerald'
+      }
+    };
+  }
+
+  if (cleanQuery.includes('doptor') || cleanQuery.includes('office sec') || cleanQuery.includes('দপ্তর')) {
+    return {
+      id: 'leadership-office',
+      keywords: [],
+      responseBn: 'ইনফিনিটি বাংলাদেশ কার্যনির্বাহী পরিষদের **দপ্তর সম্পাদক:** তানভীর রানা রিয়াদ (TANVIR RANA RIYAD)।',
+      responseEn: 'Office Secretary: TANVIR RANA RIYAD (Infinity Bangladesh Executive Committee).',
+      actionCard: {
+        title: 'দপ্তর বিভাগ (২০২৬)',
+        subtitle: 'দপ্তর সম্পাদক: তানভীর রানা রিয়াদ',
+        pageRoute: 'team/executive-committee',
+        buttonLabel: 'কমিটি পেজে দেখুন',
+        variant: 'emerald'
+      }
+    };
+  }
+
+  if (cleanQuery.includes('cultural') || cleanQuery.includes('sangskritik') || cleanQuery.includes('সাংস্কৃতিক')) {
+    return {
+      id: 'leadership-cultural',
+      keywords: [],
+      responseBn: 'ইনফিনিটি বাংলাদেশ কার্যনির্বাহী পরিষদের **সাংস্কৃতিক সম্পাদক:** জয় নাথ (JOY NATH)।',
+      responseEn: 'Cultural Secretary: JOY NATH (Infinity Bangladesh Executive Committee).',
+      actionCard: {
+        title: 'সাংস্কৃতিক বিভাগ (২০২৬)',
+        subtitle: 'সাংস্কৃতিক সম্পাদক: জয় নাথ',
+        pageRoute: 'team/executive-committee',
+        buttonLabel: 'কমিটি পেজে দেখুন',
+        variant: 'emerald'
+      }
+    };
+  }
+
+  if (cleanQuery.includes('relief') || cleanQuery.includes('tran') || cleanQuery.includes('ত্রাণ') || cleanQuery.includes('দুর্যোগ')) {
+    return {
+      id: 'leadership-relief',
+      keywords: [],
+      responseBn: 'ইনফিনিটি বাংলাদেশ কার্যনির্বাহী পরিষদের **ত্রাণ ও দুর্যোগ বিষয়ক সম্পাদক:** রকিবুল করিম (RAKIBUL KARIM)।',
+      responseEn: 'Relief and Disaster Affairs Secretary: RAKIBUL KARIM (Infinity Bangladesh Executive Committee).',
+      actionCard: {
+        title: 'ত্রাণ ও দুর্যোগ বিষয়ক বিভাগ (২০২৬)',
+        subtitle: 'ত্রাণ ও দুর্যোগ সম্পাদক: রকিবুল করিম',
+        pageRoute: 'team/executive-committee',
+        buttonLabel: 'কমিটি পেজে দেখুন',
+        variant: 'emerald'
+      }
+    };
+  }
+
+  // 9. Specific Individual Name Searches
+  if (cleanQuery.includes('sakib') || cleanQuery.includes('shakib') || cleanQuery.includes('সাকিব')) {
+    return {
+      id: 'leadership-sakib',
+      keywords: [],
+      responseBn:
+        'ইনফিনিটি বাংলাদেশে "সাকিব" নামে ৪ জন সম্মানিত দায়িত্বশীল নেতা রয়েছেন:\n\n' +
+        '১. **মোঃ শহিদুল আলম সাকিব** — সভাপতি (কার্যনির্বাহী পরিষদ ২০২৬)\n' +
+        '২. **সাকিব আল করিম** — চেয়ারম্যান (কেন্দ্রীয় স্থায়ী কমিটি)\n' +
+        '৩. **মোঃ নিয়াজ উদ্দিন সাকিব** — যুগ্ম সাধারণ সম্পাদক\n' +
+        '৪. **মোঃ ইসমাইল নুর সাকিব** — যুগ্ম সাংগঠনিক সম্পাদক',
+      responseEn:
+        'Infinity Bangladesh Leaders named "Sakib":\n\n' +
+        '1. MD. SHAHIDUL ALAM SAKIB — President (Executive Committee 2026)\n' +
+        '2. Sakib Al Karim — Chairman (Central Standing Committee)\n' +
+        '3. MD. NIAJ UDDIN SAKIB — Joint General Secretary\n' +
+        '4. MD. ISMAIL NUR SAKIB — Joint Organizing Secretary',
+      actionCard: {
+        title: 'নেতৃত্ব ও কমিটি ডিরেক্টরি',
+        subtitle: 'ইনফিনিটি বাংলাদেশের সকল নেতৃবৃন্দের তালিকা',
+        badge: 'নেতৃত্ব',
+        pageRoute: 'team/executive-committee',
+        buttonLabel: 'কমিটি ও নেতৃত্ব দেখুন',
+        variant: 'emerald'
+      }
+    };
+  }
+
+  // Check aliases across 2026 executive committee
+  for (const member of EXECUTIVE_COMMITTEE_2026) {
+    for (const alias of member.aliases) {
+      if (cleanQuery.includes(alias)) {
+        return {
+          id: `leadership-member-${member.serial}`,
+          keywords: [],
+          responseBn: `**${member.nameBn} (${member.nameEn})** ইনফিনিটি বাংলাদেশ কার্যনির্বাহী পরিষদ (২০২৬)-এর **${member.positionBn} (${member.positionEn})** হিসেবে দায়িত্ব পালন করছেন।`,
+          responseEn: `**${member.nameEn} (${member.nameBn})** serves as the **${member.positionEn} (${member.positionBn})** of Infinity Bangladesh Executive Committee (2026).`,
+          actionCard: {
+            title: `${member.nameBn} — ${member.positionBn}`,
+            subtitle: `কার্যনির্বাহী পরিষদ ২০২৬ | পোর্টফোলিও দেখুন`,
+            badge: member.positionBn,
+            pageRoute: 'team/executive-committee',
+            buttonLabel: 'কমিটি পেজে দেখুন',
+            variant: 'emerald'
+          }
+        };
+      }
+    }
+  }
+
+  // Check aliases across central standing committee
+  for (const member of STANDING_COMMITTEE_CENTRAL) {
+    for (const alias of member.aliases) {
+      if (cleanQuery.includes(alias)) {
+        return {
+          id: `leadership-standing-${member.serial}`,
+          keywords: [],
+          responseBn: `**${member.nameBn} (${member.nameEn})** ইনফিনিটি বাংলাদেশ কেন্দ্রীয় স্থায়ী কমিটির **${member.positionBn} (${member.positionEn})** হিসেবে দায়িত্ব পালন করছেন।`,
+          responseEn: `**${member.nameEn} (${member.nameBn})** serves as the **${member.positionEn}** of Infinity Bangladesh Central Standing Committee.`,
+          actionCard: {
+            title: `${member.nameBn} — ${member.positionBn}`,
+            subtitle: `কেন্দ্রীয় স্থায়ী কমিটি | পলিসি ও তত্ত্বাবধান পরিষদ`,
+            badge: member.positionBn,
+            pageRoute: 'team/standing-committees',
+            buttonLabel: 'স্থায়ী কমিটি দেখুন',
+            variant: 'emerald'
+          }
+        };
+      }
+    }
+  }
+
+  // 10. Full Committee List / General Committee Query (handles 'committe te k k ache', 'sobar nam', 'committee list', etc.)
+  if (
+    cleanQuery.includes('committe') ||
+    cleanQuery.includes('committee') ||
+    cleanQuery.includes('komiti') ||
+    cleanQuery.includes('comite') ||
+    cleanQuery.includes('কমিটি') ||
+    cleanQuery.includes('নেতৃত্ব') ||
+    cleanQuery.includes('leadership') ||
+    cleanQuery.includes('sobar nam') ||
+    cleanQuery.includes('k k ache') ||
+    cleanQuery.includes('ke ke ache') ||
+    cleanQuery.includes('কে কে আছে') ||
+    cleanQuery.includes('তালিকা') ||
+    cleanQuery.includes('সদস্য')
+  ) {
+    return {
+      id: 'leadership-full',
+      keywords: [],
+      responseBn:
+        'ইনফিনিটি বাংলাদেশ কার্যনির্বাহী পরিষদ (২০২৬)-এ মোট **২৭ জন** এবং কেন্দ্রীয় স্থায়ী কমিটিতে **৯ জন** দায়িত্ব পালন করছেন:\n\n' +
+        '🏛️ **শীর্ষ নেতৃত্ব কাঠামো:**\n' +
+        '• **সভাপতি:** মোঃ শহিদুল আলম সাকিব\n' +
+        '• **সিনিয়র সহ-সভাপতি:** মোহাম্মদ ইসমাইল\n' +
+        '• **সহ-সভাপতি:** জয়নুল আবেদীন ও সোহেল আকরাম সবুজ\n' +
+        '• **সাধারণ সম্পাদক:** সেলিমুর রহমান অপি\n' +
+        '• **যুগ্ম সাধারণ সম্পাদক:** এনায়েত উল্লাহ ফরহাদ, মোঃ নিয়াজ উদ্দিন সাকিব সহ ৫ জন\n' +
+        '• **সাংগঠনিক সম্পাদক:** মোঃ আরফাত\n' +
+        '• **অর্থ সম্পাদক:** মোঃ শাহাদাত আলম\n' +
+        '• **কেন্দ্রীয় স্থায়ী কমিটির চেয়ারম্যান:** সাকিব আল করিম\n\n' +
+        'সকল ২৭ জন কার্যনির্বাহী সদস্যের ছবি ও পরিচিতি দেখতে নিচের বোতামে ক্লিক করুন।',
+      responseEn:
+        'Infinity Bangladesh is governed by a 27-member Executive Committee (2026) and a 9-member Central Standing Committee:\n\n' +
+        '🏛️ **Top Leadership Roster:**\n' +
+        '• President: MD. SHAHIDUL ALAM SAKIB\n' +
+        '• Senior Vice President: MOHAMMAD ISMAIL\n' +
+        '• Vice Presidents: JOINUL ABEDIN & SOHEL AKRAM SOBUJ\n' +
+        '• General Secretary: SALIMUR RAHMAN OPI\n' +
+        '• Organizing Secretary: MD ARFAT\n' +
+        '• Finance Secretary: MD SHAHADAD ALAM\n' +
+        '• Standing Committee Chairman: Sakib Al Karim\n\n' +
+        'View complete credentials and biographies on our leadership directory.',
+      actionCard: {
+        title: 'কার্যনির্বাহী পরিষদ (২০২৬) পূর্ণাঙ্গ তালিকা',
+        subtitle: 'সকল ২৭ জন সদস্য ও কেন্দ্রীয় স্থায়ী কমিটির পরিচিতি',
+        badge: 'নেতৃত্ব পরিষদ',
+        pageRoute: 'team/executive-committee',
+        buttonLabel: 'পূর্ণাঙ্গ কমিটি দেখুন',
+        variant: 'emerald'
+      },
+      quickPrompts: ['👑 সভাপতি কে?', '👥 সাধারণ সম্পাদক কে?', '🏛️ স্থায়ী কমিটির চেয়ারম্যান কে?']
+    };
+  }
+
+  return null;
+};
+
   // Natural Language & Intent Matcher
   const matchIntent = (query: string): KnowledgeIntent | null => {
     const cleanQuery = query.toLowerCase().trim();
 
-    // 1. Specific Blood Intent Disambiguation
+    // 1. Leadership & Committee Query Matcher (handles spelling errors like 'committe er sovapoti ke', 'shovapoti', 'gs', names)
+    const leadershipMatch = resolveLeadershipQuery(cleanQuery);
+    if (leadershipMatch) {
+      return leadershipMatch;
+    }
+
+    // 2. Specific Blood Intent Disambiguation
     if (
       cleanQuery.includes('রক্ত দিতে') ||
       cleanQuery.includes('রক্তদাতা হতে') ||
@@ -387,7 +927,7 @@ export const InfinityAgentBot: React.FC = () => {
       return KNOWLEDGE_BASE.find(i => i.id === 'blood-emergency') || null;
     }
 
-    // 2. Check for exact keyword hits
+    // 3. Check for exact keyword hits
     for (const intent of KNOWLEDGE_BASE) {
       for (const kw of intent.keywords) {
         if (cleanQuery.includes(kw.toLowerCase())) {
@@ -396,7 +936,7 @@ export const InfinityAgentBot: React.FC = () => {
       }
     }
 
-    // 3. Secondary heuristic checks
+    // 4. Secondary heuristic checks
     if (cleanQuery.includes('রক্ত') || cleanQuery.includes('blood') || cleanQuery.includes('rokto')) {
       return KNOWLEDGE_BASE.find(i => i.id === 'blood-find') || null;
     }
@@ -438,7 +978,7 @@ export const InfinityAgentBot: React.FC = () => {
           text: isBn ? matched.responseBn : matched.responseEn,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           actionCard: matched.actionCard,
-          quickPrompts: [
+          quickPrompts: matched.quickPrompts || [
             isBn ? '📋 স্বেচ্ছাসেবক আবেদন ফর্ম' : '📋 Volunteer Form',
             isBn ? '🩸 রক্তদাতা ডিরেক্টরি' : '🩸 Donor Directory',
             isBn ? '💳 অনুদান পোর্টাল' : '💳 Donation Portal'
@@ -798,7 +1338,7 @@ export const InfinityAgentBot: React.FC = () => {
                   onClick={() => handleSendMessage(isBn ? 'হেল্পলাইন' : 'Helpline')}
                   className="hover:text-[#006A4E] cursor-pointer"
                 >
-                  {isBn ? '২৪/৭ সাপোর্ট: 01886-224424' : 'Helpline: 01886-224424'}
+                  {isBn ? '২৪/৭ সাপোর্ট: 01839-008339' : 'Helpline: 01839-008339'}
                 </button>
               </div>
             </div>
