@@ -19,6 +19,7 @@ import {
   Smartphone,
   Info
 } from 'lucide-react';
+import { BkashLogo, NagadLogo, BankLogo } from '../components/PaymentLogos';
 
 export const DonatePage: React.FC = () => {
   const { isBn, tText } = useLanguage();
@@ -30,7 +31,7 @@ export const DonatePage: React.FC = () => {
   const [donorPhone, setDonorPhone] = useState('');
   const [selectedCampaign, setSelectedCampaign] = useState(campaigns[0]?.title.en || 'General Humanitarian Fund');
   const [paymentMethod, setPaymentMethod] = useState<'bKash' | 'Nagad' | 'Bank Transfer' | 'In-Kind / Physical Support'>('bKash');
-  const [amount, setAmount] = useState<number>(1000);
+  const [amount, setAmount] = useState<number | string>(1000);
   const [transactionId, setTransactionId] = useState('');
   const [note, setNote] = useState('');
 
@@ -46,8 +47,6 @@ export const DonatePage: React.FC = () => {
 
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  const presetAmounts = [500, 1000, 2500, 5000, 10000];
-
   const handleCopy = (text: string, fieldId: string) => {
     navigator.clipboard.writeText(text);
     setCopiedField(fieldId);
@@ -57,6 +56,7 @@ export const DonatePage: React.FC = () => {
   const handleDonationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    const numericAmount = Number(amount) || 0;
     const effectiveName = isAnonymous ? (isBn ? 'নাম প্রকাশে অনিচ্ছুক শুভাকাঙ্ক্ষী' : 'Anonymous Supporter') : donorName;
 
     const record = {
@@ -64,8 +64,8 @@ export const DonatePage: React.FC = () => {
       isAnonymous,
       donorEmail,
       donorPhone,
-      amount,
-      amountBDT: amount,
+      amount: numericAmount,
+      amountBDT: numericAmount,
       campaignSlug: selectedCampaign,
       paymentMethod,
       transactionId: transactionId.trim() || undefined,
@@ -77,7 +77,7 @@ export const DonatePage: React.FC = () => {
     setReceiptData({
       receiptNumber: newRecord.receiptNumber,
       donorName: effectiveName,
-      amount,
+      amount: numericAmount,
       campaign: selectedCampaign,
       date: new Date().toLocaleDateString(isBn ? 'bn-BD' : 'en-US', {
         year: 'numeric',
@@ -129,56 +129,134 @@ export const DonatePage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* bKash */}
-          <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] space-y-1 relative group">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* bKash Official Card */}
+          <div className="p-5 rounded-2xl bg-gradient-to-b from-[#FFF5F8] to-[#FFFFFF] border border-[#FAD2E1] hover:border-[#E2136E]/40 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col justify-between space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-rose-600 block">{supportSettings.bKashType || 'bKash Merchant / Personal'}</span>
-              <button
-                type="button"
-                onClick={() => handleCopy(bKashNum, 'bkash')}
-                className="text-slate-400 hover:text-rose-600 p-1"
-                title="Copy Number"
-              >
-                {copiedField === 'bkash' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-              </button>
+              <BkashLogo className="h-7 w-auto" />
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#E2136E]/10 text-[#E2136E]">
+                {supportSettings.bKashType || (isBn ? 'মার্চেন্ট / পার্সোনাল' : 'Merchant / Personal')}
+              </span>
             </div>
-            <p className="text-base font-mono font-bold text-slate-900">{bKashNum}</p>
-            <span className="text-[10px] text-slate-500">{isBn ? 'রেফারেন্স: Infinity' : 'Ref: Infinity'}</span>
+            
+            <div className="space-y-1">
+              <span className="text-[11px] font-medium text-slate-500 block">
+                {isBn ? 'বিকাশ একাউন্ট নম্বর' : 'bKash Account Number'}
+              </span>
+              <div className="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-[#F5CEDC]">
+                <span className="text-base sm:text-lg font-mono font-extrabold text-slate-900 tracking-wide">{bKashNum}</span>
+                <button
+                  type="button"
+                  onClick={() => handleCopy(bKashNum, 'bkash')}
+                  className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg bg-[#E2136E] hover:bg-[#C21359] text-white transition-colors cursor-pointer"
+                  title="Copy bKash Number"
+                >
+                  {copiedField === 'bkash' ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>{isBn ? 'কপি হয়েছে' : 'Copied'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>{isBn ? 'কপি' : 'Copy'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-rose-100/60">
+              <span>{isBn ? 'কাউন্টার / রেফারেন্স:' : 'Counter / Reference:'}</span>
+              <span className="font-semibold text-slate-700">Infinity</span>
+            </div>
           </div>
 
-          {/* Nagad */}
-          <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] space-y-1 relative group">
+          {/* Nagad Official Card */}
+          <div className="p-5 rounded-2xl bg-gradient-to-b from-[#FFF7F0] to-[#FFFFFF] border border-[#FCE1CE] hover:border-[#F7931E]/40 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col justify-between space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-amber-600 block">{supportSettings.nagadType || 'Nagad Personal'}</span>
-              <button
-                type="button"
-                onClick={() => handleCopy(nagadNum, 'nagad')}
-                className="text-slate-400 hover:text-amber-600 p-1"
-                title="Copy Number"
-              >
-                {copiedField === 'nagad' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-              </button>
+              <NagadLogo className="h-7 w-auto" />
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#ED1C24]/10 text-[#ED1C24]">
+                {supportSettings.nagadType || (isBn ? 'অফিসিয়াল পার্সোনাল' : 'Official Personal')}
+              </span>
             </div>
-            <p className="text-base font-mono font-bold text-slate-900">{nagadNum}</p>
-            <span className="text-[10px] text-slate-500">{isBn ? 'রেফারেন্স: Infinity' : 'Ref: Infinity'}</span>
+            
+            <div className="space-y-1">
+              <span className="text-[11px] font-medium text-slate-500 block">
+                {isBn ? 'নগদ একাউন্ট নম্বর' : 'Nagad Account Number'}
+              </span>
+              <div className="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-[#FAD9C4]">
+                <span className="text-base sm:text-lg font-mono font-extrabold text-slate-900 tracking-wide">{nagadNum}</span>
+                <button
+                  type="button"
+                  onClick={() => handleCopy(nagadNum, 'nagad')}
+                  className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg bg-[#ED1C24] hover:bg-[#C1272D] text-white transition-colors cursor-pointer"
+                  title="Copy Nagad Number"
+                >
+                  {copiedField === 'nagad' ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>{isBn ? 'কপি হয়েছে' : 'Copied'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>{isBn ? 'কপি' : 'Copy'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-orange-100/60">
+              <span>{isBn ? 'রেফারেন্স:' : 'Reference:'}</span>
+              <span className="font-semibold text-slate-700">Infinity</span>
+            </div>
           </div>
 
-          {/* Bank */}
-          <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] space-y-1 relative group">
+          {/* Bank Official Card */}
+          <div className="p-5 rounded-2xl bg-gradient-to-b from-[#F2F9F6] to-[#FFFFFF] border border-[#CDE5DC] hover:border-[#006A4E]/40 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col justify-between space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-[#006A4E] block">Bank Account ({bankDet.branchName || 'Chattogram'})</span>
-              <button
-                type="button"
-                onClick={() => handleCopy(`${bankDet.bankName} - ${bankDet.accountNumber}`, 'bank')}
-                className="text-slate-400 hover:text-[#006A4E] p-1"
-                title="Copy Bank Info"
-              >
-                {copiedField === 'bank' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-              </button>
+              <BankLogo className="h-7 w-auto" />
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#006A4E]/10 text-[#006A4E]">
+                {bankDet.branchName || (isBn ? 'চট্টগ্রাম শাখা' : 'Chattogram')}
+              </span>
             </div>
-            <p className="text-xs font-mono font-bold text-slate-900 truncate">{bankDet.accountName}</p>
-            <p className="text-[11px] text-slate-600">{bankDet.bankName} • {bankDet.accountNumber}</p>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-medium text-slate-500">
+                  {bankDet.bankName}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleCopy(`${bankDet.bankName} | A/C: ${bankDet.accountNumber} | Name: ${bankDet.accountName} | Branch: ${bankDet.branchName || ''}`, 'bank')}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-[#006A4E] hover:text-[#004835] cursor-pointer"
+                  title="Copy Bank Info"
+                >
+                  {copiedField === 'bank' ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-600" />
+                      <span>{isBn ? 'কপি হয়েছে' : 'Copied'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" />
+                      <span>{isBn ? 'সব কপি' : 'Copy All'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              <div className="bg-white px-3 py-2 rounded-xl border border-[#CCE3DA]">
+                <p className="text-xs font-mono font-bold text-slate-900 truncate">{bankDet.accountName}</p>
+                <p className="text-sm font-mono font-extrabold text-[#006A4E] tracking-wider">{bankDet.accountNumber}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-emerald-100/60">
+              <span>{isBn ? 'রাউটিং নং:' : 'Routing No:'}</span>
+              <span className="font-mono font-semibold text-slate-700">{bankDet.routingNumber || 'N/A'}</span>
+            </div>
           </div>
         </div>
 
@@ -207,39 +285,41 @@ export const DonatePage: React.FC = () => {
               </p>
             </div>
 
-            {/* Amount Selection */}
+            {/* Amount Selection - Free Custom Amount (No presets, full freedom) */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-800">
-                {isBn ? 'অনুদানের পরিমাণ (Amount in BDT) *' : 'Donation Amount (BDT) *'}
-              </label>
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                {presetAmounts.map(p => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setAmount(p)}
-                    className={`py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
-                      amount === p
-                        ? 'bg-[#006A4E] text-white shadow-warm-sm'
-                        : 'bg-[#FAF7F2] hover:bg-[#F2ECE1] text-slate-800 border border-[#EAE3D9]'
-                    }`}
-                  >
-                    ৳{p}
-                  </button>
-                ))}
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-slate-800">
+                  {isBn ? 'অনুদানের পরিমাণ (Amount in BDT) *' : 'Donation Amount (BDT) *'}
+                </label>
+                <span className="text-[11px] text-slate-500">
+                  {isBn ? 'যেকোনো পরিমাণ নির্ধারণ করতে পারেন' : 'Enter any amount of your choice'}
+                </span>
               </div>
 
-              <div className="pt-2">
+              <div className="relative flex items-center">
+                <div className="absolute left-4 flex items-center pointer-events-none">
+                  <span className="text-2xl sm:text-3xl font-extrabold font-serif text-[#006A4E]">৳</span>
+                </div>
                 <input
                   type="number"
-                  min="100"
+                  min="10"
+                  step="10"
                   required
                   value={amount}
-                  onChange={(e) => setAmount(Number(e.target.value))}
-                  placeholder={isBn ? 'অন্যান্য পরিমাণ লিখুন (টাকা)' : 'Custom Amount in BDT'}
-                  className="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EAE3D9] rounded-2xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
+                  onChange={(e) => setAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                  placeholder={isBn ? 'যেমন: ৫০০, ১০০০, ৫০০০...' : 'e.g. 500, 1000, 5000...'}
+                  className="w-full pl-12 pr-16 py-3.5 bg-[#FAF7F2] border-2 border-[#EAE3D9] focus:border-[#006A4E] rounded-2xl text-xl sm:text-2xl font-mono font-extrabold text-slate-900 placeholder:text-slate-400 placeholder:font-normal placeholder:text-sm focus:outline-none focus:bg-white transition-all shadow-inner"
                 />
+                <div className="absolute right-4 text-xs font-bold text-slate-400 uppercase tracking-wider pointer-events-none">
+                  BDT
+                </div>
               </div>
+
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                {isBn
+                  ? 'আপনার সামর্থ্য অনুযায়ী যেকোনো অঙ্কের অর্থ সরাসরি সুবিধাবঞ্চিত মানুষের সাহায্যে ব্যবহৃত হবে।'
+                  : 'Whatever amount you are capable of giving will be channeled directly to ground relief.'}
+              </p>
             </div>
 
             {/* Campaign Destination */}
@@ -263,26 +343,69 @@ export const DonatePage: React.FC = () => {
               </select>
             </div>
 
-            {/* Payment Method */}
-            <div className="space-y-1.5">
+            {/* Payment Method Selector with Official Visual Badges */}
+            <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-800">
-                {isBn ? 'মাধ্যম (Payment Channel) *' : 'Payment Channel *'}
+                {isBn ? 'অনুদান প্রদানের মাধ্যম (Payment Channel) *' : 'Payment Channel *'}
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {['bKash', 'Nagad', 'Bank Transfer', 'In-Kind / Physical Support'].map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setPaymentMethod(m as any)}
-                    className={`py-2 px-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
-                      paymentMethod === m
-                        ? 'bg-[#006A4E] text-white shadow-warm-sm'
-                        : 'bg-[#FAF7F2] hover:bg-[#F2ECE1] text-slate-700 border border-[#EAE3D9]'
-                    }`}
-                  >
-                    {m}
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {/* bKash */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('bKash')}
+                  className={`p-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-2 ${
+                    paymentMethod === 'bKash'
+                      ? 'border-[#E2136E] bg-[#FFF5F8] ring-2 ring-[#E2136E]/20 shadow-sm'
+                      : 'border-[#EAE3D9] bg-[#FAF7F2] hover:bg-[#F2ECE1] text-slate-700'
+                  }`}
+                >
+                  <BkashLogo className="h-5 w-auto" />
+                  <span className="text-xs font-bold text-slate-800">bKash</span>
+                </button>
+
+                {/* Nagad */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('Nagad')}
+                  className={`p-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-2 ${
+                    paymentMethod === 'Nagad'
+                      ? 'border-[#ED1C24] bg-[#FFF7F0] ring-2 ring-[#ED1C24]/20 shadow-sm'
+                      : 'border-[#EAE3D9] bg-[#FAF7F2] hover:bg-[#F2ECE1] text-slate-700'
+                  }`}
+                >
+                  <NagadLogo className="h-5 w-auto" />
+                  <span className="text-xs font-bold text-slate-800">{isBn ? 'নগদ' : 'Nagad'}</span>
+                </button>
+
+                {/* Bank */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('Bank Transfer')}
+                  className={`p-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-2 ${
+                    paymentMethod === 'Bank Transfer'
+                      ? 'border-[#006A4E] bg-[#F2F9F6] ring-2 ring-[#006A4E]/20 shadow-sm'
+                      : 'border-[#EAE3D9] bg-[#FAF7F2] hover:bg-[#F2ECE1] text-slate-700'
+                  }`}
+                >
+                  <BankLogo className="h-5 w-auto" />
+                  <span className="text-xs font-bold text-slate-800">{isBn ? 'ব্যাংক হিসাব' : 'Bank'}</span>
+                </button>
+
+                {/* In-Kind */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('In-Kind / Physical Support')}
+                  className={`p-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-2 ${
+                    paymentMethod === 'In-Kind / Physical Support'
+                      ? 'border-amber-600 bg-amber-50/70 ring-2 ring-amber-600/20 shadow-sm'
+                      : 'border-[#EAE3D9] bg-[#FAF7F2] hover:bg-[#F2ECE1] text-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 text-amber-700">
+                    <Building className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-800">{isBn ? 'সরাসরি পণ্য/সাহায্য' : 'In-Kind Aid'}</span>
+                </button>
               </div>
             </div>
 
