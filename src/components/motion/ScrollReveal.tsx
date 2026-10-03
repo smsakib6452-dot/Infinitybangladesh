@@ -32,10 +32,15 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
     return <div className={className}>{children}</div>;
   }
 
+  // On mobile screens (<640px), horizontal sliding causes temporary horizontal viewport scrolling
+  // Convert horizontal slide to subtle fade-up on mobile for zero horizontal overflow
+  const isMobile = typeof window !== 'undefined' ? window.innerWidth < 640 : false;
+  const safeEffect = isMobile && (effect === 'slide-right' || effect === 'slide-left') ? 'fade-up' : effect;
+
   const getInitial = () => {
-    switch (effect) {
+    switch (safeEffect) {
       case 'fade-up':
-        return { opacity: 0, y: distance };
+        return { opacity: 0, y: isMobile ? 12 : distance };
       case 'fade-in':
         return { opacity: 0 };
       case 'scale-up':
@@ -45,12 +50,12 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
       case 'slide-left':
         return { opacity: 0, x: distance };
       default:
-        return { opacity: 0, y: distance };
+        return { opacity: 0, y: isMobile ? 12 : distance };
     }
   };
 
   const getAnimate = () => {
-    switch (effect) {
+    switch (safeEffect) {
       case 'fade-up':
         return { opacity: 1, y: 0 };
       case 'fade-in':

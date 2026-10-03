@@ -47,12 +47,19 @@ export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       const parts = hashPath.split('/');
       if (parts.length === 1) {
-        if (
-          parts[0] === 'team' ||
-          parts[0] === 'executive-committee' ||
-          parts[0] === 'standing-committee' ||
-          parts[0] === 'past-committees'
-        ) {
+        if (parts[0] === 'standing-committee' || parts[0] === 'standing-committees') {
+          setCurrentPage('about/standing-committees');
+          setCurrentSlug(queryParamSlug);
+          setSubSlug(null);
+        } else if (parts[0] === 'executive-committee') {
+          setCurrentPage('about/executive-committee');
+          setCurrentSlug(queryParamSlug);
+          setSubSlug(null);
+        } else if (parts[0] === 'past-committees') {
+          setCurrentPage('about/past-committees');
+          setCurrentSlug(queryParamSlug);
+          setSubSlug(null);
+        } else if (parts[0] === 'team') {
           setCurrentPage('team');
           setCurrentSlug(queryParamSlug);
           setSubSlug(null);

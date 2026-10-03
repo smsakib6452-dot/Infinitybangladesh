@@ -132,7 +132,7 @@ export const GalleryPage: React.FC = () => {
   }, [allPhotos, selectedEventId, activeEvent, eventMediaList, activeCategory, searchQuery]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-10 sm:space-y-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-10 sm:space-y-12 overflow-x-hidden">
       {/* Header Banner */}
       <ScrollReveal effect="fade-up">
         <div className="text-center space-y-4 max-w-3xl mx-auto">
@@ -224,9 +224,9 @@ export const GalleryPage: React.FC = () => {
       )}
 
       {/* Filter Tabs & Search Bar */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-2">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-2 w-full max-w-full overflow-hidden">
         {/* Dynamic Category Filter Pills + Event Selector */}
-        <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+        <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 w-full max-w-full">
           {/* Event Dropdown selector if multiple events exist */}
           {programEvents.length > 0 && (
             <select
@@ -239,7 +239,7 @@ export const GalleryPage: React.FC = () => {
                   navigate('gallery');
                 }
               }}
-              className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-white border border-[#EAE3D9] text-slate-700 hover:border-[#006A4E] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#006A4E]"
+              className="w-full sm:w-auto max-w-full sm:max-w-xs truncate px-3.5 py-2 rounded-2xl text-xs font-bold bg-white border border-[#EAE3D9] text-slate-700 hover:border-[#006A4E] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#006A4E]"
             >
               <option value="">{isBn ? '🎯 সকল ইভেন্ট / আসর' : '🎯 All Events / Editions'}</option>
               {programEvents.map(pe => (

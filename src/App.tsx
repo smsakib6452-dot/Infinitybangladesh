@@ -10,7 +10,6 @@ import { AdminErrorBoundary } from './components/AdminErrorBoundary';
 import { ScrollProgressBar } from './components/motion/ScrollProgressBar';
 import { BackToTopButton } from './components/motion/BackToTopButton';
 import { PageTransition } from './components/motion/PageTransition';
-import { CustomCursor } from './components/motion/CustomCursor';
 import { InfinityAgentBot } from './components/InfinityAgentBot';
 
 import { lazyWithRetry } from './lib/utils/lazyWithRetry';
@@ -85,12 +84,17 @@ const AppContent: React.FC = () => {
         return <AboutPage initialTab="team" />;
       case 'team':
         return <TeamOverviewPage />;
+      case 'executive-committee':
       case 'team/executive-committee':
       case 'about/executive-committee':
         return <ExecutiveCommitteePage />;
+      case 'standing-committees':
+      case 'standing-committee':
       case 'team/standing-committee':
+      case 'team/standing-committees':
       case 'about/standing-committees':
         return <StandingCommitteesPage />;
+      case 'past-committees':
       case 'team/past-committees':
       case 'about/past-committees':
         return <PastCommitteesPage />;
@@ -162,10 +166,7 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#0F172A] selection:bg-[#006A4E]/15 selection:text-[#006A4E]">
-      {/* Desktop Custom Interactive Cursor (auto-disabled on touch & reduced motion) */}
-      <CustomCursor />
-
+    <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#0F172A] selection:bg-[#006A4E]/15 selection:text-[#006A4E] overflow-x-hidden">
       {/* Global Scroll Progress Bar */}
       <ScrollProgressBar />
 
@@ -173,7 +174,7 @@ const AppContent: React.FC = () => {
       <Navbar />
 
       {/* Main Routed Content with Smooth Fast Page Transition */}
-      <main className="flex-1">
+      <main className="flex-1 overflow-x-hidden">
         <AdminErrorBoundary fallbackTitle="Page Load Notice">
           <PageTransition pageKey={currentPage}>
             <React.Suspense fallback={<PageSkeleton />}>

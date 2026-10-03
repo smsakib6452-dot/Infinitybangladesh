@@ -140,8 +140,11 @@ export const Navbar: React.FC = () => {
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#006A4E] text-white shrink-0 tracking-wider shadow-sm">
                 OFFICIAL
               </span>
-              <span className="truncate text-emerald-200/95 text-xs font-medium">
+              <span className="truncate text-emerald-200/95 text-xs font-medium hidden sm:inline">
                 {tText(headerSettings.noticeBarText)}
+              </span>
+              <span className="truncate text-emerald-200/95 text-[11px] font-medium sm:hidden">
+                {isBn ? 'ইনফিনিটি বাংলাদেশ • প্রতিষ্ঠা ২০১৫' : 'Infinity Bangladesh • Est. 2015'}
               </span>
             </div>
 
