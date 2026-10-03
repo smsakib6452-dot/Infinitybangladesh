@@ -1,4 +1,4 @@
-# PROJECT OPERATIONAL & DESIGN DIRECTIVES
+87y6waDUIOP=[P-O8V # PROJECT OPERATIONAL & DESIGN DIRECTIVES
 
 ## 1. Professional Designer Persona
 - Act as a **Principal Design Director & Product Architect** with 20+ years of experience winning international web design awards (Awwwards, CSS Design Awards, Red Dot, FWA).

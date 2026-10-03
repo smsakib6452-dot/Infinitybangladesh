@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import {
-  Bot,
   Sparkles,
   X,
   Send,
@@ -321,8 +320,8 @@ export const InfinityAgentBot: React.FC = () => {
       id: 'welcome',
       sender: 'bot',
       text: isBn
-        ? 'আসসালামু আলাইকুম! আমি ইনফিনিটি বাংলাদেশের স্মার্ট সহকারী (AI Agent)। সংগঠনের যেকোনো তথ্য, ক্যাম্পেইন, ১০০% চ্যারিটি মডেল, অডিট রিপোর্ট, স্বেচ্ছাসেবী আবেদন ফর্ম কিংবা জরুরি রক্তের প্রয়োজনে আমি আপনাকে তাৎক্ষণিক সহায়তা করতে পারি।'
-        : 'Welcome! I am the Infinity Bangladesh AI Assistant. Ask me anything about our mission, 100% charity model, volunteer application forms, emergency blood, campaigns, or audit reports.',
+        ? 'আসসালামু আলাইকুম! আমি Infi Robot — ইনফিনিটি বাংলাদেশের মানবিক এআই সহকারী। সংগঠনের যেকোনো তথ্য, ক্যাম্পেইন, ১০০% চ্যারিটি মডেল, অডিট রিপোর্ট, স্বেচ্ছাসেবী আবেদন ফর্ম কিংবা জরুরি রক্তের প্রয়োজনে আমি আপনাকে তাৎক্ষণিক সহায়তা করতে পারি।'
+        : 'Welcome! I am Infi Robot — Infinity Bangladesh’s official humanitarian AI companion. Ask me anything about our mission, 100% charity model, volunteer application forms, emergency blood, campaigns, or audit reports.',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       quickPrompts: [
         isBn ? '🩸 জরুরি রক্ত প্রয়োজন' : '🩸 Need Emergency Blood',
@@ -476,8 +475,8 @@ export const InfinityAgentBot: React.FC = () => {
           onClick={() => setIsOpen(prev => !prev)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          aria-label="Open Infinity AI Assistant"
-          className="relative group p-4 rounded-3xl bg-gradient-to-tr from-[#006A4E] to-[#0F4C3A] text-white shadow-warm-xl border border-emerald-400/30 flex items-center justify-center cursor-pointer transition-all hover:shadow-[0_12px_30px_rgba(0,106,78,0.35)]"
+          aria-label={isBn ? 'ইনফি রোবট খুলুন' : 'Open Infi Robot'}
+          className="relative group p-2.5 sm:px-4 sm:py-2.5 rounded-full bg-gradient-to-r from-[#006A4E] to-[#0A4E3B] text-white shadow-warm-xl border border-emerald-400/40 flex items-center justify-center gap-2.5 cursor-pointer transition-all hover:shadow-[0_12px_30px_rgba(0,106,78,0.4)]"
         >
           {/* Active Pulse Ring */}
           <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
@@ -493,6 +492,7 @@ export const InfinityAgentBot: React.FC = () => {
                 animate={{ rotate: 0, opacity: 1 }}
                 exit={{ rotate: 90, opacity: 0 }}
                 transition={{ duration: 0.15 }}
+                className="p-1 sm:p-0.5"
               >
                 <X className="w-6 h-6" />
               </motion.div>
@@ -503,12 +503,23 @@ export const InfinityAgentBot: React.FC = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.7, opacity: 0 }}
                 transition={{ duration: 0.15 }}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2.5"
               >
-                <Bot className="w-6 h-6" />
-                <span className="hidden md:inline font-bold text-xs tracking-wide pr-1">
-                  {isBn ? 'ইনফিনিটি সহকারী' : 'AI Assistant'}
-                </span>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden border-2 border-emerald-300 shadow-xs shrink-0 bg-white">
+                  <img
+                    src="/brand/infi-robot.png"
+                    alt="Infi Robot"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="hidden sm:flex flex-col text-left pr-1">
+                  <span className="font-bold text-xs tracking-wide leading-tight">
+                    {isBn ? 'ইনফি রোবট' : 'Infi Robot'}
+                  </span>
+                  <span className="text-[10px] text-emerald-200/90 font-medium leading-tight">
+                    {isBn ? 'এআই সহকারী' : 'AI Assistant'}
+                  </span>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -526,15 +537,19 @@ export const InfinityAgentBot: React.FC = () => {
             className="fixed bottom-24 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-[420px] max-w-[430px] h-[580px] max-h-[82vh] bg-white/95 backdrop-blur-xl rounded-3xl border border-[#EAE3D9] shadow-2xl flex flex-col overflow-hidden text-slate-800"
           >
             {/* Header */}
-            <div className="px-5 py-4 bg-gradient-to-r from-[#006A4E] to-[#0F4C3A] text-white flex items-center justify-between shadow-sm shrink-0">
+            <div className="px-5 py-4 bg-gradient-to-r from-[#006A4E] to-[#0A4E3B] text-white flex items-center justify-between shadow-sm shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center shrink-0 shadow-inner">
-                  <Bot className="w-5 h-5 text-emerald-200" />
+                <div className="w-11 h-11 rounded-2xl overflow-hidden border-2 border-emerald-300/40 shadow-inner shrink-0 bg-white p-0.5">
+                  <img
+                    src="/brand/infi-robot.png"
+                    alt="Infi Robot"
+                    className="w-full h-full object-cover rounded-xl"
+                  />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-sm tracking-tight font-display">
-                      {isBn ? 'ইনফিনিটি স্মার্ট সহকারী' : 'Infinity AI Navigator'}
+                      {isBn ? 'ইনফি রোবট (Infi Robot)' : 'Infi Robot'}
                     </h3>
                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 text-[10px] font-semibold border border-emerald-400/30">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -542,7 +557,7 @@ export const InfinityAgentBot: React.FC = () => {
                     </span>
                   </div>
                   <p className="text-[11px] text-emerald-100/80 line-clamp-1">
-                    {isBn ? 'সংগঠনের সকল তথ্য ও সরাসরি ফর্ম সহায়ক' : 'Official Portal Guide & Form Assistant'}
+                    {isBn ? 'মানবিক এআই সহকারী • ২৪/৭ পোর্টাল গাইড' : 'Humanitarian AI Assistant • 24/7 Portal Guide'}
                   </p>
                 </div>
               </div>
@@ -559,7 +574,7 @@ export const InfinityAgentBot: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  aria-label="Close Assistant"
+                  aria-label={isBn ? 'সহকারী বন্ধ করুন' : 'Close Assistant'}
                   className="p-2 rounded-xl text-emerald-100 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                 >
                   <X className="w-5 h-5" />
@@ -574,101 +589,123 @@ export const InfinityAgentBot: React.FC = () => {
                 return (
                   <div
                     key={msg.id}
-                    className={`flex flex-col ${isBot ? 'items-start' : 'items-end'} space-y-1.5`}
+                    className={`flex gap-2.5 ${isBot ? 'items-start' : 'items-end justify-end'}`}
                   >
+                    {isBot && (
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden border border-emerald-300/60 shadow-xs shrink-0 mt-0.5 bg-white">
+                        <img
+                          src="/brand/infi-robot.png"
+                          alt="Infi Robot"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
                     <div
-                      className={`max-w-[88%] rounded-2xl px-4 py-3 leading-relaxed shadow-warm-xs ${
-                        isBot
-                          ? 'bg-white border border-[#EAE3D9] text-slate-800 rounded-tl-sm'
-                          : 'bg-[#006A4E] text-white rounded-tr-sm'
-                      }`}
+                      className={`flex flex-col ${isBot ? 'items-start' : 'items-end'} space-y-1.5 max-w-[85%]`}
                     >
-                      <p className="whitespace-pre-line">{msg.text}</p>
-                    </div>
+                      <div
+                        className={`rounded-2xl px-4 py-3 leading-relaxed shadow-warm-xs ${
+                          isBot
+                            ? 'bg-white border border-[#EAE3D9] text-slate-800 rounded-tl-sm'
+                            : 'bg-[#006A4E] text-white rounded-tr-sm'
+                        }`}
+                      >
+                        <p className="whitespace-pre-line">{msg.text}</p>
+                      </div>
 
-                    {/* Action Card Attachment */}
-                    {msg.actionCard && (
-                      <div className="max-w-[92%] w-full mt-2 p-3.5 rounded-2xl bg-white border border-[#EAE3D9] shadow-warm-sm space-y-2.5">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            {msg.actionCard.badge && (
-                              <span
-                                className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider mb-1 ${
-                                  msg.actionCard.variant === 'crimson'
-                                    ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                                    : msg.actionCard.variant === 'amber'
-                                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                    : 'bg-emerald-50 text-[#006A4E] border border-emerald-200'
-                                }`}
+                      {/* Action Card Attachment */}
+                      {msg.actionCard && (
+                        <div className="w-full mt-2 p-3.5 rounded-2xl bg-white border border-[#EAE3D9] shadow-warm-sm space-y-2.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              {msg.actionCard.badge && (
+                                <span
+                                  className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider mb-1 ${
+                                    msg.actionCard.variant === 'crimson'
+                                      ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                      : msg.actionCard.variant === 'amber'
+                                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                      : 'bg-emerald-50 text-[#006A4E] border border-emerald-200'
+                                  }`}
+                                >
+                                  {msg.actionCard.badge}
+                                </span>
+                              )}
+                              <h4 className="font-bold text-xs sm:text-sm text-slate-900 leading-snug">
+                                {msg.actionCard.title}
+                              </h4>
+                              <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">
+                                {msg.actionCard.subtitle}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
+                            <button
+                              type="button"
+                              onClick={() => handleActionClick(msg.actionCard!)}
+                              className={`w-full py-2 px-3 rounded-xl text-xs font-bold transition-all shadow-warm-xs flex items-center justify-center gap-1.5 cursor-pointer ${
+                                msg.actionCard.variant === 'crimson'
+                                  ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                                  : msg.actionCard.variant === 'amber'
+                                  ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                                  : 'bg-[#006A4E] hover:bg-[#00523C] text-white'
+                              }`}
+                            >
+                              <span>{msg.actionCard.buttonLabel}</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+
+                            {msg.actionCard.phoneCall && (
+                              <a
+                                href={`tel:${msg.actionCard.phoneCall}`}
+                                className="w-full py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                               >
-                                {msg.actionCard.badge}
-                              </span>
+                                <Phone className="w-3 h-3 text-[#006A4E]" />
+                                <span>হটলাইনে সরাসরি কল করুন ({msg.actionCard.phoneCall})</span>
+                              </a>
                             )}
-                            <h4 className="font-bold text-xs sm:text-sm text-slate-900 leading-snug">
-                              {msg.actionCard.title}
-                            </h4>
-                            <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">
-                              {msg.actionCard.subtitle}
-                            </p>
                           </div>
                         </div>
+                      )}
 
-                        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
-                          <button
-                            type="button"
-                            onClick={() => handleActionClick(msg.actionCard!)}
-                            className={`w-full py-2 px-3 rounded-xl text-xs font-bold transition-all shadow-warm-xs flex items-center justify-center gap-1.5 cursor-pointer ${
-                              msg.actionCard.variant === 'crimson'
-                                ? 'bg-rose-600 hover:bg-rose-700 text-white'
-                                : msg.actionCard.variant === 'amber'
-                                ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                                : 'bg-[#006A4E] hover:bg-[#00523C] text-white'
-                            }`}
-                          >
-                            <span>{msg.actionCard.buttonLabel}</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </button>
-
-                          {msg.actionCard.phoneCall && (
-                            <a
-                              href={`tel:${msg.actionCard.phoneCall}`}
-                              className="w-full py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      {/* Quick Suggestions Chips */}
+                      {msg.quickPrompts && msg.quickPrompts.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1.5 max-w-[95%]">
+                          {msg.quickPrompts.map((chip, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => handleSendMessage(chip)}
+                              className="px-2.5 py-1 rounded-xl bg-white border border-[#EAE3D9] text-[11px] font-medium text-slate-700 hover:bg-[#FAF7F2] hover:text-[#006A4E] hover:border-[#006A4E]/40 transition-all shadow-warm-xs cursor-pointer flex items-center gap-1"
                             >
-                              <Phone className="w-3 h-3 text-[#006A4E]" />
-                              <span>হটলাইনে সরাসরি কল করুন ({msg.actionCard.phoneCall})</span>
-                            </a>
-                          )}
+                              <span>{chip}</span>
+                            </button>
+                          ))}
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Quick Suggestions Chips */}
-                    {msg.quickPrompts && msg.quickPrompts.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pt-1.5 max-w-[95%]">
-                        {msg.quickPrompts.map((chip, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => handleSendMessage(chip)}
-                            className="px-2.5 py-1 rounded-xl bg-white border border-[#EAE3D9] text-[11px] font-medium text-slate-700 hover:bg-[#FAF7F2] hover:text-[#006A4E] hover:border-[#006A4E]/40 transition-all shadow-warm-xs cursor-pointer flex items-center gap-1"
-                          >
-                            <span>{chip}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    <span className="text-[10px] text-slate-400 px-1">{msg.timestamp}</span>
+                      <span className="text-[10px] text-slate-400 px-1">{msg.timestamp}</span>
+                    </div>
                   </div>
                 );
               })}
 
               {/* Bot Typing Indicator */}
               {isTyping && (
-                <div className="flex items-center gap-2 p-3 bg-white border border-[#EAE3D9] rounded-2xl rounded-tl-sm w-20 shadow-warm-xs">
-                  <span className="w-2 h-2 rounded-full bg-[#006A4E] animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-[#006A4E] animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-[#006A4E] animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden border border-emerald-300/60 shadow-xs shrink-0 bg-white">
+                    <img
+                      src="/brand/infi-robot.png"
+                      alt="Infi Robot"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5 p-3 bg-white border border-[#EAE3D9] rounded-2xl rounded-tl-sm w-18 shadow-warm-xs">
+                    <span className="w-2 h-2 rounded-full bg-[#006A4E] animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 rounded-full bg-[#006A4E] animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-2 h-2 rounded-full bg-[#006A4E] animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
                 </div>
               )}
 
