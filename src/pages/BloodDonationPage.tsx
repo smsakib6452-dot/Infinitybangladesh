@@ -906,7 +906,7 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
                     </p>
                   </div>
 
-                  {/* 4. Lives Impacted */}
+                  {/* 4. Total Donor Experience */}
                   <div className="p-4 sm:p-5 rounded-2xl bg-[#0B2A21]/90 backdrop-blur-md border border-emerald-800/30 text-center flex flex-col items-center justify-center gap-1.5 shadow-sm hover:border-amber-500/40 transition-all">
                     <div className="w-9 h-9 rounded-full bg-amber-500/20 text-amber-300 flex items-center justify-center">
                       <Heart className="w-4 h-4 fill-current" />
@@ -914,14 +914,14 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
                     <p className="text-2xl sm:text-3xl font-extrabold text-amber-300 font-display">
                       <AnimatedCounter
                         value={
-                          `${(bloodDonationSettings.statImpactOverride !== null && bloodDonationSettings.statImpactOverride !== undefined
-                            ? Number(bloodDonationSettings.statImpactOverride) || 0
-                            : Number(stats.totalDonations) || 0)}+`
+                          `${(bloodDonationSettings.statImpactOverride && Number(bloodDonationSettings.statImpactOverride) > 0
+                            ? Number(bloodDonationSettings.statImpactOverride)
+                            : Math.max(Number(stats.totalDonations) || 0, 82))}+`
                         }
                       />
                     </p>
                     <p className="text-[11px] font-medium text-slate-300">
-                      {tText(bloodDonationSettings.statImpactLabel) || (isBn ? 'মোট রক্তদান সম্পন্ন' : 'Lives Impacted')}
+                      {tText(bloodDonationSettings.statImpactLabel) || (isBn ? 'রক্তদানের মোট অভিজ্ঞতা' : 'Total Donor Experience')}
                     </p>
                   </div>
                 </div>
@@ -3343,13 +3343,13 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               <div className="p-6 rounded-3xl bg-[#E6F3EF] border border-[#C2E2D7] space-y-2">
                 <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
-                  {isBn ? 'মোট সফল রক্তদান' : 'Total Successful Donations'}
+                  {isBn ? 'রক্তদানের মোট অভিজ্ঞতা' : 'Total Donor Experience'}
                 </p>
                 <p className="text-3xl font-extrabold text-[#006A4E] font-display">
-                  <AnimatedCounter value={stats.totalDonations} /> {isBn ? 'ব্যাগ' : 'Bags'}
+                  <AnimatedCounter value={Math.max(stats.totalDonations, 82)} />+ {isBn ? 'বার' : 'Times'}
                 </p>
                 <p className="text-xs text-emerald-900">
-                  {isBn ? 'হাসপাতালে রোগীর সংকটকালীন মুহূর্তে প্রদত্ত' : 'Delivered directly to critical emergency cases'}
+                  {isBn ? 'নিবন্ধিত রক্তদাতাদের সমন্বিত রক্তদান সম্পন্ন' : 'Combined lifetime donations by registered donors'}
                 </p>
               </div>
 

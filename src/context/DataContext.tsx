@@ -1592,6 +1592,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             ? prevLocal.wingLogoUrl 
             : (remoteLogo || prevLocal.wingLogoUrl || INITIAL_BLOOD_SETTINGS.wingLogoUrl);
 
+          const isOldImpactLabel = !bSettingsData.stat_impact_label || 
+            bSettingsData.stat_impact_label.en === 'Lives Impacted' || 
+            bSettingsData.stat_impact_label === 'Lives Impacted';
+          const resolvedImpactLabel = isOldImpactLabel ? INITIAL_BLOOD_SETTINGS.statImpactLabel : (bSettingsData.stat_impact_label || INITIAL_BLOOD_SETTINGS.statImpactLabel);
+          const resolvedImpactOverride = bSettingsData.stat_impact_override && Number(bSettingsData.stat_impact_override) > 0 
+            ? Number(bSettingsData.stat_impact_override) 
+            : null;
+
           const remoteBSettings: BloodDonationSettings = {
             ...INITIAL_BLOOD_SETTINGS,
             ...prevLocal,
@@ -1611,10 +1619,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             statActiveDonorsLabel: prevLocal.statActiveDonorsLabel?.bn ? prevLocal.statActiveDonorsLabel : (bSettingsData.stat_active_donors_label || prevLocal.statActiveDonorsLabel),
             statGroupsLabel: prevLocal.statGroupsLabel?.bn ? prevLocal.statGroupsLabel : (bSettingsData.stat_groups_label || prevLocal.statGroupsLabel),
             statGroupsValue: prevLocal.statGroupsValue || bSettingsData.stat_groups_value || INITIAL_BLOOD_SETTINGS.statGroupsValue,
-            statImpactLabel: prevLocal.statImpactLabel?.bn ? prevLocal.statImpactLabel : (bSettingsData.stat_impact_label || prevLocal.statImpactLabel),
+            statImpactLabel: resolvedImpactLabel,
             statTotalDonorsOverride: prevLocal.statTotalDonorsOverride ?? bSettingsData.stat_total_donors_override ?? null,
             statActiveDonorsOverride: prevLocal.statActiveDonorsOverride ?? bSettingsData.stat_active_donors_override ?? null,
-            statImpactOverride: prevLocal.statImpactOverride ?? bSettingsData.stat_impact_override ?? null,
+            statImpactOverride: resolvedImpactOverride,
             emergencyHelpline: prevLocal.emergencyHelpline || bSettingsData.emergency_helpline || INITIAL_BLOOD_SETTINGS.emergencyHelpline,
             helplineLabel: prevLocal.helplineLabel?.bn ? prevLocal.helplineLabel : (bSettingsData.helpline_label || prevLocal.helplineLabel),
             coordinationEmail: prevLocal.coordinationEmail || bSettingsData.coordination_email || INITIAL_BLOOD_SETTINGS.coordinationEmail,

@@ -533,8 +533,8 @@ export const INITIAL_BLOOD_SETTINGS: BloodDonationSettings = {
   },
   statGroupsValue: '8/8',
   statImpactLabel: {
-    en: 'Lives Impacted',
-    bn: 'মোট রক্তদান সম্পন্ন'
+    en: 'Total Donor Experience',
+    bn: 'রক্তদানের মোট অভিজ্ঞতা'
   },
   statTotalDonorsOverride: null,
   statActiveDonorsOverride: null,
