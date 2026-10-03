@@ -1,0 +1,53 @@
+name: Keep Supabase Active
+
+on:
+  schedule:
+    # Runs at 06:00 UTC (12:00 PM BST) every 3 days to keep Supabase free tier from pausing
+    - cron: '0 6 */3 * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions UI anytime
+
+jobs:
+  ping-supabase:
+    name: Ping Supabase Database
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send keep-alive queries to Supabase
+        run: |
+          SUPABASE_URL="${{ secrets.VITE_SUPABASE_URL || secrets.SUPABASE_URL || 'https://pzpnphgnexfaxxaorqsq.supabase.co' }}"
+          SUPABASE_KEY="${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY || 'sb_publishable_Vqapvc2C91UpllwvFevK9w_OJPdTi3V' }}"
+          
+          echo "=============================================="
+          echo "Keeping Supabase alive: $SUPABASE_URL"
+          echo "Timestamp: $(date -u)"
+          echo "=============================================="
+
+          # Ping 1: Query site_settings
+          echo "Executing ping 1 (site_settings)..."
+          HTTP_STATUS_1=$(curl -s -o /tmp/resp_settings.json -w "%{http_code}" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            "$SUPABASE_URL/rest/v1/site_settings?select=id&limit=1")
+
+          echo "site_settings HTTP Status: $HTTP_STATUS_1"
+
+          # Ping 2: Query blood_donors
+          echo "Executing ping 2 (blood_donors)..."
+          HTTP_STATUS_2=$(curl -s -o /tmp/resp_donors.json -w "%{http_code}" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            "$SUPABASE_URL/rest/v1/blood_donors?select=id&limit=1")
+
+          echo "blood_donors HTTP Status: $HTTP_STATUS_2"
+
+          if [ "$HTTP_STATUS_1" -ge 200 ] && [ "$HTTP_STATUS_1" -lt 400 ]; then
+            echo "✅ Supabase is active and responding successfully!"
+            exit 0
+          elif [ "$HTTP_STATUS_2" -ge 200 ] && [ "$HTTP_STATUS_2" -lt 400 ]; then
+            echo "✅ Supabase is active and responding successfully!"
+            exit 0
+          else
+            echo "⚠️ Warning: Ping failed with status $HTTP_STATUS_1 / $HTTP_STATUS_2."
+            echo "Response: $(cat /tmp/resp_settings.json 2>/dev/null || echo 'No response body')"
+            echo "If your project is currently Paused in Supabase Dashboard, please click 'Restore project' once."
+            exit 1
+          fi
