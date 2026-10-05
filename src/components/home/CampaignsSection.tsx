@@ -40,37 +40,37 @@ export const CampaignsSection: React.FC<CampaignsSectionProps> = ({
       <div className="space-y-8">
         {featuredCampaign && (
           <ScrollReveal effect="fade-up">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-white rounded-[2.5rem] border border-[#EAE3D9] p-6 sm:p-8 lg:p-10 shadow-warm-md">
-              <div className="lg:col-span-6 space-y-4 text-left">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-[#006A4E] text-xs font-extrabold border border-emerald-200">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center bg-white rounded-3xl sm:rounded-[2.5rem] border border-[#EAE3D9] p-4.5 sm:p-8 lg:p-10 shadow-warm-md">
+              <div className="lg:col-span-6 space-y-3 sm:space-y-4 text-left">
+                <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-emerald-50 text-[#006A4E] text-[11px] sm:text-xs font-extrabold border border-emerald-200">
+                  <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-500" />
                   <span>{tText(campaignsSection?.featuredBadgeText) || (isBn ? 'বিশেষ ফিচার্ড ক্যাম্পেইন' : 'Featured Campaign')}</span>
                 </div>
 
-                <h3 className="text-xl sm:text-3xl font-extrabold text-slate-900 font-display">
+                <h3 className="text-lg sm:text-2xl lg:text-3xl font-extrabold text-slate-900 font-display leading-snug sm:leading-tight">
                   {tText(featuredCampaign.title)}
                 </h3>
 
-                <p className="text-sm sm:text-base text-slate-700 leading-relaxed font-normal">
+                <p className="text-xs sm:text-base text-slate-700 leading-relaxed font-normal">
                   {tText(featuredCampaign.description)}
                 </p>
 
-                <div className="pt-2 flex flex-wrap items-center gap-3">
+                <div className="pt-1 sm:pt-2 flex flex-row items-center gap-2 sm:gap-3">
                   <Link
                     to={campaignsSection?.featuredDetailsUrl || "campaigns/detail"}
                     slug={featuredCampaign.slug}
-                    className="px-6 py-3 rounded-2xl bg-[#006A4E] hover:bg-[#00523C] text-white text-xs sm:text-sm font-bold shadow-warm-sm transition-all flex items-center gap-2 cursor-pointer"
+                    className="flex-1 sm:flex-initial px-3.5 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-[#006A4E] hover:bg-[#00523C] text-white text-[11px] sm:text-sm font-bold shadow-warm-xs transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer text-center"
                   >
-                    <span>{tText(campaignsSection?.featuredDetailsText) || (isBn ? 'ক্যাম্পেইন বিবরণ দেখুন' : 'View Campaign Details')}</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <span className="truncate">{tText(campaignsSection?.featuredDetailsText) || (isBn ? 'বিবরণ দেখুন' : 'View Details')}</span>
+                    <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                   </Link>
 
                   <Link
                     to={campaignsSection?.featuredSupportUrl || "donate"}
-                    className="px-6 py-3 rounded-2xl bg-[#FAF7F2] hover:bg-[#F2ECE1] text-slate-800 text-xs sm:text-sm font-bold border border-[#EAE3D9] transition-all flex items-center gap-2 cursor-pointer"
+                    className="flex-1 sm:flex-initial px-3 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-[#FAF7F2] hover:bg-[#F2ECE1] text-slate-800 text-[11px] sm:text-sm font-bold border border-[#EAE3D9] transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer text-center whitespace-nowrap"
                   >
-                    <Heart className="w-4 h-4 text-rose-500 fill-rose-500" />
-                    <span>{tText(campaignsSection?.featuredSupportText) || (isBn ? 'সহায়তা করুন' : 'Support Campaign')}</span>
+                    <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 shrink-0" />
+                    <span className="truncate">{tText(campaignsSection?.featuredSupportText) || (isBn ? 'সহায়তা করুন' : 'Support')}</span>
                   </Link>
                 </div>
               </div>

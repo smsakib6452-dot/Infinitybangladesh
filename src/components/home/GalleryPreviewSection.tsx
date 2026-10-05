@@ -64,10 +64,10 @@ export const GalleryPreviewSection: React.FC<GalleryPreviewSectionProps> = ({
         ))}
       </StaggerGroup>
 
-      <div className="text-center pt-8">
+      <div className="text-center pt-6 sm:pt-8">
         <Link
           to={gallerySection?.viewAllUrl || "gallery"}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white hover:bg-[#FAF7F2] text-slate-800 font-extrabold text-xs sm:text-sm border border-[#EAE3D9] shadow-warm-xs hover:shadow-warm-sm transition-all cursor-pointer transform hover:-translate-y-0.5"
+          className="inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-white hover:bg-[#FAF7F2] text-slate-800 font-extrabold text-[11px] sm:text-sm border border-[#EAE3D9] shadow-warm-xs hover:shadow-warm-sm transition-all cursor-pointer transform hover:-translate-y-0.5"
         >
           <span>{tText(gallerySection?.viewAllText) || (isBn ? 'সম্পূর্ণ ফটো গ্যালারি দেখুন' : 'View Full Photo Gallery')}</span>
           <ArrowRight className="w-4 h-4 text-[#006A4E]" />

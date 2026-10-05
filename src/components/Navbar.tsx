@@ -134,21 +134,21 @@ export const Navbar: React.FC = () => {
     <header className="sticky top-0 z-40 w-full transition-all duration-300">
       {/* 1. Official Top Notice Bar */}
       {headerSettings.showNoticeBar && (
-        <div className="bg-[#11241E] text-emerald-100 text-xs py-1.5 px-3 sm:px-4 border-b border-emerald-900/60">
-          <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 truncate">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#006A4E] text-white shrink-0 tracking-wider shadow-sm">
+        <div className="bg-[#11241E] text-emerald-100 text-xs py-0.5 sm:py-1.5 px-2.5 sm:px-4 border-b border-emerald-900/60">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[8.5px] sm:text-[10px] font-extrabold bg-[#006A4E] text-white shrink-0 tracking-wider shadow-sm">
                 OFFICIAL
               </span>
               <span className="truncate text-emerald-200/95 text-xs font-medium hidden sm:inline">
                 {tText(headerSettings.noticeBarText)}
               </span>
-              <span className="truncate text-emerald-200/95 text-[11px] font-medium sm:hidden">
+              <span className="truncate text-emerald-200/95 text-[10px] sm:text-[11px] font-medium sm:hidden">
                 {isBn ? 'ইনফিনিটি বাংলাদেশ • প্রতিষ্ঠা ২০১৫' : 'Infinity Bangladesh • Est. 2015'}
               </span>
             </div>
 
-            <div className="flex items-center gap-3 shrink-0 text-emerald-200">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0 text-emerald-200">
               {headerSettings.showNoticeBarButton !== false && (
                 <Link
                   to={headerSettings.noticeBarLink || 'transparency'}
@@ -165,10 +165,10 @@ export const Navbar: React.FC = () => {
                   <button
                     type="button"
                     onClick={toggleLanguage}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-950/80 hover:bg-emerald-900 text-emerald-200 hover:text-white text-xs font-bold border border-emerald-700/50 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full bg-emerald-950/80 hover:bg-emerald-900 text-emerald-200 hover:text-white text-[10px] sm:text-xs font-bold border border-emerald-700/50 transition-colors cursor-pointer"
                     title="Switch Language (English / বাংলা)"
                   >
-                    <Globe className="w-3 h-3 text-emerald-400" />
+                    <Globe className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-400" />
                     <span>{language === 'en' ? 'বাংলা' : 'English'}</span>
                   </button>
                 </>
@@ -182,8 +182,8 @@ export const Navbar: React.FC = () => {
       <nav
         className={`w-full transition-all duration-300 ${
           isScrolled
-            ? 'bg-white/95 backdrop-blur-md shadow-warm-sm py-2.5 border-b border-[#EAE3D9]'
-            : 'bg-white py-3.5 border-b border-[#EAE3D9]/60'
+            ? 'bg-white/95 backdrop-blur-md shadow-warm-sm py-2 sm:py-2.5 border-b border-[#EAE3D9]'
+            : 'bg-white py-2 sm:py-3.5 border-b border-[#EAE3D9]/60'
         }`}
       >
         <div className="max-w-[1440px] mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 flex items-center justify-between gap-2 xl:gap-4">

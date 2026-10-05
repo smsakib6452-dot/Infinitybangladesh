@@ -62,7 +62,7 @@
   }
 
   body {
-    font-family: 'Plus Jakarta Sans', 'Hind Siliguri', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Anek Bangla', 'Hind Siliguri', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: var(--text-primary);
     background-color: var(--bg-cream);
     letter-spacing: -0.01em;
@@ -71,9 +71,9 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Plus Jakarta Sans', 'Hind Siliguri', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Anek Bangla', 'Hind Siliguri', system-ui, sans-serif;
     font-weight: 800;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.02em;
     color: var(--brand-dark);
   }
 
@@ -101,13 +101,13 @@
 /* TYPOGRAPHY HELPERS                                           */
 /* ============================================================ */
 .font-display {
-  font-family: 'Plus Jakarta Sans', 'Hind Siliguri', system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Anek Bangla', 'Hind Siliguri', system-ui, sans-serif;
   font-weight: 800;
   letter-spacing: -0.025em;
 }
 
 .font-bengali {
-  font-family: 'Hind Siliguri', 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Anek Bangla', 'Hind Siliguri', 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
 .font-serif-quote {

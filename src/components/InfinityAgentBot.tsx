@@ -1041,57 +1041,83 @@ const resolveLeadershipQuery = (cleanQuery: string): KnowledgeIntent | null => {
   return (
     <>
       {/* Floating Launcher Button */}
-      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40">
+      <div className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 lg:bottom-10 lg:right-12 z-40">
         <motion.button
           type="button"
           onClick={() => setIsOpen(prev => !prev)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           aria-label={isBn ? 'ইনফি রোবট খুলুন' : 'Open Infi Robot'}
-          className="relative group p-2.5 sm:px-4 sm:py-2.5 rounded-full bg-gradient-to-r from-[#006A4E] to-[#0A4E3B] text-white shadow-warm-xl border border-emerald-400/40 flex items-center justify-center gap-2.5 cursor-pointer transition-all hover:shadow-[0_12px_30px_rgba(0,106,78,0.4)] touch-manipulation active:scale-95"
+          className="relative group flex items-center justify-center cursor-pointer touch-manipulation focus:outline-none"
         >
-          {/* Active Pulse Ring */}
-          <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-400 border-2 border-white" />
-          </span>
+          {/* Desktop Hover Micro-Tooltip */}
+          <div className="hidden lg:flex items-center absolute right-full mr-3.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0 z-30">
+            <span className="whitespace-nowrap px-3.5 py-1.5 rounded-full bg-slate-900/90 backdrop-blur-md text-white text-xs font-semibold shadow-2xl border border-white/15 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              {isBn ? 'ইনফি রোবট' : 'Infi Robot'}
+            </span>
+          </div>
 
           <AnimatePresence mode="wait">
             {isOpen ? (
               <motion.div
                 key="close-icon"
-                initial={{ rotate: -90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: 90, opacity: 0 }}
-                transition={{ duration: 0.15 }}
-                className="p-1 sm:p-0.5"
+                initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
+                animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
+                transition={{ duration: 0.2 }}
+                className="w-12 h-12 rounded-full bg-white text-slate-800 shadow-xl border border-[#EAE3D9] flex items-center justify-center hover:bg-slate-50 transition-colors"
               >
                 <X className="w-6 h-6" />
               </motion.div>
             ) : (
               <motion.div
                 key="bot-icon"
-                initial={{ scale: 0.7, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.7, opacity: 0 }}
-                transition={{ duration: 0.15 }}
-                className="flex items-center gap-2.5"
+                initial={{ scale: 0.7, opacity: 0, y: 10 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.7, opacity: 0, y: 10 }}
+                transition={{ duration: 0.3 }}
+                className="relative flex flex-col items-center justify-center p-0.5 sm:p-1"
               >
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden border-2 border-emerald-300 shadow-xs shrink-0 bg-white">
+                {/* 1. Ground Drop Shadow under the entire 3D dock */}
+                <div className="absolute -bottom-0.5 w-8 sm:w-13 h-1.5 sm:h-2 bg-black/25 blur-[2.5px] rounded-[100%] pointer-events-none" />
+
+                {/* 2. 3D Frosted Glass Pedestal Dock (Compact on mobile, full size on desktop) */}
+                <div className="absolute bottom-0 w-[34px] sm:w-[54px] h-[8.5px] sm:h-[15px] rounded-[100%] bg-gradient-to-b from-white/95 via-white/70 to-emerald-50/40 backdrop-blur-xl border border-white/90 shadow-[0_4px_12px_-2px_rgba(0,106,78,0.25),0_1.5px_3px_rgba(0,0,0,0.04),inset_0_1px_1.5px_rgba(255,255,255,1),inset_0_-1px_2px_rgba(0,106,78,0.1)] flex items-center justify-center pointer-events-none">
+                  {/* Holographic Emerald Energy Ring inside glass */}
+                  <div className="absolute inset-[1.5px] sm:inset-[2px] rounded-[100%] border border-emerald-400/40 bg-gradient-to-tr from-emerald-500/15 via-teal-400/20 to-emerald-400/5 blur-[0.5px]" />
+                  {/* Specular Glass Sheen */}
+                  <div className="absolute top-[1px] sm:top-[1.5px] inset-x-2 sm:inset-x-2.5 h-[0.75px] sm:h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-95" />
+                  {/* Active Status Jewel - Mounted on glass rim */}
+                  <span className="absolute -top-0.5 right-0.5 sm:right-1 flex h-2 w-2 sm:h-2.5 sm:w-2.5 z-30">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-emerald-500 border border-white shadow-[0_0_5px_rgba(16,185,129,0.8)]" />
+                  </span>
+                </div>
+
+                {/* 3. Dynamic Contact Shadow on top of Glass Disc (syncs with levitation height) */}
+                <motion.div 
+                  animate={{ scale: [1, 0.75, 1], opacity: [0.5, 0.2, 0.5] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute bottom-1 sm:bottom-1.5 w-5 sm:w-8 h-1 sm:h-1.5 bg-emerald-950/40 blur-[1.5px] sm:blur-[2px] rounded-[100%] z-10 pointer-events-none" 
+                />
+                
+                {/* 4. Robot Container with floating levitation animation above the glass */}
+                <motion.div 
+                  animate={{ y: [0, -6, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  className="relative z-20 w-10 h-10 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center mb-1 sm:mb-1.5"
+                >
+                  {/* Gentle Levitation Aura */}
+                  <div className="absolute inset-1 sm:inset-2 bg-emerald-400/25 blur-md sm:blur-lg rounded-full animate-pulse pointer-events-none" />
+
+                  {/* Robot Image (Compact on mobile, full-size on desktop) */}
                   <img
-                    src="/brand/infi-robot.png"
+                    src="/brand/infi-robot.png?v=4"
                     alt="Infi Robot"
-                    className="w-full h-full object-cover"
+                    className="relative z-10 w-full h-full object-contain scale-100 sm:scale-[1.18] drop-shadow-[0_4px_10px_rgba(0,106,78,0.3)] sm:drop-shadow-[0_8px_16px_rgba(0,106,78,0.35)]"
                   />
-                </div>
-                <div className="hidden sm:flex flex-col text-left pr-1">
-                  <span className="font-bold text-xs tracking-wide leading-tight">
-                    {isBn ? 'ইনফি রোবট' : 'Infi Robot'}
-                  </span>
-                  <span className="text-[10px] text-emerald-200/90 font-medium leading-tight">
-                    {isBn ? 'এআই সহকারী' : 'AI Assistant'}
-                  </span>
-                </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -1106,16 +1132,17 @@ const resolveLeadershipQuery = (cleanQuery: string): KnowledgeIntent | null => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.94 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-18 right-2.5 left-2.5 sm:left-auto sm:right-6 sm:bottom-24 z-50 w-auto sm:w-[420px] max-w-[430px] h-[580px] max-h-[82vh] bg-white/95 backdrop-blur-xl rounded-3xl border border-[#EAE3D9] shadow-2xl flex flex-col overflow-hidden text-slate-800 touch-manipulation"
+            className="fixed bottom-[76px] left-3 right-3 sm:left-auto sm:right-8 sm:bottom-[92px] lg:right-12 lg:bottom-[104px] z-50 w-auto sm:w-[420px] max-w-[430px] h-[580px] max-h-[calc(100dvh-100px)] bg-white/95 backdrop-blur-xl rounded-3xl border border-[#EAE3D9] shadow-2xl flex flex-col overflow-hidden text-slate-800 touch-manipulation"
           >
             {/* Header */}
             <div className="px-5 py-4 bg-gradient-to-r from-[#006A4E] to-[#0A4E3B] text-white flex items-center justify-between shadow-sm shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl overflow-hidden border-2 border-emerald-300/40 shadow-inner shrink-0 bg-white p-0.5">
+                <div className="relative w-12 h-12 shrink-0 flex items-center justify-center -ml-1">
+                  <div className="absolute inset-2 bg-white/20 blur-md rounded-full animate-pulse" />
                   <img
-                    src="/brand/infi-robot.png"
+                    src="/brand/infi-robot.png?v=4"
                     alt="Infi Robot"
-                    className="w-full h-full object-cover rounded-xl"
+                    className="relative z-10 w-full h-full object-contain scale-[1.1] drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)]"
                   />
                 </div>
                 <div>
@@ -1164,11 +1191,11 @@ const resolveLeadershipQuery = (cleanQuery: string): KnowledgeIntent | null => {
                     className={`flex gap-2.5 ${isBot ? 'items-start' : 'items-end justify-end'}`}
                   >
                     {isBot && (
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden border border-emerald-300/60 shadow-xs shrink-0 mt-0.5 bg-white">
+                      <div className="relative w-9 h-9 sm:w-9 sm:h-9 shrink-0 mt-0.5 flex items-center justify-center">
                         <img
-                          src="/brand/infi-robot.png"
+                          src="/brand/infi-robot.png?v=4"
                           alt="Infi Robot"
-                          className="w-full h-full object-cover"
+                          className="relative z-10 w-full h-full object-contain scale-[1.1] drop-shadow-[0_3px_6px_rgba(0,106,78,0.25)]"
                         />
                       </div>
                     )}
@@ -1266,11 +1293,11 @@ const resolveLeadershipQuery = (cleanQuery: string): KnowledgeIntent | null => {
               {/* Bot Typing Indicator */}
               {isTyping && (
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden border border-emerald-300/60 shadow-xs shrink-0 bg-white">
+                  <div className="relative w-9 h-9 sm:w-9 sm:h-9 shrink-0 flex items-center justify-center">
                     <img
-                      src="/brand/infi-robot.png"
+                      src="/brand/infi-robot.png?v=4"
                       alt="Infi Robot"
-                      className="w-full h-full object-cover"
+                      className="relative z-10 w-full h-full object-contain scale-[1.1] drop-shadow-[0_3px_6px_rgba(0,106,78,0.25)]"
                     />
                   </div>
                   <div className="flex items-center gap-1.5 p-3 bg-white border border-[#EAE3D9] rounded-2xl rounded-tl-sm w-18 shadow-warm-xs">

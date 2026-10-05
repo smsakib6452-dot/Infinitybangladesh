@@ -32,14 +32,14 @@ export const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
   const icon = ICON_MAP[program.iconName] || <Sparkles className="w-6 h-6" />;
 
   return (
-    <div className="group bg-white rounded-3xl border border-[#EAE3D9] p-6 sm:p-7 shadow-warm-sm hover:shadow-warm-lg hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between hover:border-[#006A4E]/40 w-full h-full">
-      <div className="space-y-4">
+    <div className="group bg-white rounded-3xl border border-[#EAE3D9] p-4.5 sm:p-7 shadow-warm-sm hover:shadow-warm-lg hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between hover:border-[#006A4E]/40 w-full h-full">
+      <div className="space-y-3.5 sm:space-y-4">
         {/* Icon & Category */}
         <div className="flex items-center justify-between">
           <Link
             to="programs/detail"
             slug={program.slug}
-            className="w-13 h-13 rounded-2xl bg-[#E6F3EF] text-[#006A4E] flex items-center justify-center group-hover:bg-[#006A4E] group-hover:text-white transition-all duration-300 shadow-xs"
+            className="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl bg-[#E6F3EF] text-[#006A4E] flex items-center justify-center group-hover:bg-[#006A4E] group-hover:text-white transition-all duration-300 shadow-xs"
           >
             {icon}
           </Link>
@@ -50,7 +50,7 @@ export const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
 
         {/* Title */}
         <Link to="programs/detail" slug={program.slug} className="block group/title">
-          <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 group-hover/title:text-[#006A4E] transition-colors font-display">
+          <h3 className="text-base sm:text-xl font-extrabold text-slate-900 group-hover/title:text-[#006A4E] transition-colors font-display leading-snug">
             {tText(program.title)}
           </h3>
         </Link>

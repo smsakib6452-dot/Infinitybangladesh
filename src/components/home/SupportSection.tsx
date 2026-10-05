@@ -16,13 +16,13 @@ export const SupportSection: React.FC<SupportSectionProps> = ({
 }) => {
   return (
     <ScrollReveal effect="fade-up" key="support" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="bg-gradient-to-br from-[#FAF7F2] via-white to-[#F6F1EA] rounded-[2.5rem] border border-[#EAE3D9] p-8 sm:p-12 text-center space-y-6 shadow-warm-lg hover:shadow-warm-xl transition-shadow duration-300">
-        <div className="w-14 h-14 rounded-3xl bg-[#E6F3EF] text-[#006A4E] border border-[#C2E2D7]/70 flex items-center justify-center mx-auto shadow-xs">
-          <HandHeart className="w-7 h-7" />
+      <div className="bg-gradient-to-br from-[#FAF7F2] via-white to-[#F6F1EA] rounded-3xl sm:rounded-[2.5rem] border border-[#EAE3D9] p-5 sm:p-10 lg:p-12 text-center space-y-4 sm:space-y-6 shadow-warm-lg hover:shadow-warm-xl transition-shadow duration-300">
+        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl sm:rounded-3xl bg-[#E6F3EF] text-[#006A4E] border border-[#C2E2D7]/70 flex items-center justify-center mx-auto shadow-xs">
+          <HandHeart className="w-6 h-6 sm:w-7 sm:h-7" />
         </div>
 
-        <div className="max-w-2xl mx-auto space-y-2">
-          <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display">
+        <div className="max-w-2xl mx-auto space-y-1.5 sm:space-y-2">
+          <h3 className="text-xl sm:text-3xl font-extrabold text-slate-900 font-display leading-snug sm:leading-tight">
             {tText(supportBanner?.title) || (isBn ? 'সহযোগিতার হাত বাড়িয়ে দিন' : 'Stand With Infinity Bangladesh')}
           </h3>
           <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
@@ -32,21 +32,21 @@ export const SupportSection: React.FC<SupportSectionProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+        <div className="flex flex-row items-center justify-center gap-2 sm:gap-4 pt-1 sm:pt-2">
           <Link
             to={supportBanner?.primaryButtonUrl || supportBanner?.primaryCtaUrl || 'donate'}
-            className="px-8 py-3.5 rounded-2xl bg-[#006A4E] hover:bg-[#00523C] text-white font-extrabold text-xs sm:text-sm shadow-warm-md transition-all flex items-center gap-2 cursor-pointer transform hover:-translate-y-0.5"
+            className="flex-1 sm:flex-initial px-3.5 sm:px-8 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#006A4E] hover:bg-[#00523C] text-white font-extrabold text-[11px] sm:text-sm shadow-warm-md transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer transform hover:-translate-y-0.5 text-center"
           >
-            <Heart className="w-4 h-4 fill-white" />
-            <span>{tText(supportBanner?.primaryButtonText || supportBanner?.primaryCtaText) || (isBn ? 'অনলাইন অনুদান প্রদান' : 'Donate to Infinity Bangladesh')}</span>
+            <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white shrink-0" />
+            <span className="truncate">{tText(supportBanner?.primaryButtonText) || (isBn ? 'অনলাইন অনুদান' : 'Online Donation')}</span>
           </Link>
 
           <Link
             to={supportBanner?.secondaryButtonUrl || supportBanner?.secondaryCtaUrl || 'transparency'}
-            className="px-6 py-3.5 rounded-2xl bg-white hover:bg-[#FAF7F2] text-slate-800 font-bold text-xs sm:text-sm border border-[#EAE3D9] transition-all flex items-center gap-2 cursor-pointer"
+            className="flex-1 sm:flex-initial px-3 sm:px-6 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-white hover:bg-[#FAF7F2] text-slate-800 font-bold text-[11px] sm:text-sm border border-[#EAE3D9] transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer text-center whitespace-nowrap"
           >
-            <ShieldCheck className="w-4 h-4 text-[#006A4E]" />
-            <span>{tText(supportBanner?.secondaryButtonText || supportBanner?.secondaryCtaText) || (isBn ? 'স্বচ্ছতা ও অডিট রিপোর্ট' : 'Audit & Expense Logs')}</span>
+            <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#006A4E] shrink-0" />
+            <span className="truncate">{tText(supportBanner?.secondaryButtonText) || (isBn ? 'অডিট রিপোর্ট' : 'Audit Logs')}</span>
           </Link>
         </div>
       </div>

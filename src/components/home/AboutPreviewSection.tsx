@@ -27,60 +27,61 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({
 
   return (
     <section key="about" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center bg-white rounded-[2.5rem] border border-[#EAE3D9] p-6 sm:p-10 lg:p-12 shadow-warm-md">
-        <ScrollReveal effect="slide-right" className="lg:col-span-6 space-y-5 text-left">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E6F3EF] border border-[#C2E2D7] text-[#00523C] text-xs font-bold uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10 items-center bg-white rounded-3xl sm:rounded-[2.5rem] border border-[#EAE3D9] p-4.5 sm:p-10 lg:p-12 shadow-warm-md">
+        <ScrollReveal effect="slide-right" className="lg:col-span-6 space-y-3.5 sm:space-y-5 text-left">
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-0.5 sm:px-3.5 sm:py-1 rounded-full bg-[#E6F3EF] border border-[#C2E2D7] text-[#00523C] text-[11px] sm:text-xs font-bold uppercase tracking-wider">
+            <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-500" />
             <span>{tText(aboutPreview?.eyebrow) || tText(defaultEyebrow)}</span>
           </div>
 
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 font-display leading-tight">
+          <h2 className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 font-display leading-snug sm:leading-tight">
             {tText(aboutPreview?.titleMain) || tText(defaultTitleMain)}{' '}
             <span className="text-[#006A4E]">{tText(aboutPreview?.titleHighlight) || tText(defaultTitleHighlight)}</span>
           </h2>
 
-          <p className="text-sm sm:text-base text-slate-700 leading-relaxed font-normal">
+          <p className="text-xs sm:text-base text-slate-700 leading-relaxed font-normal">
             {tText(aboutPreview?.description) || tText(defaultDesc)}
           </p>
 
-          {/* Mission & Vision Feature Highlights */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
-            <div className="flex items-start gap-3 p-4 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] hover:border-[#006A4E]/30 transition-colors shadow-2xs">
-              <div className="w-8 h-8 rounded-xl bg-[#E6F3EF] text-[#006A4E] flex items-center justify-center shrink-0 border border-[#C2E2D7]/60 shadow-xs">
-                <Target className="w-4 h-4" />
+          {/* Mission & Vision Feature Highlights - Compact 2-Col Micro Grid */}
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5 pt-1.5">
+            <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-3 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] hover:border-[#006A4E]/30 transition-colors shadow-2xs">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-[#E6F3EF] text-[#006A4E] flex items-center justify-center shrink-0 border border-[#C2E2D7]/60 shadow-xs">
+                <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900 font-display">{tText(aboutPreview?.missionHeading) || (isBn ? 'আমাদের লক্ষ্য' : 'Our Mission')}</h4>
-                <p className="text-[11px] text-slate-600 mt-1 leading-relaxed line-clamp-2">{tText(aboutPreview?.missionText) || tText(aboutSettings?.mission)}</p>
+              <div className="min-w-0">
+                <h4 className="text-[11px] sm:text-xs font-bold text-slate-900 font-display truncate">{tText(aboutPreview?.missionHeading) || (isBn ? 'আমাদের লক্ষ্য' : 'Our Mission')}</h4>
+                <p className="text-[10px] sm:text-[11px] text-slate-600 mt-0.5 sm:mt-1 leading-relaxed line-clamp-2">{tText(aboutPreview?.missionText) || tText(aboutSettings?.mission)}</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-4 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] hover:border-[#006A4E]/30 transition-colors shadow-2xs">
-              <div className="w-8 h-8 rounded-xl bg-[#E6F3EF] text-[#006A4E] flex items-center justify-center shrink-0 border border-[#C2E2D7]/60 shadow-xs">
-                <Eye className="w-4 h-4" />
+            <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-3 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] hover:border-[#006A4E]/30 transition-colors shadow-2xs">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-[#E6F3EF] text-[#006A4E] flex items-center justify-center shrink-0 border border-[#C2E2D7]/60 shadow-xs">
+                <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900 font-display">{tText(aboutPreview?.visionHeading) || (isBn ? 'আমাদের দর্শন' : 'Our Vision')}</h4>
-                <p className="text-[11px] text-slate-600 mt-1 leading-relaxed line-clamp-2">{tText(aboutPreview?.visionText) || tText(aboutSettings?.vision)}</p>
+              <div className="min-w-0">
+                <h4 className="text-[11px] sm:text-xs font-bold text-slate-900 font-display truncate">{tText(aboutPreview?.visionHeading) || (isBn ? 'আমাদের দর্শন' : 'Our Vision')}</h4>
+                <p className="text-[10px] sm:text-[11px] text-slate-600 mt-0.5 sm:mt-1 leading-relaxed line-clamp-2">{tText(aboutPreview?.visionText) || tText(aboutSettings?.vision)}</p>
               </div>
             </div>
           </div>
 
-          <div className="pt-2 flex flex-wrap items-center gap-3">
+          {/* Action CTAs - Balanced Ergonomic Row */}
+          <div className="pt-1.5 sm:pt-2 flex flex-row items-center gap-2 sm:gap-3">
             <Link
               to={aboutPreview?.ctaUrl || 'about/story'}
-              className="px-6 py-3.5 rounded-2xl bg-[#006A4E] hover:bg-[#00523C] text-white text-xs sm:text-sm font-bold shadow-warm-sm hover:shadow-warm-md transition-all flex items-center gap-2 cursor-pointer transform hover:-translate-y-0.5"
+              className="flex-1 sm:flex-initial px-3.5 sm:px-6 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#006A4E] hover:bg-[#00523C] active:bg-[#00402E] text-white text-[11px] sm:text-sm font-bold shadow-warm-xs hover:shadow-warm-md transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer transform hover:-translate-y-0.5 text-center"
             >
-              <span>{tText(aboutPreview?.ctaText) || (isBn ? 'আমাদের সম্পূর্ণ যাত্রা পড়ুন' : 'Read Our Full Story')}</span>
-              <ArrowRight className="w-4 h-4" />
+              <span className="truncate">{tText(aboutPreview?.ctaText) || (isBn ? 'সম্পূর্ণ যাত্রা' : 'Full Story')}</span>
+              <ArrowRight className="w-3.5 h-3.5 shrink-0" />
             </Link>
 
             <Link
               to={aboutPreview?.secondaryCtaUrl || "about/executive-committee"}
-              className="px-5 py-3.5 rounded-2xl bg-[#FAF7F2] hover:bg-[#F2ECE1] text-slate-800 text-xs sm:text-sm font-bold border border-[#D8CFC4] hover:border-[#006A4E] hover:text-[#006A4E] transition-all flex items-center gap-2 cursor-pointer transform hover:-translate-y-0.5"
+              className="flex-1 sm:flex-initial px-3 sm:px-5 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#FAF7F2] hover:bg-[#F2ECE1] text-slate-800 text-[11px] sm:text-sm font-bold border border-[#D8CFC4] hover:border-[#006A4E] hover:text-[#006A4E] transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer transform hover:-translate-y-0.5 text-center whitespace-nowrap"
             >
-              <Users className="w-4 h-4 text-[#006A4E]" />
-              <span>{tText(aboutPreview?.secondaryCtaText) || (isBn ? 'নেতৃত্ব কমিটি' : 'Executive Team')}</span>
+              <Users className="w-3.5 h-3.5 text-[#006A4E] shrink-0" />
+              <span className="truncate">{tText(aboutPreview?.secondaryCtaText) || (isBn ? 'নেতৃত্ব কমিটি' : 'Executive Team')}</span>
             </Link>
           </div>
         </ScrollReveal>
@@ -97,14 +98,14 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
 
-            {/* Floating Glassmorphic Badge */}
-            <div className="absolute bottom-4 left-4 right-4 bg-slate-950/80 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-2xl flex items-center justify-between gap-3">
-              <div className="text-white space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-extrabold uppercase tracking-wider">
-                  <Sparkles className="w-3 h-3 text-amber-400" />
+            {/* Bottom Caption Overlay - Center aligned for photographic symmetry */}
+            <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4 bg-gradient-to-t from-slate-950/90 via-slate-950/60 to-transparent flex items-end justify-center text-center">
+              <div className="text-white space-y-1 flex flex-col items-center max-w-md mx-auto">
+                <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-wider shadow-xs">
+                  <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400" />
                   <span>{tText(aboutPreview?.imageBadgeTitle) || (isBn ? 'টিম ইনফিনিটি — মানবতার জন্য একতাবদ্ধ' : 'TEAM INFINITY — UNITED FOR HUMANITY')}</span>
                 </div>
-                <p className="text-xs sm:text-sm font-medium text-slate-200">
+                <p className="text-[11px] sm:text-sm font-medium text-slate-200 leading-snug line-clamp-1 sm:line-clamp-none text-center">
                   {tText(aboutPreview?.imageBadgeSubtitle) || (isBn ? '২০১৫ সাল থেকে সুবিধাবঞ্চিত মানুষের পাশে' : 'Serving underserved communities since 2015')}
                 </p>
               </div>

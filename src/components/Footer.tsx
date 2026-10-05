@@ -174,7 +174,7 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Col 3: Programs & Field Work */}
-          <div className="space-y-3">
+          <div className="space-y-3 pr-14 sm:pr-0">
             <span className="text-xs font-extrabold text-white uppercase tracking-wider block">
               {isBn ? 'কার্যক্রম ও ক্যাম্পেইন' : 'Field Initiatives'}
             </span>
@@ -205,7 +205,7 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Col 4: Infinity LifeLine & Contact */}
-          <div className="space-y-4">
+          <div className="space-y-4 pr-14 sm:pr-0">
             {/* LifeLine Special Section */}
             <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800/40 space-y-2">
               <div className="flex items-center gap-1.5 text-rose-300 font-bold text-xs uppercase tracking-wider">
@@ -252,13 +252,13 @@ export const Footer: React.FC = () => {
       </div>
 
       {/* 3. Bottom Legal Copyright Bar (with mobile safe-padding for floating buttons) */}
-      <div className="bg-[#0A1612] pt-4 pb-24 sm:pb-5 border-t border-emerald-950 text-emerald-300/70 text-xs">
+      <div className="bg-[#0A1612] pt-4 pb-28 sm:pb-6 border-t border-emerald-950 text-emerald-300/70 text-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-          <div>
+          <div className="pr-12 sm:pr-0">
             <p>{tText(footerSettings.copyrightText)}</p>
           </div>
 
-          <div className="flex items-center gap-4 text-[11px]">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-4 gap-y-1.5 text-[11px] pb-6 sm:pb-0 px-2 sm:px-0 pr-12 sm:pr-0">
             <Link to="privacy" className="hover:text-white transition-colors cursor-pointer">
               {isBn ? 'প্রাইভেসি পলিসি' : 'Privacy Policy'}
             </Link>
@@ -267,7 +267,7 @@ export const Footer: React.FC = () => {
               {isBn ? 'টার্মস অ্যান্ড কন্ডিশন' : 'Terms & Verification'}
             </Link>
             <span>&bull;</span>
-            <Link to="contact" className="hover:text-white transition-colors cursor-pointer">
+            <Link to="contact" className="hover:text-white transition-colors cursor-pointer whitespace-nowrap">
               {isBn ? 'হেল্পডেস্ক' : 'Official Helpdesk'}
             </Link>
           </div>

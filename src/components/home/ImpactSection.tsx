@@ -31,9 +31,9 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
         }
       />
 
-      <StaggerGroup className="flex flex-wrap justify-center gap-5 sm:gap-6">
+      <StaggerGroup className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-6 max-w-6xl mx-auto">
         {metrics.map((m) => (
-          <StaggerItem key={m.id} className="w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(25%-1.15rem)] max-w-xs flex">
+          <StaggerItem key={m.id} className="flex h-full w-full">
             <ImpactCounter metric={m} />
           </StaggerItem>
         ))}

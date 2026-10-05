@@ -41,10 +41,10 @@ export const ProgramsSection: React.FC<ProgramsSectionProps> = ({
         ))}
       </StaggerGroup>
 
-      <div className="text-center pt-8">
+      <div className="text-center pt-6 sm:pt-8">
         <Link
           to={programsSection?.viewAllUrl || "programs"}
-          className="px-6 py-3 rounded-2xl bg-white hover:bg-[#FAF7F2] text-slate-800 text-xs sm:text-sm font-bold border border-[#EAE3D9] shadow-warm-xs transition-all inline-flex items-center gap-2 cursor-pointer"
+          className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-white hover:bg-[#FAF7F2] text-slate-800 text-[11px] sm:text-sm font-bold border border-[#EAE3D9] shadow-warm-xs transition-all inline-flex items-center gap-1.5 sm:gap-2 cursor-pointer"
         >
           <span>{tText(programsSection?.viewAllText) || (isBn ? 'সকল কর্মসূচি ও ইভেন্ট তালিকা দেখুন' : 'View All Programs & Events')}</span>
           <ArrowRight className="w-4 h-4 text-[#006A4E]" />

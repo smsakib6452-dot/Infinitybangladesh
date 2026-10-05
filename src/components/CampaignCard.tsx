@@ -80,10 +80,10 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, featured =
       </Link>
 
       {/* Card Content */}
-      <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between space-y-4">
-        <div className="space-y-2">
+      <div className="p-4 sm:p-6 flex-1 flex flex-col justify-between space-y-3.5 sm:space-y-4">
+        <div className="space-y-1.5 sm:space-y-2">
           <Link to="campaigns/detail" slug={campaign.slug} className="block group/title">
-            <h3 className="text-lg sm:text-xl font-bold text-slate-900 group-hover/title:text-[#006A4E] transition-colors line-clamp-2 font-display leading-snug">
+            <h3 className="text-base sm:text-xl font-bold text-slate-900 group-hover/title:text-[#006A4E] transition-colors line-clamp-2 font-display leading-snug">
               {tText(campaign.title)}
             </h3>
           </Link>
