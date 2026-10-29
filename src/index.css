@@ -111,7 +111,7 @@
 }
 
 .font-serif-quote {
-  font-family: 'Playfair Display', Georgia, Cambria, 'Times New Roman', serif;
+  font-family: Georgia, Cambria, 'Times New Roman', serif;
 }
 
 /* ============================================================ */
@@ -502,3 +502,4 @@ body {
     transform: none !important;
   }
 }
+

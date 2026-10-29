@@ -12,7 +12,6 @@ import {
   ChevronDown,
   Globe,
   ShieldCheck,
-  Sparkles,
   ArrowRight,
   Droplet
 } from 'lucide-react';
@@ -186,15 +185,21 @@ export const Navbar: React.FC = () => {
             : 'bg-white py-2 sm:py-3.5 border-b border-[#EAE3D9]/60'
         }`}
       >
-        <div className="max-w-[1440px] mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 flex items-center justify-between gap-2 xl:gap-4">
-          {/* Official Brand Logo */}
+        <div className="max-w-[1536px] 2xl:max-w-[1600px] mx-auto px-3 sm:px-4 lg:px-5 xl:px-6 2xl:px-8 flex items-center justify-between gap-1.5 lg:gap-2 xl:gap-3 2xl:gap-4">
+          {/* Official Brand Logo (Clean, badge-free in navbar to avoid crowding) */}
           <Link to="home" className="shrink-0 block focus:outline-none group">
-            <BrandLogo size="md" />
+            <BrandLogo size="md" showBadge={false} />
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <div className="hidden lg:flex items-center justify-center gap-0.5 xl:gap-1 2xl:gap-2 text-[13px] xl:text-[13.5px] 2xl:text-sm font-bold text-slate-700 whitespace-nowrap flex-1 min-w-0 px-1">
+          {/* Desktop Navigation Links — Collision-Safe Responsive Architecture */}
+          <div className="hidden lg:flex items-center justify-center gap-0.5 xl:gap-1 2xl:gap-1.5 text-[11.5px] xl:text-[12.5px] 2xl:text-[13.5px] font-bold text-slate-700 whitespace-nowrap flex-1 min-w-0 px-0.5 xl:px-1 overflow-visible">
             {activeNavItems.map(item => {
+              const rawLabel = tText(item.label);
+              // Streamline very long labels on compact laptop viewports (lg) to avoid overflow
+              const renderedLabel = rawLabel === 'আমাদের টিম ও নেতৃত্ব'
+                ? (<span className="whitespace-nowrap"><span className="hidden xl:inline">আমাদের </span>টিম ও নেতৃত্ব</span>)
+                : (<span className="whitespace-nowrap">{rawLabel}</span>);
+
               if (item.isDropdown && item.children && item.children.length > 0) {
                 const isDropdownOpen = activeDropdownId === item.id;
                 const isChildActive = item.children.some(c => isItemActive(c.path));
@@ -213,7 +218,7 @@ export const Navbar: React.FC = () => {
                         to={item.path}
                         isExternal={item.isExternal}
                         onClick={() => setActiveDropdownId(null)}
-                        className={`px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-l-xl flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                        className={`px-1.5 xl:px-2 2xl:px-2.5 py-1.5 xl:py-2 rounded-l-xl flex items-center gap-1 xl:gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                           isChildActive || isItemActive(item.path)
                             ? isLifeLine
                               ? 'text-rose-700 bg-rose-50 font-extrabold'
@@ -226,7 +231,7 @@ export const Navbar: React.FC = () => {
                         {isLifeLine && (
                           <Droplet className="w-3.5 h-3.5 text-rose-600 fill-rose-600 animate-heartbeat shrink-0" />
                         )}
-                        <span className="whitespace-nowrap">{tText(item.label)}</span>
+                        {renderedLabel}
                       </Link>
 
                       <button
@@ -235,7 +240,7 @@ export const Navbar: React.FC = () => {
                           e.stopPropagation();
                           setActiveDropdownId(prev => (prev === item.id ? null : item.id));
                         }}
-                        className={`py-1.5 xl:py-2 pr-1.5 xl:pr-2 pl-0.5 rounded-r-xl transition-colors cursor-pointer shrink-0 ${
+                        className={`py-1.5 xl:py-2 pr-1 xl:pr-1.5 2xl:pr-2 pl-0.5 rounded-r-xl transition-colors cursor-pointer shrink-0 ${
                           isChildActive || isItemActive(item.path)
                             ? isLifeLine
                               ? 'text-rose-700 bg-rose-50'
@@ -364,20 +369,20 @@ export const Navbar: React.FC = () => {
                   key={item.id}
                   to={item.path}
                   isExternal={item.isExternal}
-                  className={`px-2.5 xl:px-3 py-1.5 xl:py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap ${
+                  className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 xl:py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap ${
                     isActive
                       ? 'text-[#006A4E] bg-[#E6F3EF] font-extrabold'
                       : 'hover:text-[#006A4E] hover:bg-slate-50'
                   }`}
                 >
-                  {tText(item.label)}
+                  {renderedLabel}
                 </Link>
               );
             })}
           </div>
 
-          {/* Right Action Controls: Search & Join Us */}
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          {/* Right Action Controls: Search & Join Us with guaranteed non-overlapping clearance */}
+          <div className="flex items-center gap-1.5 sm:gap-2 2xl:gap-2.5 shrink-0 z-10 ml-1 xl:ml-2">
             {headerSettings.showSearch && (
               <button
                 type="button"
@@ -393,9 +398,9 @@ export const Navbar: React.FC = () => {
             {headerSettings.showSupportButton && (
               <Link
                 to={headerSettings.supportButtonUrl || 'volunteer'}
-                className="hidden sm:inline-flex items-center gap-2 px-4 xl:px-5 py-2 sm:py-2.5 rounded-xl btn-primary-green text-xs sm:text-sm font-bold shadow-warm-sm cursor-pointer whitespace-nowrap"
+                className="hidden sm:inline-flex items-center gap-1.5 xl:gap-2 px-3 xl:px-4 2xl:px-5 py-2 sm:py-2.5 rounded-xl btn-primary-green text-xs 2xl:text-sm font-bold shadow-warm-sm cursor-pointer whitespace-nowrap shrink-0"
               >
-                <Heart className="w-4 h-4 text-rose-300 fill-rose-300" />
+                <Heart className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-rose-300 fill-rose-300 shrink-0" />
                 <span>{tText(headerSettings.supportButtonText) || (isBn ? 'আমাদের সাথে যোগ দিন' : 'Join Us')}</span>
               </Link>
             )}

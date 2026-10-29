@@ -4,18 +4,19 @@
  * Supports direct unsigned uploads to Cloudinary CDN via the REST API endpoint:
  * https://api.cloudinary.com/v1_1/:cloud_name/image/upload
  * 
- * Default Cloudinary Configuration:
- * - Cloud Name: evj6fhsf
- * - Upload Preset: Infinity
+ * Cloudinary Configuration:
+ * Configure via VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET in .env
  */
 
 export const CLOUDINARY_CLOUD_NAME =
-  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_CLOUDINARY_CLOUD_NAME) || 'evj6fhsf';
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_CLOUDINARY_CLOUD_NAME) || '';
 
 export const CLOUDINARY_UPLOAD_PRESET =
-  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_CLOUDINARY_UPLOAD_PRESET) || 'Infinity';
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_CLOUDINARY_UPLOAD_PRESET) || '';
 
-export const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+export const CLOUDINARY_UPLOAD_URL = CLOUDINARY_CLOUD_NAME
+  ? `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`
+  : '';
 
 export interface CloudinaryUploadResponse {
   asset_id?: string;

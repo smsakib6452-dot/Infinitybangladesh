@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from '../../context/RouterContext';
 import { ScrollReveal } from '../motion/ScrollReveal';
 import { OptimizedImage } from '../OptimizedImage';
+import { HeroConfig } from '../../types';
 import {
   Heart,
   Users,
@@ -14,7 +15,7 @@ import {
 } from 'lucide-react';
 
 interface HeroSectionProps {
-  hero: any;
+  hero: HeroConfig;
   isBn: boolean;
   tText: (value: any) => string;
 }
@@ -228,3 +229,4 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
     </section>
   );
 };
+

@@ -617,25 +617,7 @@ export const AdminPage: React.FC = () => {
     const inputEmail = authEmail.trim().toLowerCase();
     const inputPass = authPassword.trim();
 
-    // Verify Primary Official Admin Credentials (supports master keys or official emails)
-    const isMasterPassword =
-      inputPass === 'InfinityWebsite@2015' ||
-      inputPass === 'infinity2026' ||
-      inputPass === 'admin123' ||
-      inputPass === 'admin';
-
-    const isValidOfficialAdmin =
-      isMasterPassword ||
-      ((inputEmail === 'infinitybd@social.org' || inputEmail === 'admin@infinitybangladesh.org' || !inputEmail) && isMasterPassword);
-
-    if (isValidOfficialAdmin) {
-      setIsAuthenticated(true);
-      localStorage.setItem('infinity_bd_admin_auth', 'true');
-      sessionStorage.setItem('infinity_admin_user', authEmail.trim() || 'Infinitybd@social.org');
-      showToast(isBn ? 'সফলভাবে অ্যাডমিন প্যানেলে লগইন হয়েছে' : 'Logged in as Administrator');
-      return;
-    }
-
+    // 1. Primary: If Supabase Auth is configured, authenticate securely against backend
     if (isSupabaseConfigured && inputEmail && inputPass) {
       try {
         const { data, error } = await signInWithEmail(authEmail, authPassword);
@@ -643,17 +625,33 @@ export const AdminPage: React.FC = () => {
           setIsAuthenticated(true);
           localStorage.setItem('infinity_bd_admin_auth', 'true');
           sessionStorage.setItem('infinity_admin_user', data.user.email || authEmail);
-          showToast('Authenticated via Supabase');
+          showToast(isBn ? 'সফলভাবে অ্যাডমিন প্যানেলে লগইন হয়েছে' : 'Authenticated as Administrator');
           return;
         } else if (error) {
           console.warn('Supabase auth notice:', error.message);
+          setAuthError(isBn ? 'ভুল ইমেইল অথবা পাসওয়ার্ড। অনুগ্রহ করে সঠিক তথ্য দিয়ে চেষ্টা করুন।' : 'Invalid email or password. Please verify your credentials.');
+          return;
         }
       } catch (err: any) {
-        console.warn('Supabase auth failed, trying credentials fallback:', err);
+        console.warn('Supabase auth exception:', err);
       }
     }
 
-    setAuthError(isBn ? 'ভুল ইমেইল অথবা পাসওয়ার্ড। সঠিক পাসওয়ার্ড (যেমন: InfinityWebsite@2015 বা infinity2026) দিয়ে পুনরায় চেষ্টা করুন।' : 'Invalid credentials. Please enter a valid administrator password.');
+    // 2. Secondary: Secure environment variable password for local/offline admin access
+    const envAdminPass = typeof import.meta !== 'undefined' ? (import.meta.env?.VITE_ADMIN_PASSWORD || '') : '';
+    if (envAdminPass && inputPass === envAdminPass) {
+      setIsAuthenticated(true);
+      localStorage.setItem('infinity_bd_admin_auth', 'true');
+      sessionStorage.setItem('infinity_admin_user', authEmail.trim() || 'admin@local');
+      showToast(isBn ? 'সফলভাবে অ্যাডমিন প্যানেলে লগইন হয়েছে' : 'Logged in as Administrator');
+      return;
+    }
+
+    setAuthError(
+      isBn
+        ? 'ভুল ইমেইল অথবা পাসওয়ার্ড। অনুগ্রহ করে সঠিক তথ্য দিয়ে চেষ্টা করুন।'
+        : 'Invalid credentials. Please enter a valid administrator email and password.'
+    );
   };
 
   const handleLogout = async () => {

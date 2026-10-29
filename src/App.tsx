@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { LanguageProvider } from './context/LanguageContext';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { DataProvider } from './context/DataContext';
 import { RouterProvider, useRouter } from './context/RouterContext';
+import { updatePageMetadata } from './lib/seo';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { GlobalSearchModal } from './components/GlobalSearchModal';
@@ -64,12 +65,18 @@ const PageSkeleton: React.FC = () => (
 );
 
 const AppContent: React.FC = () => {
-  const { currentPage } = useRouter();
+  const { currentPage, currentSlug } = useRouter();
+  const { isBn } = useLanguage();
 
   // Instant scroll to top on page change
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [currentPage]);
+
+  // Dynamic SEO metadata, Document Title, and Canonical updates
+  useEffect(() => {
+    updatePageMetadata(currentPage, currentSlug, isBn);
+  }, [currentPage, currentSlug, isBn]);
 
   const renderPage = () => {
     switch (currentPage) {
@@ -167,6 +174,14 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#0F172A] selection:bg-[#006A4E]/15 selection:text-[#006A4E] overflow-x-hidden">
+      {/* Accessible Skip to Main Content Link (WCAG 2.2 AA) */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-5 focus:py-3 focus:bg-[#006A4E] focus:text-white focus:font-bold focus:rounded-xl focus:shadow-2xl focus:outline-none focus:ring-4 focus:ring-[#006A4E]/30"
+      >
+        {isBn ? 'মূল বিষয়বস্তুতে যান' : 'Skip to main content'}
+      </a>
+
       {/* Global Scroll Progress Bar */}
       <ScrollProgressBar />
 
@@ -174,7 +189,7 @@ const AppContent: React.FC = () => {
       <Navbar />
 
       {/* Main Routed Content with Smooth Fast Page Transition */}
-      <main className="flex-1 overflow-x-hidden">
+      <main id="main-content" tabIndex={-1} className="flex-1 overflow-x-hidden outline-none">
         <AdminErrorBoundary fallbackTitle="Page Load Notice">
           <PageTransition pageKey={currentPage}>
             <React.Suspense fallback={<PageSkeleton />}>

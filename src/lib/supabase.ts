@@ -9,17 +9,21 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { uploadToCloudinary } from './cloudinary';
 
-// Environment variables with fallback
+// Environment variables — NEVER hardcode credentials in source code.
+// Configure via .env file or Vercel environment variables.
 const supabaseUrl =
-  (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_SUPABASE_URL || import.meta.env?.NEXT_PUBLIC_SUPABASE_URL)) || 'https://pzpnphgnexfaxxaorqsq.supabase.co';
+  (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_SUPABASE_URL || import.meta.env?.NEXT_PUBLIC_SUPABASE_URL)) || '';
 const supabaseAnonKey =
-  (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_SUPABASE_ANON_KEY || import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env?.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || import.meta.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY)) || 'sb_publishable_Vqapvc2C91UpllwvFevK9w_OJPdTi3V';
+  (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_SUPABASE_ANON_KEY || import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env?.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || import.meta.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY)) || '';
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
   supabaseAnonKey &&
+  supabaseUrl.startsWith('https://') &&
+  supabaseUrl.endsWith('.supabase.co') &&
   supabaseUrl !== 'https://your-project.supabase.co' &&
-  !supabaseUrl.includes('placeholder')
+  !supabaseUrl.includes('placeholder') &&
+  supabaseAnonKey.length > 10
 );
 
 // Singleton Supabase Client instance (or null if unconfigured)

@@ -114,32 +114,34 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
             </span>
 
             {showBadge && (
-              <span
-                className={`hidden 2xl:inline-flex items-center rounded-full font-bold uppercase tracking-wider shrink-0 ${currentSize.badge} ${
-                  isLight
-                    ? 'bg-emerald-950/90 text-emerald-300 border border-emerald-500/40'
-                    : 'bg-[#E6F3EF] text-[#00523C] border border-[#C2E2D7]'
-                }`}
-              >
-                {teamId}
-              </span>
-            )}
+              <>
+                <span
+                  className={`hidden 2xl:inline-flex items-center rounded-full font-bold uppercase tracking-wider shrink-0 ${currentSize.badge} ${
+                    isLight
+                      ? 'bg-emerald-950/90 text-emerald-300 border border-emerald-500/40'
+                      : 'bg-[#E6F3EF] text-[#00523C] border border-[#C2E2D7]'
+                  }`}
+                >
+                  {teamId}
+                </span>
 
-            {/* Info Icon Indicator directly next to title/badge */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowModal(true);
-              }}
-              className={`hidden 2xl:inline-flex p-1 rounded-full opacity-70 hover:opacity-100 transition-opacity shrink-0 cursor-pointer ${
-                isLight ? 'text-teal-300 hover:text-white' : 'text-slate-400 hover:text-[#006A4E]'
-              }`}
-              title="Official brand identity verification details"
-              aria-label="Brand Asset Information"
-            >
-              <Info className="w-3.5 h-3.5" />
-            </button>
+                {/* Info Icon Indicator directly next to title/badge */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowModal(true);
+                  }}
+                  className={`hidden 2xl:inline-flex p-1 rounded-full opacity-70 hover:opacity-100 transition-opacity shrink-0 cursor-pointer ${
+                    isLight ? 'text-teal-300 hover:text-white' : 'text-slate-400 hover:text-[#006A4E]'
+                  }`}
+                  title="Official brand identity verification details"
+                  aria-label="Brand Asset Information"
+                >
+                  <Info className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
           </div>
 
           {showTagline && (

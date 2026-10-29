@@ -26,6 +26,19 @@ import {
   BloodGroup
 } from '../../types';
 
+// Rate-limiting map for form submissions (minimum 6-8 seconds cooldown to prevent spam/abuse)
+const submissionTimestamps: Record<string, number> = {};
+
+function enforceRateLimit(key: string, minIntervalMs: number = 6000): void {
+  const now = Date.now();
+  const lastTime = submissionTimestamps[key] || 0;
+  if (now - lastTime < minIntervalMs) {
+    const waitSeconds = Math.ceil((minIntervalMs - (now - lastTime)) / 1000);
+    throw new Error(`Please wait ${waitSeconds} second(s) before submitting again.`);
+  }
+  submissionTimestamps[key] = now;
+}
+
 export class ApiService {
   /**
    * Fetch site-wide public metadata and settings
@@ -303,14 +316,68 @@ export class ApiService {
   }
 
   /**
-   * Submit volunteer application with server validation
+   * Submit volunteer application with server validation, rate limiting & offline fallback
    */
   static async submitVolunteerApplication(data: Omit<VolunteerApplication, 'id' | 'submittedAt' | 'status'>): Promise<{ success: boolean; id: string; message: string }> {
     if (!data.fullName || !data.email || !data.phone || !data.district) {
       throw new Error('Please fill in all required fields (Name, Email, Phone, District).');
     }
 
-    const id = `vol_${Date.now().toString(36)}`;
+    const emailKey = data.email.toLowerCase().trim();
+    enforceRateLimit(`vol_${emailKey}`, 7000);
+
+    const id = `vol_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
+    const newRecord: VolunteerApplication = {
+      ...data,
+      id,
+      submittedAt: new Date().toISOString(),
+      status: 'New'
+    };
+
+    // 1. Attempt Supabase direct persistence if available
+    try {
+      const { supabase, isSupabaseConfigured } = await import('../supabase');
+      if (supabase && isSupabaseConfigured) {
+        const { error } = await supabase.from('volunteer_applications').insert([{
+          id: newRecord.id,
+          full_name: newRecord.fullName,
+          email: newRecord.email,
+          phone: newRecord.phone,
+          district: newRecord.district,
+          upazila: newRecord.upazila || null,
+          blood_group: newRecord.bloodGroup || null,
+          occupation: newRecord.occupation || null,
+          skills: newRecord.skills || [],
+          motivation: newRecord.motivation || null,
+          status: 'New',
+          submitted_at: newRecord.submittedAt,
+          raw_data: newRecord
+        }]);
+
+        if (!error) {
+          return {
+            success: true,
+            id,
+            message: 'Application recorded and synchronized successfully.'
+          };
+        }
+        console.warn('Supabase volunteer insert notice, falling back to local storage:', error.message);
+      }
+    } catch (err) {
+      console.warn('Supabase volunteer insert error, storing in local fallback queue:', err);
+    }
+
+    // 2. Safe Local Storage Persistence Fallback
+    try {
+      if (typeof window !== 'undefined') {
+        const existing = JSON.parse(localStorage.getItem('infinity_pending_volunteers') || '[]');
+        existing.unshift(newRecord);
+        localStorage.setItem('infinity_pending_volunteers', JSON.stringify(existing.slice(0, 50)));
+      }
+    } catch (e) {
+      console.warn('LocalStorage volunteer fallback warning:', e);
+    }
+
     return {
       success: true,
       id,
@@ -319,12 +386,63 @@ export class ApiService {
   }
 
   /**
-   * Submit contact inquiry message
+   * Submit contact inquiry message with rate limiting & persistence fallback
    */
   static async submitContactInquiry(data: Omit<ContactMessage, 'id' | 'submittedAt' | 'status'>): Promise<{ success: boolean; message: string }> {
     if (!data.name || !data.email || !data.message) {
       throw new Error('Name, Email, and Message are required.');
     }
+
+    const emailKey = data.email.toLowerCase().trim();
+    enforceRateLimit(`contact_${emailKey}`, 7000);
+
+    const id = `msg_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
+    const newRecord: ContactMessage = {
+      ...data,
+      id,
+      submittedAt: new Date().toISOString(),
+      status: 'Unread'
+    };
+
+    // 1. Attempt Supabase direct persistence if available
+    try {
+      const { supabase, isSupabaseConfigured } = await import('../supabase');
+      if (supabase && isSupabaseConfigured) {
+        const { error } = await supabase.from('contact_inquiries').insert([{
+          id: newRecord.id,
+          name: newRecord.name,
+          email: newRecord.email,
+          phone: newRecord.phone || null,
+          subject: newRecord.subject || null,
+          message: newRecord.message,
+          status: 'Unread',
+          submitted_at: newRecord.submittedAt,
+          raw_data: newRecord
+        }]);
+
+        if (!error) {
+          return {
+            success: true,
+            message: 'Message delivered to Infinity Bangladesh desk.'
+          };
+        }
+        console.warn('Supabase contact insert notice, falling back to local storage:', error.message);
+      }
+    } catch (err) {
+      console.warn('Supabase contact insert error, storing in local fallback queue:', err);
+    }
+
+    // 2. Safe Local Storage Persistence Fallback
+    try {
+      if (typeof window !== 'undefined') {
+        const existing = JSON.parse(localStorage.getItem('infinity_pending_contacts') || '[]');
+        existing.unshift(newRecord);
+        localStorage.setItem('infinity_pending_contacts', JSON.stringify(existing.slice(0, 50)));
+      }
+    } catch (e) {
+      console.warn('LocalStorage contact fallback warning:', e);
+    }
+
     return {
       success: true,
       message: 'Message delivered to Infinity Bangladesh desk.'
@@ -429,6 +547,9 @@ export class ApiService {
       throw new Error('Please provide Full Name, Blood Group, Phone, District, Upazila, and Date of Birth.');
     }
 
+    const phoneKey = donorData.phone.trim();
+    enforceRateLimit(`donor_${phoneKey}`, 7000);
+
     const id = `donor_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
     try {
       const { supabase, isSupabaseConfigured } = await import('../supabase');
@@ -478,7 +599,19 @@ export class ApiService {
       throw new Error('Please fill in all mandatory fields (Requester, Contact Phone, Patient, Blood Group, Hospital, District).');
     }
 
-    const id = `emg_${Date.now().toString(36)}`;
+    const phoneKey = reqData.contactNumber.trim();
+    enforceRateLimit(`emg_${phoneKey}`, 5000);
+
+    const id = `emg_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
+    const nowIso = new Date().toISOString();
+    const newEmergencyRecord: EmergencyBloodRequest = {
+      ...reqData,
+      id,
+      status: 'PENDING',
+      createdAt: nowIso,
+      updatedAt: nowIso
+    };
+
     try {
       const { supabase, isSupabaseConfigured } = await import('../supabase');
       if (supabase && isSupabaseConfigured) {
@@ -501,6 +634,17 @@ export class ApiService {
       }
     } catch (err) {
       console.warn('ApiService submitEmergencyBloodRequest db error:', err);
+    }
+
+    // Local Storage emergency fallback
+    try {
+      if (typeof window !== 'undefined') {
+        const existing = JSON.parse(localStorage.getItem('infinity_pending_emergency_requests') || '[]');
+        existing.unshift(newEmergencyRecord);
+        localStorage.setItem('infinity_pending_emergency_requests', JSON.stringify(existing.slice(0, 30)));
+      }
+    } catch (e) {
+      console.warn('LocalStorage emergency request fallback warning:', e);
     }
 
     return {

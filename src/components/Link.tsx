@@ -3,7 +3,7 @@ import { useRouter } from '../context/RouterContext';
 import { PageRoute } from '../types';
 
 export function getHref(to?: PageRoute | string, slug?: string | null): string {
-  if (!to) return '#/';
+  if (!to) return '/';
   
   const toStr = String(to).trim();
   
@@ -17,29 +17,35 @@ export function getHref(to?: PageRoute | string, slug?: string | null): string {
   }
 
   // Strip leading '#' or '/'
-  let clean = toStr.replace(/^#\/?/, '').replace(/^\//, '');
+  const clean = toStr.replace(/^#\/?/, '').replace(/^\//, '');
 
   if (!clean || clean === 'home') {
-    return '#/';
+    return '/';
   }
 
   if (clean === 'campaigns/detail' && slug) {
-    return `#/campaigns/${slug}`;
+    return `/campaigns/${slug}`;
   }
   if (clean === 'programs/detail' && slug) {
-    return `#/programs/${slug}`;
+    return `/programs/${slug}`;
   }
   if (clean === 'stories/detail' && slug) {
-    return `#/stories/${slug}`;
+    return `/stories/${slug}`;
   }
   if (clean === 'news/detail' && slug) {
-    return `#/news/${slug}`;
+    return `/news/${slug}`;
   }
   if (clean === 'events/detail' && slug) {
-    return `#/events/${slug}`;
+    return `/events/${slug}`;
+  }
+  if (clean === 'gallery' && slug) {
+    return `/gallery?event=${encodeURIComponent(slug)}`;
+  }
+  if ((clean === 'about/past-committees' || clean === 'team/past-committees') && slug) {
+    return `/team/past-committees?id=${encodeURIComponent(slug)}`;
   }
 
-  return `#/${clean}`;
+  return `/${clean}`;
 }
 
 export interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
@@ -75,7 +81,7 @@ export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
         return;
       }
 
-      // Smooth client-side hash routing for normal left clicks
+      // Smooth client-side HTML5 History routing for normal left clicks
       e.preventDefault();
       navigate(to as PageRoute, slug);
     };

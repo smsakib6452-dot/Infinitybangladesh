@@ -13,7 +13,6 @@ import {
   ArrowRight,
   Droplet
 } from 'lucide-react';
-import { PageRoute } from '../types';
 
 export const GlobalSearchModal: React.FC = () => {
   const { isSearchOpen, setIsSearchOpen } = useRouter();
@@ -23,6 +22,7 @@ export const GlobalSearchModal: React.FC = () => {
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Auto-focus input on open
   useEffect(() => {
     if (isSearchOpen) {
       setTimeout(() => inputRef.current?.focus(), 50);
@@ -30,6 +30,21 @@ export const GlobalSearchModal: React.FC = () => {
       setQuery('');
     }
   }, [isSearchOpen]);
+
+  // Handle physical Escape key press to dismiss modal (WCAG 2.2 AA)
+  useEffect(() => {
+    if (!isSearchOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setIsSearchOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSearchOpen, setIsSearchOpen]);
 
   if (!isSearchOpen) return null;
 
@@ -123,6 +138,9 @@ export const GlobalSearchModal: React.FC = () => {
     <div
       className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in"
       onClick={() => setIsSearchOpen(false)}
+      role="dialog"
+      aria-modal="true"
+      aria-label={isBn ? 'ইনফিনিটি গ্লোবাল অনুসন্ধান' : 'Infinity Global Search'}
     >
       <div
         className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-[#EAE3D9] overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95"
@@ -148,6 +166,7 @@ export const GlobalSearchModal: React.FC = () => {
               type="button"
               onClick={() => setQuery('')}
               className="p-1 rounded-full text-slate-400 hover:text-slate-600 cursor-pointer"
+              aria-label={isBn ? 'অনুসন্ধান মুছুন' : 'Clear search'}
             >
               <X className="w-4 h-4" />
             </button>
@@ -156,6 +175,7 @@ export const GlobalSearchModal: React.FC = () => {
             type="button"
             onClick={() => setIsSearchOpen(false)}
             className="px-2.5 py-1 text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold cursor-pointer"
+            aria-label={isBn ? 'বন্ধ করুন' : 'Close search dialog'}
           >
             ESC
           </button>
@@ -365,4 +385,3 @@ export const GlobalSearchModal: React.FC = () => {
     </div>
   );
 };
-
