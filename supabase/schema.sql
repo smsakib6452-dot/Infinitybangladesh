@@ -864,8 +864,8 @@ ALTER TABLE public.blood_donation_settings ADD COLUMN IF NOT EXISTS helpline_lab
 -- 6. ROW LEVEL SECURITY (RLS) POLICIES — FULL READ & WRITE ACCESS FOR ALL CMS TABLES
 -- ==============================================================================
 
--- Enable RLS and grant full select/insert/update/delete policies
-DO $$
+-- Enable RLS across all tables in public schema and drop legacy blanket policies
+DO $
 DECLARE
   tbl TEXT;
 BEGIN
@@ -874,9 +874,89 @@ BEGIN
   LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;', tbl);
     EXECUTE format('DROP POLICY IF EXISTS "Public full access %I" ON public.%I;', tbl, tbl);
-    EXECUTE format('CREATE POLICY "Public full access %I" ON public.%I FOR ALL USING (true) WITH CHECK (true);', tbl, tbl);
   END LOOP;
-END $$;
+END $;
+
+-- 6.1 Public Read-Only Content Tables (Anyone can read, only authenticated admin can mutate)
+DO $
+DECLARE
+  pub_tbl TEXT;
+  pub_tables TEXT[] := ARRAY[
+    'site_settings', 'homepage_config', 'about_settings', 'header_settings',
+    'footer_settings', 'social_links', 'volunteer_settings', 'support_settings',
+    'contact_settings', 'seo_settings', 'navigation_items', 'banners',
+    'programs', 'program_events', 'event_media', 'campaigns',
+    'impact_metrics', 'stories', 'media_library', 'gallery_albums',
+    'gallery_photos', 'video_items', 'journey_videos', 'transparency_reports',
+    'news_articles', 'event_items', 'partners', 'faqs',
+    'committees', 'persons', 'positions', 'committee_members',
+    'blood_donation_settings'
+  ];
+BEGIN
+  FOREACH pub_tbl IN ARRAY pub_tables LOOP
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = pub_tbl) THEN
+      EXECUTE format('DROP POLICY IF EXISTS "Public read-only %I" ON public.%I;', pub_tbl, pub_tbl);
+      EXECUTE format('CREATE POLICY "Public read-only %I" ON public.%I FOR SELECT USING (true);', pub_tbl, pub_tbl);
+      EXECUTE format('DROP POLICY IF EXISTS "Admin full access %I" ON public.%I;', pub_tbl, pub_tbl);
+      EXECUTE format('CREATE POLICY "Admin full access %I" ON public.%I FOR ALL TO authenticated USING (true) WITH CHECK (true);', pub_tbl, pub_tbl);
+    END IF;
+  END LOOP;
+END $;
+
+-- 6.2 Public Submission Tables (Public INSERT only; SELECT/UPDATE/DELETE restricted to authenticated admin)
+-- volunteer_applications
+DROP POLICY IF EXISTS "Public insert volunteer application" ON public.volunteer_applications;
+CREATE POLICY "Public insert volunteer application" ON public.volunteer_applications FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Admin manage volunteer applications" ON public.volunteer_applications;
+CREATE POLICY "Admin manage volunteer applications" ON public.volunteer_applications FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- donation_records
+DROP POLICY IF EXISTS "Public submit donation record" ON public.donation_records;
+CREATE POLICY "Public submit donation record" ON public.donation_records FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Admin manage donation records" ON public.donation_records;
+CREATE POLICY "Admin manage donation records" ON public.donation_records FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- contact_messages
+DROP POLICY IF EXISTS "Public submit contact message" ON public.contact_messages;
+CREATE POLICY "Public submit contact message" ON public.contact_messages FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Admin manage contact messages" ON public.contact_messages;
+CREATE POLICY "Admin manage contact messages" ON public.contact_messages FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- 6.3 Blood Donation Network Security
+-- blood_donors (Public read approved donors, public self-register, admin full management)
+DROP POLICY IF EXISTS "Public read approved blood donors" ON public.blood_donors;
+CREATE POLICY "Public read approved blood donors" ON public.blood_donors FOR SELECT USING (approval_status = 'APPROVED' OR approval_status IS NULL);
+DROP POLICY IF EXISTS "Public register as blood donor" ON public.blood_donors;
+CREATE POLICY "Public register as blood donor" ON public.blood_donors FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Admin manage blood donors" ON public.blood_donors;
+CREATE POLICY "Admin manage blood donors" ON public.blood_donors FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- emergency_blood_requests (Public read, public submit, admin manage)
+DROP POLICY IF EXISTS "Public read emergency requests" ON public.emergency_blood_requests;
+CREATE POLICY "Public read emergency requests" ON public.emergency_blood_requests FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public submit emergency request" ON public.emergency_blood_requests;
+CREATE POLICY "Public submit emergency request" ON public.emergency_blood_requests FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Admin manage emergency requests" ON public.emergency_blood_requests;
+CREATE POLICY "Admin manage emergency requests" ON public.emergency_blood_requests FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- blood_donation_history
+DROP POLICY IF EXISTS "Public read blood donation history" ON public.blood_donation_history;
+CREATE POLICY "Public read blood donation history" ON public.blood_donation_history FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admin manage donation history" ON public.blood_donation_history;
+CREATE POLICY "Admin manage donation history" ON public.blood_donation_history FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- 6.4 Private Administration & Audit Logs (Restricted entirely to authenticated admin sessions)
+-- admin_profiles
+DROP POLICY IF EXISTS "Admin read profiles" ON public.admin_profiles;
+CREATE POLICY "Admin read profiles" ON public.admin_profiles FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Admin manage profiles" ON public.admin_profiles;
+CREATE POLICY "Admin manage profiles" ON public.admin_profiles FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- audit_logs
+DROP POLICY IF EXISTS "Admin read audit logs" ON public.audit_logs;
+CREATE POLICY "Admin read audit logs" ON public.audit_logs FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "System insert audit logs" ON public.audit_logs;
+CREATE POLICY "System insert audit logs" ON public.audit_logs FOR INSERT WITH CHECK (true);
 
 -- Default Singletons Seed
 INSERT INTO public.site_settings (id) VALUES ('default') ON CONFLICT (id) DO NOTHING;

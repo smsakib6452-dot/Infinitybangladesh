@@ -113,7 +113,7 @@ export const ContactPage: React.FC = () => {
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder={isBn ? 'নাম লিখুন' : 'Full Name'}
-                    className="w-full px-4 py-2.5 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] text-xs sm:text-sm focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
+                    className="w-full px-4 py-2.5 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] text-base sm:text-sm focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
                   />
                 </div>
 
@@ -125,7 +125,7 @@ export const ContactPage: React.FC = () => {
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="name@example.com"
-                    className="w-full px-4 py-2.5 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] text-xs sm:text-sm focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
+                    className="w-full px-4 py-2.5 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] text-base sm:text-sm focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
                   />
                 </div>
 
@@ -136,7 +136,7 @@ export const ContactPage: React.FC = () => {
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
                     placeholder="01XXXXXXXXX"
-                    className="w-full px-4 py-2.5 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] text-xs sm:text-sm focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
+                    className="w-full px-4 py-2.5 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] text-base sm:text-sm focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
                   />
                 </div>
 
@@ -145,7 +145,7 @@ export const ContactPage: React.FC = () => {
                   <select
                     value={subject}
                     onChange={e => setSubject(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] text-xs sm:text-sm focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
+                    className="w-full px-4 py-2.5 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] text-base sm:text-sm focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
                   >
                     <option value="General Inquiry">{isBn ? 'সাধারণ তথ্য' : 'General Inquiry'}</option>
                     <option value="Volunteering">{isBn ? 'স্বেচ্ছাসেবী সংক্রান্ত' : 'Volunteering'}</option>
@@ -163,7 +163,7 @@ export const ContactPage: React.FC = () => {
                   value={message}
                   onChange={e => setMessage(e.target.value)}
                   placeholder={isBn ? 'আপনার বার্তা বা প্রশ্ন লিখুন...' : 'Write your message or inquiry here...'}
-                  className="w-full px-4 py-2.5 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] text-xs sm:text-sm focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
+                  className="w-full px-4 py-2.5 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] text-base sm:text-sm focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
                 />
               </div>
 

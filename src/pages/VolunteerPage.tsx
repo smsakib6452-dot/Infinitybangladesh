@@ -792,48 +792,94 @@ export const VolunteerPage: React.FC = () => {
                   />
                 </div>
 
-                {/* Step Icons Pill Bar with Premium Frosted Design */}
-                <div className="p-1.5 sm:p-2 bg-[#FAF7F2] rounded-2xl border border-[#EAE3D9] grid grid-cols-8 gap-1 shadow-inner">
-                  {sectionSteps.map((s) => {
-                    const Icon = s.icon;
-                    const isActive = s.num === currentStep;
-                    const isDone = s.num < currentStep;
-                    return (
-                      <button
-                        key={s.num}
-                        type="button"
-                        onClick={() => {
-                          if (s.num < currentStep) {
-                            setCurrentStep(s.num);
-                          }
-                        }}
-                        disabled={s.num > currentStep}
-                        className={`flex flex-col items-center gap-1 p-1 sm:p-1.5 rounded-xl transition-all duration-200 select-none ${
-                          isActive
-                            ? 'bg-white shadow-warm-xs ring-2 ring-[#006A4E] text-[#006A4E]'
-                            : isDone
-                            ? 'text-emerald-700 cursor-pointer hover:bg-white/80'
-                            : 'text-slate-400 opacity-60 cursor-not-allowed'
-                        }`}
-                        title={isBn ? s.titleBn : s.titleEn}
-                      >
-                        <div
-                          className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-xs transition-all ${
+                {/* Step Icons Pill Bar: Adaptive Mobile Stepper (WCAG 2.2 AA SC 2.5.8 Compliant 44x44px touch targets) */}
+                <div className="p-1.5 sm:p-2 bg-[#FAF7F2] rounded-2xl border border-[#EAE3D9] shadow-inner">
+                  {/* Mobile View: Horizontal smooth scrollable track with accessible 44px touch targets */}
+                  <div className="flex sm:hidden items-center gap-2 overflow-x-auto no-scrollbar py-1 px-0.5 scroll-smooth">
+                    {sectionSteps.map((s) => {
+                      const Icon = s.icon;
+                      const isActive = s.num === currentStep;
+                      const isDone = s.num < currentStep;
+                      return (
+                        <button
+                          key={s.num}
+                          type="button"
+                          onClick={() => {
+                            if (s.num < currentStep) {
+                              setCurrentStep(s.num);
+                            }
+                          }}
+                          disabled={s.num > currentStep}
+                          className={`min-h-[44px] px-3.5 py-2 rounded-xl flex items-center gap-2 text-xs font-bold transition-all shrink-0 select-none cursor-pointer ${
                             isActive
-                              ? 'bg-[#006A4E] text-white shadow-2xs font-extrabold'
+                              ? 'bg-[#006A4E] text-white shadow-warm-xs ring-2 ring-[#006A4E]/30'
                               : isDone
-                              ? 'bg-[#E6F3EF] text-[#006A4E] font-bold'
-                              : 'bg-slate-200/70 text-slate-500'
+                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100/70'
+                              : 'bg-white/70 text-slate-400 border border-slate-200/60 opacity-60 cursor-not-allowed'
                           }`}
+                          title={isBn ? s.titleBn : s.titleEn}
+                          aria-label={`Step ${s.num}: ${isBn ? s.titleBn : s.titleEn}`}
                         >
-                          {isDone ? <Check className="w-3.5 h-3.5" /> : <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
-                        </div>
-                        <span className="text-[9px] font-bold hidden md:inline truncate max-w-full text-center">
-                          {s.num}. {isBn ? s.titleBn.split(' ')[0] : s.titleEn.split(' ')[0]}
-                        </span>
-                      </button>
-                    );
-                  })}
+                          <div
+                            className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs shrink-0 ${
+                              isActive
+                                ? 'bg-white text-[#006A4E] font-black'
+                                : isDone
+                                ? 'bg-[#006A4E] text-white font-bold'
+                                : 'bg-slate-200 text-slate-500'
+                            }`}
+                          >
+                            {isDone ? <Check className="w-3.5 h-3.5" /> : s.num}
+                          </div>
+                          <span className="whitespace-nowrap">{isBn ? s.titleBn : s.titleEn}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Tablet/Desktop View: Refined 8-Column Grid */}
+                  <div className="hidden sm:grid grid-cols-8 gap-1.5">
+                    {sectionSteps.map((s) => {
+                      const Icon = s.icon;
+                      const isActive = s.num === currentStep;
+                      const isDone = s.num < currentStep;
+                      return (
+                        <button
+                          key={s.num}
+                          type="button"
+                          onClick={() => {
+                            if (s.num < currentStep) {
+                              setCurrentStep(s.num);
+                            }
+                          }}
+                          disabled={s.num > currentStep}
+                          className={`flex flex-col items-center gap-1 p-1.5 rounded-xl transition-all duration-200 select-none min-h-[44px] ${
+                            isActive
+                              ? 'bg-white shadow-warm-xs ring-2 ring-[#006A4E] text-[#006A4E]'
+                              : isDone
+                              ? 'text-emerald-700 cursor-pointer hover:bg-white/80'
+                              : 'text-slate-400 opacity-60 cursor-not-allowed'
+                          }`}
+                          title={isBn ? s.titleBn : s.titleEn}
+                        >
+                          <div
+                            className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs transition-all ${
+                              isActive
+                                ? 'bg-[#006A4E] text-white shadow-2xs font-extrabold'
+                                : isDone
+                                ? 'bg-[#E6F3EF] text-[#006A4E] font-bold'
+                                : 'bg-slate-200/70 text-slate-500'
+                            }`}
+                          >
+                            {isDone ? <Check className="w-3.5 h-3.5" /> : <Icon className="w-3.5 h-3.5" />}
+                          </div>
+                          <span className="text-[10px] font-bold hidden md:inline truncate max-w-full text-center">
+                            {s.num}. {isBn ? s.titleBn.split(' ')[0] : s.titleEn.split(' ')[0]}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 

@@ -128,6 +128,6 @@ export async function resetAdminPassword(email: string) {
     throw new Error('Supabase credentials required for automated password reset emails.');
   }
   return await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/#/admin`
+    redirectTo: `${window.location.origin}/admin`
   });
 }

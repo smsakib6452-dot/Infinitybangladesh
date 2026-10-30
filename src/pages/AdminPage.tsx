@@ -152,7 +152,7 @@ import { BloodDonorModal } from '../components/BloodDonorModal';
 import { EmergencyRequestAdminModal } from '../components/EmergencyRequestAdminModal';
 import { AdminHomepageManager } from '../components/AdminHomepageManager';
 import { AdminErrorBoundary } from '../components/AdminErrorBoundary';
-import { isSupabaseConfigured, signInWithEmail, signOutAdmin } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, signInWithEmail, signOutAdmin } from '../lib/supabase';
 import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL, isPortraitVideo } from '../lib/utils/mediaHelper';
 import { uploadToCloudinary } from '../lib/cloudinary';
 
@@ -238,13 +238,6 @@ export const AdminPage: React.FC = () => {
     loadAdminData, isAdminLoaded
   } = useData();
 
-  // Load complete admin-only datasets on entry if not already loaded
-  React.useEffect(() => {
-    if (!isAdminLoaded) {
-      loadAdminData();
-    }
-  }, [isAdminLoaded, loadAdminData]);
-
   // Auth State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return localStorage.getItem('infinity_bd_admin_auth') === 'true';
@@ -253,6 +246,25 @@ export const AdminPage: React.FC = () => {
   const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
   const [currentRole, setCurrentRole] = useState<AdminRole>('super_admin');
+
+  // Validate active session on mount if Supabase Auth is enabled
+  React.useEffect(() => {
+    if (isSupabaseConfigured && supabase) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session && !sessionStorage.getItem('infinity_admin_user')) {
+          setIsAuthenticated(false);
+          localStorage.removeItem('infinity_bd_admin_auth');
+        }
+      }).catch(() => {});
+    }
+  }, []);
+
+  // Load complete admin-only datasets on entry only if actively authenticated
+  React.useEffect(() => {
+    if (isAuthenticated && !isAdminLoaded) {
+      loadAdminData();
+    }
+  }, [isAuthenticated, isAdminLoaded, loadAdminData]);
 
   // UI Navigation
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');

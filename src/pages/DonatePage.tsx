@@ -89,8 +89,8 @@ export const DonatePage: React.FC = () => {
     });
   };
 
-  const bKashNum = supportSettings.bKashNumber || settings.bKashNumber || '01800-000000';
-  const nagadNum = supportSettings.nagadNumber || settings.nagadNumber || '01800-000000';
+  const bKashNum = supportSettings.bKashNumber || settings.bKashNumber || '01839-008339';
+  const nagadNum = supportSettings.nagadNumber || settings.nagadNumber || '01839-008339';
   const bankDet = supportSettings.bankDetails || settings.bankDetails;
 
   return (

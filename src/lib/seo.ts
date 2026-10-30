@@ -372,7 +372,20 @@ export function updatePageMetadata(page: PageRoute, slug: string | null = null, 
   if (twDesc) twDesc.setAttribute('content', pageDesc);
 
   // 5. Update Canonical URL
-  const cleanPath = page === 'home' ? '' : (slug ? `/${page.replace('/detail', '')}/${slug}` : `/${page}`);
+  let cleanPath = '';
+  if (page === 'home') {
+    cleanPath = '';
+  } else if (slug) {
+    if (page === 'gallery') {
+      cleanPath = `/gallery?event=${encodeURIComponent(slug)}`;
+    } else if (page === 'about/past-committees' || page === 'team/past-committees') {
+      cleanPath = `/team/past-committees?id=${encodeURIComponent(slug)}`;
+    } else {
+      cleanPath = `/${page.replace('/detail', '')}/${slug}`;
+    }
+  } else {
+    cleanPath = `/${page}`;
+  }
   const canonicalUrl = `https://infinitybangladesh.vercel.app${cleanPath}`;
 
   let canonicalLink = document.querySelector('link[rel="canonical"]');
@@ -382,5 +395,18 @@ export function updatePageMetadata(page: PageRoute, slug: string | null = null, 
     document.head.appendChild(canonicalLink);
   }
   canonicalLink.setAttribute('href', canonicalUrl);
+
+  // 6. Update Robots Indexing Directive (Enforce strict noindex on /admin)
+  let robotsMeta = document.querySelector('meta[name="robots"]');
+  if (!robotsMeta) {
+    robotsMeta = document.createElement('meta');
+    robotsMeta.setAttribute('name', 'robots');
+    document.head.appendChild(robotsMeta);
+  }
+  if (page === 'admin') {
+    robotsMeta.setAttribute('content', 'noindex, nofollow, noarchive');
+  } else {
+    robotsMeta.setAttribute('content', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
+  }
 }
 

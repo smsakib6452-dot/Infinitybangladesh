@@ -87,7 +87,7 @@ export function cleanBloodDonor(d: any): BloodDonor {
   const email = toSafeString(d.email, '');
   const gender = toSafeString(d.gender, 'Male');
   // Male donors are automatically public; Female/Other donors follow their privacy preference
-  const showPhonePublicly = gender === 'Male' ? true : Boolean(d.showPhonePublicly);
+  const showPhonePublicly = d.showPhonePublicly !== undefined ? Boolean(d.showPhonePublicly) : (gender === 'Male');
 
   return {
     ...d,
@@ -131,13 +131,13 @@ export function cleanEmergencyRequest(r: any): EmergencyBloodRequest {
 /**
  * Master Admin Access Passcodes that always unlock profile editing
  */
-export const MASTER_ADMIN_PASSCODES = ['INFINITY2026', 'IBBLOODADMIN', 'IB2026', '123456'];
+export const MASTER_ADMIN_PASSCODES: string[] = [];
 
 /**
  * Generates or retrieves deterministic 6-digit donor edit access passcode
  */
 export function getDonorEditAccessCode(donor: BloodDonor): string {
-  if (!donor) return '123456';
+  if (!donor) return '';
   if ((donor as any).editPasscode) return String((donor as any).editPasscode);
 
   const raw = `${donor.id}_${donor.phone || '01800000000'}`;
@@ -156,7 +156,8 @@ export function getDonorEditAccessCode(donor: BloodDonor): string {
 export function verifyDonorAccessCode(donor: BloodDonor, inputCode: string): boolean {
   if (!donor || !inputCode) return false;
   const cleanInput = inputCode.trim();
-  if (MASTER_ADMIN_PASSCODES.includes(cleanInput.toUpperCase()) || MASTER_ADMIN_PASSCODES.includes(cleanInput)) {
+  const isAdminAuth = typeof window !== 'undefined' && localStorage.getItem('infinity_bd_admin_auth') === 'true' && Boolean(sessionStorage.getItem('infinity_admin_user'));
+  if (isAdminAuth || (MASTER_ADMIN_PASSCODES.length > 0 && MASTER_ADMIN_PASSCODES.includes(cleanInput))) {
     return true;
   }
   const expectedCode = getDonorEditAccessCode(donor);

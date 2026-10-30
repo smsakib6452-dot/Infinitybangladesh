@@ -75,6 +75,8 @@ import {
   Unlock,
   Key,
   MessageCircle,
+  Share2,
+  Copy,
   ShieldAlert
 } from 'lucide-react';
 import { ScrollReveal } from '../components/motion/ScrollReveal';
@@ -653,6 +655,31 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
     };
   }, [bloodDonors, emergencyBloodRequests]);
 
+  // Live Active Emergency Requests
+  const pendingEmergencyRequests = useMemo(() => {
+    return emergencyBloodRequests.filter(
+      r => r.status === 'PENDING' || r.status === 'PROCESSING'
+    );
+  }, [emergencyBloodRequests]);
+
+  const [copiedReqId, setCopiedReqId] = useState<string | null>(null);
+
+  const handleCopyEmergencyDetails = useCallback((req: EmergencyBloodRequest) => {
+    const text = `🚨 অতি জরুরি রক্তের আবেদন! 🚨
+🩸 রক্তের গ্রুপ: ${req.bloodGroup} (${req.unitsNeeded} ব্যাগ প্রয়োজন)
+👤 রোগী: ${req.patientName}
+🏥 হাসপাতাল: ${req.hospitalName} (${req.upazila}, ${req.district})
+📅 তারিখ: ${req.requiredDate}
+📞 জরুরি যোগাযোগের নম্বর: ${req.contactNumber}
+${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalNotes}\n` : ''}
+🌐 যাচাইকৃত প্ল্যাটফর্ম: ইনফিনিটি লাইফলাইন (ইনফিনিটি বাংলাদেশ)
+🔗 লাইভ লিংক: https://infinitybangladesh.vercel.app/blood-donation`;
+
+    navigator.clipboard.writeText(text);
+    setCopiedReqId(req.id);
+    setTimeout(() => setCopiedReqId(null), 2500);
+  }, []);
+
   // ----------------------------------------------------
   // FILTERED DONORS FOR SEARCH
   // ----------------------------------------------------
@@ -1028,7 +1055,7 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
       </section>
 
       {/* 2. NAVIGATION TABS */}
-      <section id="blood-tabs-nav" className="sticky top-16 z-30 bg-white/90 backdrop-blur-md border-b border-[#EAE3D9] shadow-xs">
+      <section id="blood-tabs-nav" className="sticky top-[68px] sm:top-16 z-30 bg-white/90 backdrop-blur-md border-b border-[#EAE3D9] shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-3 scroll-smooth">
               {[
@@ -1076,6 +1103,81 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
         {/* ==================================================== */}
         {activeTab === 'find-donor' && (
           <div className="space-y-8">
+            {/* Live Urgent Blood Request Alert Banner (High-Priority Life Saver) */}
+            {pendingEmergencyRequests.length > 0 && (
+              <ScrollReveal effect="fade-in">
+                <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-rose-600 via-rose-700 to-red-800 text-white shadow-warm-lg border border-rose-400/30 space-y-3">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-rose-500/50 pb-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <span className="relative flex h-3 w-3 shrink-0">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-200 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />
+                      </span>
+                      <span className="text-xs sm:text-sm font-extrabold tracking-wider uppercase flex items-center gap-1.5">
+                        <Flame className="w-4 h-4 text-amber-300 animate-pulse" />
+                        <span>{isBn ? 'জরুরি রক্তের লাইভ নোটিশ' : 'Live Urgent Blood Alert'}</span>
+                      </span>
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-white text-rose-700 shadow-2xs">
+                        {pendingEmergencyRequests.length} {isBn ? 'টি সক্রিয় আবেদন' : 'Active'}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => scrollToFormSection('emergency-request')}
+                      className="text-xs font-bold text-rose-100 hover:text-white underline underline-offset-2 cursor-pointer flex items-center gap-1 self-end sm:self-auto"
+                    >
+                      <span>{isBn ? 'সকল আবেদন দেখুন' : 'View All Requests'}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {pendingEmergencyRequests.slice(0, 2).map((req) => (
+                      <div
+                        key={req.id}
+                        className="bg-black/25 backdrop-blur-md rounded-2xl p-3 border border-white/15 flex items-center justify-between gap-3"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="w-10 h-10 rounded-xl bg-white text-rose-700 font-black font-display text-sm flex items-center justify-center shrink-0 shadow-md">
+                            {req.bloodGroup}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-xs font-extrabold truncate text-white">
+                              {req.patientName} &bull; <span className="text-rose-200 font-bold">{req.unitsNeeded} {isBn ? 'ব্যাগ' : 'Bags'}</span>
+                            </p>
+                            <p className="text-[10px] text-rose-100 truncate flex items-center gap-1">
+                              <Building2 className="w-2.5 h-2.5 shrink-0 text-amber-300" />
+                              <span className="truncate">{req.hospitalName} ({req.upazila || req.district})</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <a
+                            href={`tel:${req.contactNumber}`}
+                            className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-white text-rose-700 hover:bg-rose-50 font-extrabold text-xs flex items-center gap-1 transition-all shadow-xs cursor-pointer"
+                            title={isBn ? 'সরাসরি কল' : 'Call'}
+                          >
+                            <Phone className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">{isBn ? 'কল' : 'Call'}</span>
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyEmergencyDetails(req)}
+                            className="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs transition-colors cursor-pointer"
+                            title={isBn ? 'শেয়ার মেসেজ কপি করুন' : 'Copy Share Message'}
+                          >
+                            {copiedReqId === req.id ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <Share2 className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </ScrollReveal>
+            )}
+
             {/* Search Filter Card */}
             <ScrollReveal effect="fade-up">
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#EAE3D9] shadow-warm-sm space-y-6">
@@ -1133,9 +1235,46 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
 
               {/* Filter Selectors Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-                {/* District */}
+                {/* District with Hotspot Quick-Pills */}
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-700">{isBn ? 'জেলা' : 'District'}</label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700">{isBn ? 'জেলা' : 'District'}</label>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => { setSearchDistrict('Chattogram'); setSearchUpazila('ALL'); }}
+                        className={`text-[10px] px-1.5 py-0.5 rounded font-bold transition-colors cursor-pointer ${
+                          searchDistrict === 'Chattogram' && searchUpazila === 'ALL'
+                            ? 'bg-[#006A4E] text-white'
+                            : 'bg-emerald-50 text-[#006A4E] hover:bg-emerald-100'
+                        }`}
+                      >
+                        {isBn ? 'চট্টগ্রাম' : 'Ctg'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setSearchDistrict('Chattogram'); setSearchUpazila('Hathazari'); }}
+                        className={`text-[10px] px-1.5 py-0.5 rounded font-bold transition-colors cursor-pointer ${
+                          searchDistrict === 'Chattogram' && searchUpazila === 'Hathazari'
+                            ? 'bg-[#006A4E] text-white'
+                            : 'bg-emerald-50 text-[#006A4E] hover:bg-emerald-100'
+                        }`}
+                      >
+                        {isBn ? 'হাটহাজারী' : 'Hathazari'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setSearchDistrict('Dhaka'); setSearchUpazila('ALL'); }}
+                        className={`text-[10px] px-1.5 py-0.5 rounded font-bold transition-colors cursor-pointer ${
+                          searchDistrict === 'Dhaka'
+                            ? 'bg-[#006A4E] text-white'
+                            : 'bg-emerald-50 text-[#006A4E] hover:bg-emerald-100'
+                        }`}
+                      >
+                        {isBn ? 'ঢাকা' : 'Dhaka'}
+                      </button>
+                    </div>
+                  </div>
                   <select
                     value={searchDistrict}
                     onChange={(e) => {
@@ -1479,13 +1618,33 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
                               <span>{isBn ? 'বিশ্রামে আছেন' : 'In Recovery'}</span>
                             </button>
                           ) : phoneVis.isPublic ? (
-                            <a
-                              href={`tel:${donor.phone}`}
-                              className="w-full py-2.5 px-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-xs hover:shadow-warm-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                            >
-                              <Phone className="w-3.5 h-3.5" />
-                              <span>{isBn ? 'কল করুন' : 'Call Donor'}</span>
-                            </a>
+                            <div className="flex items-center gap-1.5">
+                              <a
+                                href={`tel:${donor.phone}`}
+                                className="flex-1 py-2.5 px-2 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-xs hover:shadow-warm-sm transition-all flex items-center justify-center gap-1 cursor-pointer"
+                                title={isBn ? 'সরাসরি কল' : 'Call'}
+                              >
+                                <Phone className="w-3.5 h-3.5" />
+                                <span>{isBn ? 'কল' : 'Call'}</span>
+                              </a>
+                              <a
+                                href={`https://wa.me/${(() => {
+                                  const c = (donor.phone || '').replace(/[^0-9]/g, '');
+                                  return c.startsWith('880') ? c : c.startsWith('0') ? `88${c}` : c;
+                                })()}?text=${encodeURIComponent(
+                                  isBn
+                                    ? `আসসালামু আলাইকুম ${donor.fullName} ভাই/আপু, ইনফিনিটি লাইফলাইনে আপনার রক্তদানের (${donor.bloodGroup}) তথ্য দেখে জরুরি রক্তের প্রয়োজনে যোগাযোগ করছি।`
+                                    : `Hello ${donor.fullName}, contacting from Infinity LifeLine regarding emergency ${donor.bloodGroup} blood.`
+                                )}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 py-2.5 px-2 rounded-2xl bg-[#25D366] hover:bg-[#1EBE5D] text-white font-extrabold text-xs shadow-xs hover:shadow-warm-sm transition-all flex items-center justify-center gap-1 cursor-pointer"
+                                title="WhatsApp"
+                              >
+                                <MessageCircle className="w-3.5 h-3.5" />
+                                <span>WhatsApp</span>
+                              </a>
+                            </div>
                           ) : (
                             <button
                               type="button"
@@ -3258,17 +3417,52 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
                           </p>
                         )}
 
-                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-                          <span className="text-[11px] text-slate-500 font-medium">
-                            {isBn ? 'রক্ত দিতে আগ্রহী?' : 'Can you donate?'}
-                          </span>
-                          <a
-                            href={`tel:${req.contactNumber}`}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-xs transition-all"
+                        <div className="pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleCopyEmergencyDetails(req)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#FAF7F2] hover:bg-slate-100 text-slate-700 text-xs font-bold border border-[#EAE3D9] transition-all cursor-pointer"
+                            title={isBn ? 'জরুরি মেসেজ কপি করুন' : 'Copy formatted broadcast message'}
                           >
-                            <Phone className="w-3 h-3" />
-                            <span>{isBn ? 'সরাসরি কল করুন' : 'Call Contact'}</span>
-                          </a>
+                            {copiedReqId === req.id ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                <span className="text-emerald-700">{isBn ? 'মেসেজ কপি হয়েছে!' : 'Copied!'}</span>
+                              </>
+                            ) : (
+                              <>
+                                <Share2 className="w-3.5 h-3.5 text-slate-500" />
+                                <span>{isBn ? 'মেসেজ শেয়ার' : 'Share'}</span>
+                              </>
+                            )}
+                          </button>
+
+                          <div className="flex items-center gap-1.5">
+                            <a
+                              href={`https://wa.me/${(() => {
+                                const c = (req.contactNumber || '').replace(/[^0-9]/g, '');
+                                return c.startsWith('880') ? c : c.startsWith('0') ? `88${c}` : c;
+                              })()}?text=${encodeURIComponent(
+                                isBn
+                                  ? `আসসালামু আলাইকুম। ইনফিনিটি লাইফলাইনে ${req.patientName} রোগীর জন্য ${req.bloodGroup} রক্তের জরুরি আবেদন দেখে যোগাযোগ করছি...`
+                                  : `Hello, contacting regarding the emergency ${req.bloodGroup} blood request on Infinity LifeLine.`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white font-extrabold text-xs shadow-xs transition-all cursor-pointer"
+                              title="WhatsApp"
+                            >
+                              <MessageCircle className="w-3.5 h-3.5" />
+                              <span className="hidden xs:inline">WhatsApp</span>
+                            </a>
+                            <a
+                              href={`tel:${req.contactNumber}`}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-xs transition-all cursor-pointer"
+                            >
+                              <Phone className="w-3.5 h-3.5" />
+                              <span>{isBn ? 'কল' : 'Call'}</span>
+                            </a>
+                          </div>
                         </div>
                       </div>
                     );

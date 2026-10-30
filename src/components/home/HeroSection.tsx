@@ -207,17 +207,17 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
               </div>
             </div>
 
-            {/* Mobile 3 Hero Trust Indicators - Sleek unified minimalist strip */}
-            <div className="sm:hidden mt-2 px-2.5 py-1.5 rounded-xl bg-white/90 backdrop-blur-xs border border-[#EAE3D9] flex items-center justify-between text-slate-700 shadow-2xs divide-x divide-slate-200/80">
+            {/* Mobile 3 Hero Trust Indicators - Refined non-clipping typography strip */}
+            <div className="sm:hidden mt-2.5 px-2 py-1.5 rounded-xl bg-white/95 backdrop-blur-xs border border-[#EAE3D9] flex items-center justify-between text-slate-700 shadow-2xs divide-x divide-slate-200/80">
               {hero.trustIndicators?.filter((t: any) => t.active).map((indicator: any, idx: number) => (
                 <div
                   key={idx}
-                  className="flex-1 flex items-center justify-center gap-1 px-1 first:pl-0 last:pr-0 min-w-0"
+                  className="flex-1 flex items-center justify-center gap-1 px-0.5 first:pl-0 last:pr-0 min-w-0"
                 >
                   <div className="w-3.5 h-3.5 rounded-md bg-[#E6F3EF] flex items-center justify-center shrink-0 text-[#006A4E]">
                     {renderTrustIcon(indicator.icon)}
                   </div>
-                  <span className="font-bold text-slate-800 text-[9px] truncate">
+                  <span className="font-bold text-slate-800 text-[9.5px] leading-tight text-center truncate">
                     {tText(indicator.text)}
                   </span>
                 </div>
