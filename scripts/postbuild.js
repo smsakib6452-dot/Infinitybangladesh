@@ -14,19 +14,6 @@ const noJekyllPath = path.join(distPath, '.nojekyll');
 fs.writeFileSync(noJekyllPath, '');
 console.log('Created dist/.nojekyll to disable Jekyll processing on GitHub Pages.');
 
-// Create dist/docs subfolder so that if user selects gh-pages + /docs it also works!
-const distDocsPath = path.join(distPath, 'docs');
-if (fs.existsSync(distDocsPath)) {
-  fs.rmSync(distDocsPath, { recursive: true, force: true });
-}
-fs.mkdirSync(distDocsPath, { recursive: true });
-for (const file of fs.readdirSync(distPath)) {
-  if (file !== 'docs') {
-    fs.cpSync(path.join(distPath, file), path.join(distDocsPath, file), { recursive: true });
-  }
-}
-console.log('Created dist/docs subfolder for gh-pages + /docs support.');
-
 // Also copy to root docs/ folder so GitHub Pages can serve directly from main branch /docs folder
 const docsPath = path.resolve('docs');
 if (fs.existsSync(docsPath)) {
@@ -39,6 +26,3 @@ for (const file of fs.readdirSync(distPath)) {
   }
 }
 console.log('Copied dist/ to root docs/ for main + /docs folder support.');
-
-
-

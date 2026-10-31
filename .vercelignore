@@ -1,0 +1,3 @@
+# Vercel Deployment Optimization Ignore
+# Exclude GitHub Pages static directory from Vercel deployment & build cache
+docs/
