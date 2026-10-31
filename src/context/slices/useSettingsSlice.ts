@@ -29,8 +29,8 @@ import {
   INITIAL_FAQS
 } from '../../data/initialData';
 import { getFreshImageUrl } from '../../lib/cloudinary';
-import { STORAGE_PREFIX, getStoredOrDefault } from '../dataStorage';
-import { safeDbUpsert, safeDbDelete } from '../dbAdapter';
+import { STORAGE_PREFIX, getStoredOrDefault, saveToStorage } from '../dataStorage';
+import { safeDbUpsert, safeDbInsert, safeDbDelete, generateSecureId } from '../dbAdapter';
 
 export function useSettingsSlice(
   logAudit: (action: string, entity: string, entityId: string, details: string) => void
@@ -107,11 +107,7 @@ export function useSettingsSlice(
       clearTimeout(persistQueueRef.current[key]);
     }
     persistQueueRef.current[key] = setTimeout(() => {
-      try {
-        localStorage.setItem(`${STORAGE_PREFIX}${key}`, JSON.stringify(data));
-      } catch (err) {
-        console.warn(`Error persisting ${key} to localStorage:`, err);
-      }
+      saveToStorage(key, data);
       delete persistQueueRef.current[key];
     }, 400);
   }, []);
@@ -167,11 +163,9 @@ export function useSettingsSlice(
       };
       logAudit('UPDATE', 'HomepageConfig', 'homepage', 'Updated homepage hero, sections, or visibility');
 
-      try {
-        localStorage.setItem(`${STORAGE_PREFIX}homepageConfig`, JSON.stringify(updated));
+      saveToStorage('homepageConfig', updated);
+      if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('infinity_homepage_config_updated', { detail: updated }));
-      } catch (e) {
-        console.warn('Failed to save homepageConfig to localStorage:', e);
       }
 
       const safeVolunteerBanner = {
@@ -450,7 +444,7 @@ export function useSettingsSlice(
   // CONTACT MESSAGES ACTIONS
   // ----------------------------------------------------
   const submitContactMessage = useCallback((msg: Omit<ContactMessage, 'id' | 'submittedAt' | 'status'>) => {
-    const id = `msg-${Date.now()}`;
+    const id = generateSecureId('msg');
     const newMsg: ContactMessage = {
       ...msg,
       id,
@@ -459,11 +453,18 @@ export function useSettingsSlice(
     };
     setMessages(prev => [newMsg, ...prev]);
     logAudit('SUBMIT', 'ContactMessage', id, `Received message from ${msg.name}`);
-    safeDbUpsert('contact_messages', newMsg);
+    safeDbInsert('contact_messages', {
+      id,
+      name: msg.name,
+      email: msg.email,
+      phone: msg.phone || '',
+      subject: msg.subject || '',
+      message: msg.message
+    });
   }, [logAudit]);
 
   const addContactMessage = useCallback((msg: Omit<ContactMessage, 'id' | 'submittedAt' | 'status'>): ContactMessage => {
-    const id = `msg-${Date.now()}`;
+    const id = generateSecureId('msg');
     const newMsg: ContactMessage = {
       ...msg,
       id,
@@ -472,7 +473,14 @@ export function useSettingsSlice(
     };
     setMessages(prev => [newMsg, ...prev]);
     logAudit('SUBMIT', 'ContactMessage', id, `Received message from ${msg.name}`);
-    safeDbUpsert('contact_messages', newMsg);
+    safeDbInsert('contact_messages', {
+      id,
+      name: msg.name,
+      email: msg.email,
+      phone: msg.phone || '',
+      subject: msg.subject || '',
+      message: msg.message
+    });
     return newMsg;
   }, [logAudit]);
 

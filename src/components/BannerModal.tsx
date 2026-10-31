@@ -3,6 +3,7 @@ import { X, Upload, Check, Image as ImageIcon, Sparkles, Link as LinkIcon, Layer
 import { BannerItem } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { uploadToCloudinary } from '../lib/cloudinary';
+import { isValidPermanentUrl } from '../lib/utils/mediaSanitizer';
 
 interface BannerModalProps {
   isOpen: boolean;
@@ -81,8 +82,11 @@ export const BannerModal: React.FC<BannerModalProps> = ({
       setIsUploading(true);
       setUploadError(null);
       const res = await uploadToCloudinary(file);
-      if (res?.secure_url || res?.url) {
-        setDesktopImageUrl(res.secure_url || res.url);
+      const targetUrl = res?.secure_url || res?.url;
+      if (targetUrl && isValidPermanentUrl(targetUrl)) {
+        setDesktopImageUrl(targetUrl);
+      } else {
+        setUploadError('Cloud uploads are locked during Phase 1.1 containment. Please enter a verified permanent image URL.');
       }
     } catch (err: any) {
       console.error('Upload error:', err);
@@ -98,7 +102,11 @@ export const BannerModal: React.FC<BannerModalProps> = ({
       alert('Please enter banner title');
       return;
     }
-    if (!desktopImageUrl.trim()) {
+    if (!desktopImageUrl.trim() || !isValidPermanentUrl(desktopImageUrl.trim())) {
+      alert('Please provide a valid permanent desktop image URL (HTTPS or local asset)');
+      return;
+    }
+    if (false) {
       alert('Please provide banner image URL');
       return;
     }

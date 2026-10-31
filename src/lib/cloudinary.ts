@@ -86,6 +86,8 @@ export function getFreshImageUrl(url?: string, versionOrTimestamp?: number | str
   return url;
 }
 
+export const CLOUDINARY_UPLOADS_LOCKED = true;
+
 /**
  * Uploads a File, Blob, or base64 data URI directly to Cloudinary using unsigned upload.
  * 
@@ -97,6 +99,23 @@ export async function uploadToCloudinary(
   file: File | Blob | string,
   options?: CloudinaryUploadOptions
 ): Promise<CloudinaryUploadResponse> {
+  if (CLOUDINARY_UPLOADS_LOCKED) {
+    if (typeof console !== 'undefined') {
+      console.warn('[SECURITY] Cloudinary unsigned upload blocked locally (Phase 1.1 containment). No network request dispatched.');
+    }
+    
+    // In Phase 1.1 containment, return an explicit locked placeholder response with empty URLs
+    // to strictly prevent unrevoked blob: or data: URLs from being allocated or persisted.
+    return {
+      public_id: `local-locked-${Date.now()}`,
+      url: '',
+      secure_url: '',
+      format: typeof file === 'string' ? 'string' : (file as any).type || 'image',
+      bytes: typeof file === 'string' ? file.length : (file as any).size || 0,
+      placeholder: true
+    };
+  }
+
   const cloudName = CLOUDINARY_CLOUD_NAME;
   const uploadPreset = options?.uploadPreset || CLOUDINARY_UPLOAD_PRESET;
 

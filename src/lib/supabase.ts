@@ -8,6 +8,7 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { uploadToCloudinary } from './cloudinary';
+import { isValidPermanentUrl } from './utils/mediaSanitizer';
 
 // Environment variables — NEVER hardcode credentials in source code.
 // Configure via .env file or Vercel environment variables.
@@ -37,6 +38,8 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
     })
   : null;
 
+export const SUPABASE_STORAGE_UPLOADS_LOCKED = true;
+
 /**
  * Storage Helpers
  */
@@ -45,32 +48,36 @@ export async function uploadFileToSupabase(
   file: File,
   customPath?: string
 ): Promise<{ success: boolean; url?: string; fileName?: string; error?: string }> {
+  if (SUPABASE_STORAGE_UPLOADS_LOCKED) {
+    if (typeof console !== 'undefined') {
+      console.warn('[SECURITY] Supabase storage upload blocked locally (Phase 1.1 containment). No network request dispatched.');
+    }
+    return {
+      success: false,
+      error: 'Supabase storage uploads are locked during Phase 1.1 security baseline. No network request dispatched.'
+    };
+  }
   try {
     if (!supabase || !isSupabaseConfigured) {
       // Cloudinary cloud fallback for GitHub Pages and standalone deployment
       try {
         const cloudRes = await uploadToCloudinary(file);
+        if (cloudRes && cloudRes.secure_url && !cloudRes.placeholder && isValidPermanentUrl(cloudRes.secure_url)) {
+          return {
+            success: true,
+            url: cloudRes.secure_url,
+            fileName: file.name
+          };
+        }
         return {
-          success: true,
-          url: cloudRes.secure_url,
-          fileName: file.name
+          success: false,
+          error: 'Cloudinary upload locked or returned non-permanent URL.'
         };
       } catch (cloudErr: any) {
-        console.warn('Cloudinary upload fallback failed, converting to local data URI:', cloudErr);
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            resolve({
-              success: true,
-              url: reader.result as string,
-              fileName: file.name
-            });
-          };
-          reader.onerror = () => {
-            resolve({ success: false, error: 'Failed to read local file.' });
-          };
-          reader.readAsDataURL(file);
-        });
+        return {
+          success: false,
+          error: 'Cloudinary upload fallback failed.'
+        };
       }
     }
 

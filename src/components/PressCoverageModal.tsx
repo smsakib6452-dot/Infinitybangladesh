@@ -3,6 +3,7 @@ import { X, Upload, Check, Newspaper, Sparkles, ExternalLink, Star, Calendar } f
 import { PressCoverage, PressCoverageType } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { uploadToCloudinary } from '../lib/cloudinary';
+import { isValidPermanentUrl } from '../lib/utils/mediaSanitizer';
 import { DateInput } from './DateInput';
 
 interface PressCoverageModalProps {
@@ -79,8 +80,11 @@ export const PressCoverageModal: React.FC<PressCoverageModalProps> = ({
       setIsUploading(true);
       setUploadError(null);
       const res = await uploadToCloudinary(file);
-      if (res?.secure_url || res?.url) {
-        setImageUrl(res.secure_url || res.url);
+      const targetUrl = res?.secure_url || res?.url;
+      if (targetUrl && isValidPermanentUrl(targetUrl)) {
+        setImageUrl(targetUrl);
+      } else {
+        setUploadError('Cloud uploads are locked during Phase 1.1 containment. Please enter a verified permanent image URL.');
       }
     } catch (err: any) {
       console.error('Upload error:', err);

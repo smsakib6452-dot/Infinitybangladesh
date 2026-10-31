@@ -3,6 +3,7 @@ import { X, Upload, Check, Image as ImageIcon, Sparkles, FolderPlus, Calendar, T
 import { GalleryAlbum } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { uploadToCloudinary } from '../lib/cloudinary';
+import { isValidPermanentUrl } from '../lib/utils/mediaSanitizer';
 
 interface AlbumModalProps {
   isOpen: boolean;
@@ -69,8 +70,11 @@ export const AlbumModal: React.FC<AlbumModalProps> = ({
       setIsUploading(true);
       setUploadError(null);
       const res = await uploadToCloudinary(file);
-      if (res?.secure_url || res?.url) {
-        setCoverImageUrl(res.secure_url || res.url);
+      const targetUrl = res?.secure_url || res?.url;
+      if (targetUrl && isValidPermanentUrl(targetUrl)) {
+        setCoverImageUrl(targetUrl);
+      } else {
+        setUploadError('Cloud uploads are locked during Phase 1.1 containment. Please enter a verified permanent image URL.');
       }
     } catch (err: any) {
       console.error('Upload error:', err);
@@ -86,7 +90,11 @@ export const AlbumModal: React.FC<AlbumModalProps> = ({
       alert('Please enter album title');
       return;
     }
-    if (!coverImageUrl.trim()) {
+    if (!coverImageUrl.trim() || !isValidPermanentUrl(coverImageUrl.trim())) {
+      alert('Please provide a valid permanent cover image URL (HTTPS or local asset)');
+      return;
+    }
+    if (false) {
       alert('Please provide cover image URL');
       return;
     }

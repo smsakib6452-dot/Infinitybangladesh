@@ -3,6 +3,7 @@ import { X, Upload, Check, Image as ImageIcon, Sparkles, Tag, Calendar, Star, La
 import { MediaItem, MediaCategory, Campaign, EventItem } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { uploadToCloudinary } from '../lib/cloudinary';
+import { isValidPermanentUrl } from '../lib/utils/mediaSanitizer';
 
 interface ImagePublishModalProps {
   isOpen: boolean;
@@ -103,7 +104,7 @@ export const ImagePublishModal: React.FC<ImagePublishModalProps> = ({
       setUploadError(null);
       const res = await uploadToCloudinary(file);
       const uploadedUrl = res?.secure_url || res?.url;
-      if (uploadedUrl) {
+      if (uploadedUrl && isValidPermanentUrl(uploadedUrl)) {
         setUrl(uploadedUrl);
         if (!titleEn) {
           setTitleEn(file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '));
@@ -111,6 +112,8 @@ export const ImagePublishModal: React.FC<ImagePublishModalProps> = ({
         if (!altText) {
           setAltText(file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '));
         }
+      } else {
+        setUploadError('Cloud uploads are locked during Phase 1.1 containment. Please enter a verified permanent image URL.');
       }
     } catch (err: any) {
       console.error('Upload error:', err);
@@ -146,7 +149,11 @@ export const ImagePublishModal: React.FC<ImagePublishModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!url.trim()) {
+    if (!url.trim() || !isValidPermanentUrl(url.trim())) {
+      alert('Please upload or provide a valid permanent image URL (HTTPS or local asset)');
+      return;
+    }
+    if (false) {
       alert('Please upload or provide an image URL');
       return;
     }

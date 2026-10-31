@@ -30,8 +30,9 @@ import {
 } from '../../data/initialData';
 import { getFreshImageUrl } from '../../lib/cloudinary';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
-import { STORAGE_PREFIX, getStoredOrDefault } from '../dataStorage';
-import { safeDbUpsert, safeDbDelete } from '../dbAdapter';
+import { STORAGE_PREFIX, getStoredOrDefault, saveToStorage } from '../dataStorage';
+import { resolveMediaFieldUpdate, sanitizeMediaUrlArray, isValidPermanentUrl } from '../../lib/utils/mediaSanitizer';
+import { safeDbUpsert, safeDbInsert, safeDbDelete, generateSecureId } from '../dbAdapter';
 
 export function useHumanitarianSlice(
   logAudit: (action: string, entity: string, entityId: string, details: string) => void,
@@ -110,11 +111,7 @@ export function useHumanitarianSlice(
       clearTimeout(persistQueueRef.current[key]);
     }
     persistQueueRef.current[key] = setTimeout(() => {
-      try {
-        localStorage.setItem(`${STORAGE_PREFIX}${key}`, JSON.stringify(data));
-      } catch (err) {
-        console.warn(`Error persisting ${key} to localStorage:`, err);
-      }
+      saveToStorage(key, data);
       delete persistQueueRef.current[key];
     }, 400);
   }, []);
@@ -140,8 +137,8 @@ export function useHumanitarianSlice(
     const newCamp: Campaign = {
       ...campaign,
       id,
-      imageUrl: getFreshImageUrl(campaign.imageUrl),
-      galleryImages: (campaign.galleryImages || []).map(img => getFreshImageUrl(img))
+      imageUrl: resolveMediaFieldUpdate('', campaign.imageUrl, true) || '',
+      galleryImages: sanitizeMediaUrlArray([], campaign.galleryImages)
     };
     setCampaigns(prev => [newCamp, ...prev]);
     logAudit('CREATE', 'Campaign', id, `Created campaign: ${campaign.title.en}`);
@@ -184,8 +181,8 @@ export function useHumanitarianSlice(
         return {
           ...c,
           ...campaign,
-          imageUrl: campaign.imageUrl ? getFreshImageUrl(campaign.imageUrl) : c.imageUrl,
-          galleryImages: campaign.galleryImages ? campaign.galleryImages.map(img => getFreshImageUrl(img)) : c.galleryImages
+          imageUrl: campaign.imageUrl !== undefined ? (resolveMediaFieldUpdate(c.imageUrl, campaign.imageUrl, true) || c.imageUrl) : c.imageUrl,
+          galleryImages: campaign.galleryImages !== undefined ? sanitizeMediaUrlArray(c.galleryImages, campaign.galleryImages) : c.galleryImages
         };
       });
       const match = updated.find(c => c.id === id);
@@ -237,7 +234,7 @@ export function useHumanitarianSlice(
     const newProg: Program = {
       ...program,
       id,
-      imageUrl: getFreshImageUrl(program.imageUrl)
+      imageUrl: resolveMediaFieldUpdate('', program.imageUrl, false) || ''
     };
     setPrograms(prev => [...prev, newProg]);
     logAudit('CREATE', 'Program', id, `Created program: ${program.title.en}`);
@@ -306,7 +303,7 @@ export function useHumanitarianSlice(
     const newEvt: ProgramEvent = {
       ...event,
       id,
-      coverImageUrl: getFreshImageUrl(event.coverImageUrl)
+      coverImageUrl: resolveMediaFieldUpdate('', event.coverImageUrl, false) || ''
     };
     setProgramEvents(prev => [newEvt, ...prev]);
     logAudit('CREATE', 'ProgramEvent', id, `Created event edition: ${event.title.en}`);
@@ -586,7 +583,7 @@ export function useHumanitarianSlice(
     const newStory: ImpactStory = {
       ...story,
       id,
-      imageUrl: getFreshImageUrl(story.imageUrl)
+      imageUrl: resolveMediaFieldUpdate('', story.imageUrl, false) || ''
     };
     setStories(prev => [newStory, ...prev]);
     logAudit('CREATE', 'ImpactStory', id, `Published story: ${story.title.en}`);
@@ -656,7 +653,7 @@ export function useHumanitarianSlice(
     const newN: NewsArticle = {
       ...newsItem,
       id,
-      imageUrl: getFreshImageUrl(newsItem.imageUrl)
+      imageUrl: resolveMediaFieldUpdate('', newsItem.imageUrl, false) || ''
     };
     setNews(prev => [newN, ...prev]);
     logAudit('CREATE', 'NewsArticle', id, `Added news: ${newsItem.title.en}`);
@@ -885,7 +882,7 @@ export function useHumanitarianSlice(
   // VOLUNTEERS & DONATIONS ACTIONS
   // ----------------------------------------------------
   const submitVolunteerApplication = useCallback((app: Omit<VolunteerApplication, 'id' | 'submittedAt' | 'status'>): string => {
-    const id = `vol-${Date.now()}`;
+    const id = generateSecureId('vol');
     const newApp: VolunteerApplication = {
       ...app,
       id,
@@ -894,7 +891,21 @@ export function useHumanitarianSlice(
     };
     setVolunteers(prev => [newApp, ...prev]);
     logAudit('SUBMIT', 'VolunteerApplication', id, `New application from ${app.fullName}`);
-    safeDbUpsert('volunteer_applications', newApp);
+    safeDbInsert('volunteer_applications', {
+      id,
+      full_name: app.fullName,
+      email: app.email,
+      phone: app.phone,
+      district: app.district,
+      institution: app.institution || '',
+      occupation: app.occupation || '',
+      blood_group: app.bloodGroup || '',
+      skills: app.skills || [],
+      preferred_areas: app.preferredAreas || [],
+      availability: app.availability || '',
+      message: app.message || '',
+      agreed_code_of_conduct: Boolean(app.agreedCodeOfConduct)
+    });
     return id;
   }, [logAudit]);
 
@@ -933,7 +944,7 @@ export function useHumanitarianSlice(
   }, [logAudit]);
 
   const submitDonation = useCallback((donation: Omit<DonationRecord, 'id' | 'date' | 'status'>): string => {
-    const id = `don-${Date.now()}`;
+    const id = generateSecureId('don');
     const newDon: DonationRecord = {
       ...donation,
       id,
@@ -942,18 +953,31 @@ export function useHumanitarianSlice(
     };
     setDonations(prev => [newDon, ...prev]);
     logAudit('SUBMIT', 'DonationRecord', id, `Donation submitted by ${donation.donorName}: ৳${donation.amountBDT || donation.amount || 0}`);
-    safeDbUpsert('donation_records', newDon);
+    safeDbInsert('donation_records', {
+      id,
+      donor_name: donation.donorName,
+      donor_email: donation.donorEmail,
+      donor_phone: donation.donorPhone,
+      amount_bdt: donation.amountBDT || donation.amount || 0,
+      campaign_slug: donation.campaignSlug,
+      campaign_title: donation.campaignTitle,
+      donation_type: donation.donationType,
+      payment_method: donation.paymentMethod,
+      transaction_id: donation.transactionId,
+      is_anonymous: Boolean(donation.isAnonymous),
+      notes: donation.notes
+    });
     return id;
   }, [logAudit]);
 
   const addDonationRecord = useCallback((donation: Partial<DonationRecord>): DonationRecord => {
-    const id = donation.id || `don-${Date.now()}`;
+    const id = donation.id || generateSecureId('don');
     const newDon: DonationRecord = {
       id,
       donorName: donation.donorName || 'Anonymous Supporter',
       paymentMethod: donation.paymentMethod || 'bKash',
       date: donation.date || new Date().toISOString(),
-      status: donation.status || 'Successful',
+      status: donation.status || 'Pending',
       ...donation
     };
     setDonations(prev => [newDon, ...prev]);

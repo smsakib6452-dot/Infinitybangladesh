@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { StorageService } from '../lib/storage/storageService';
 import { uploadToCloudinary, isCloudinaryConfigured, CLOUDINARY_CLOUD_NAME } from '../lib/cloudinary';
+import { isValidPermanentUrl } from '../lib/utils/mediaSanitizer';
 import { detectAndNormalizeMedia } from '../lib/utils/mediaHelper';
 
 export interface MediaPickerModalProps {
@@ -155,8 +156,8 @@ export const MediaPickerModal: React.FC<MediaPickerModalProps> = ({
       // Upload directly to Cloudinary
       const uploadRes = await uploadToCloudinary(file);
 
-      if (!uploadRes || !uploadRes.secure_url) {
-        setUploadError('Failed to receive secure image URL from Cloudinary.');
+      if (!uploadRes || !uploadRes.secure_url || !isValidPermanentUrl(uploadRes.secure_url)) {
+        setUploadError('Cloud uploads are locked during Phase 1.1 containment.');
         setIsUploading(false);
         return;
       }

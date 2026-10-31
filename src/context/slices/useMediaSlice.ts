@@ -20,7 +20,8 @@ import {
 import { getFreshImageUrl } from '../../lib/cloudinary';
 import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL, isBlacklistedMedia } from '../../lib/utils/mediaHelper';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
-import { STORAGE_PREFIX, getStoredOrDefault } from '../dataStorage';
+import { STORAGE_PREFIX, getStoredOrDefault, saveToStorage } from '../dataStorage';
+import { resolveMediaFieldUpdate, isValidPermanentUrl } from '../../lib/utils/mediaSanitizer';
 import { safeDbUpsert, safeDbDelete } from '../dbAdapter';
 
 export function useMediaSlice(logAudit: (action: string, entity: string, entityId: string, details: string) => void) {
@@ -83,11 +84,7 @@ export function useMediaSlice(logAudit: (action: string, entity: string, entityI
       clearTimeout(persistQueueRef.current[key]);
     }
     persistQueueRef.current[key] = setTimeout(() => {
-      try {
-        localStorage.setItem(`${STORAGE_PREFIX}${key}`, JSON.stringify(data));
-      } catch (err) {
-        console.warn(`Error persisting ${key} to localStorage:`, err);
-      }
+      saveToStorage(key, data);
       delete persistQueueRef.current[key];
     }, 400);
   }, []);
@@ -898,23 +895,6 @@ export function useMediaSlice(logAudit: (action: string, entity: string, entityI
     };
     setPressCoverages(prev => [newPress, ...prev]);
     logAudit('CREATE', 'PressCoverage', id, `Added press coverage: ${press.title.en}`);
-
-    safeDbUpsert('press_coverage', {
-      id: newPress.id,
-      outlet_name: newPress.outletName,
-      outlet_logo_url: newPress.outletLogoUrl,
-      title: newPress.title,
-      article_url: newPress.articleUrl,
-      excerpt: newPress.excerpt,
-      coverage_type: newPress.coverageType,
-      published_date: newPress.publishedDate,
-      image_url: newPress.imageUrl,
-      is_featured: newPress.isFeatured,
-      status: newPress.status,
-      created_at: newPress.createdAt,
-      updated_at: newPress.updatedAt
-    });
-
     return newPress;
   }, [logAudit]);
 
@@ -930,24 +910,6 @@ export function useMediaSlice(logAudit: (action: string, entity: string, entityI
           updatedAt: new Date().toISOString()
         };
       });
-      const match = updated.find(p => p.id === id);
-      if (match) {
-        safeDbUpsert('press_coverage', {
-          id: match.id,
-          outlet_name: match.outletName,
-          outlet_logo_url: match.outletLogoUrl,
-          title: match.title,
-          article_url: match.articleUrl,
-          excerpt: match.excerpt,
-          coverage_type: match.coverageType,
-          published_date: match.publishedDate,
-          image_url: match.imageUrl,
-          is_featured: match.isFeatured,
-          status: match.status,
-          created_at: match.createdAt || new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-      }
       return updated;
     });
     logAudit('UPDATE', 'PressCoverage', id, 'Updated press coverage details');
@@ -956,7 +918,6 @@ export function useMediaSlice(logAudit: (action: string, entity: string, entityI
   const deletePressCoverage = useCallback((id: string) => {
     setPressCoverages(prev => prev.filter(p => p.id !== id));
     logAudit('DELETE', 'PressCoverage', id, 'Deleted press coverage');
-    safeDbDelete('press_coverage', 'id', id);
   }, [logAudit]);
 
   return {

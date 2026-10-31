@@ -91,8 +91,8 @@ import { cleanBloodDonor, cleanEmergencyRequest } from '../data/bloodDonationDat
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { getFreshImageUrl } from '../lib/cloudinary';
 import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL, isBlacklistedMedia } from '../lib/utils/mediaHelper';
-import { STORAGE_PREFIX, DATA_VERSION_KEY, CURRENT_DATA_VERSION, getStoredOrDefault } from './dataStorage';
-import { safeDbUpsert, safeDbDelete, createAuditLog } from './dbAdapter';
+import { STORAGE_PREFIX, DATA_VERSION_KEY, CURRENT_DATA_VERSION, getStoredOrDefault, saveToStorage } from './dataStorage';
+import { safeDbUpsert, safeDbDelete, createAuditLog, REMOTE_CMS_MUTATIONS_LOCKED } from './dbAdapter';
 import { useBloodDonationSlice } from './slices/useBloodDonationSlice';
 import { useMediaSlice } from './slices/useMediaSlice';
 import { useGovernanceSlice } from './slices/useGovernanceSlice';
@@ -355,6 +355,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [previewMode, setPreviewMode] = useState<boolean>(false);
+  const isSyncInProgressRef = useRef<boolean>(false);
   const [isAdminLoaded, setIsAdminLoaded] = useState<boolean>(false);
 
   // Global audit logs state
@@ -1039,71 +1040,60 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // 20. Blood Donors
       try {
-        const isAdminSession = typeof window !== 'undefined' && (
-          localStorage.getItem('infinity_bd_admin_auth') === 'true'
-        );
+        // In Phase 1.1: Public blood reads must strictly query public_blood_donors view only.
+        const query = supabase.from('public_blood_donors').select('*');
 
-        const query = isAdminSession
-          ? supabase.from('blood_donors').select('*').order('created_at', { ascending: false })
-          : supabase.from('blood_donors')
-              .select('id, full_name, blood_group, district, upazila, area, org_category, availability_status, total_donations, photo_url, show_phone_publicly, phone, approval_status, is_verified')
-              .eq('approval_status', 'APPROVED')
-              .order('created_at', { ascending: false });
-
-        const { data: bData } = await query;
-        if (bData && Array.isArray(bData)) {
+        const { data: bData, error: bError } = await query;
+        if (bError) {
+          if (import.meta.env.DEV) console.warn('Public blood donors view read notice (fail closed):', bError.message);
+        } else if (bData && Array.isArray(bData)) {
           const legacyMockIds = new Set(['donor-1', 'donor-2', 'donor-3', 'donor-4', 'donor-5', 'donor-6', 'donor-7', 'donor-8', 'donor-9', 'donor-10']);
           const remoteDonors: BloodDonor[] = bData
             .filter(d => !legacyMockIds.has(d.id))
-            .map(d => {
-              const canShowPhone = d.gender === 'Male' || Boolean(d.show_phone_publicly ?? d.show_phone_number_publicly);
-              return {
-                id: d.id,
-                fullName: d.full_name,
-                bloodGroup: d.blood_group,
-                gender: d.gender || 'Male',
-                dateOfBirth: d.date_of_birth || d.dob,
-                dob: d.date_of_birth || d.dob,
-                phone: canShowPhone ? d.phone : '',
-                email: d.email || undefined,
-                photoUrl: getFreshImageUrl(d.photo_url),
-                district: d.district,
-                upazila: d.upazila,
-                area: d.area,
-                orgCategory: (d.org_category === 'Executive Committee' || d.org_category === 'Standing Committee' || d.org_category === 'Infinity Bangladesh Volunteer')
-                  ? 'Infinity Bangladesh Member'
-                  : (d.org_category || 'Open Voluntary Blood Donor'),
-                committeePosition: d.committee_position || ((d.org_category === 'Executive Committee' || d.org_category === 'Standing Committee') ? d.org_category : undefined),
-                availabilityStatus: d.availability_status || 'AVAILABLE_EMERGENCY',
-                lastDonationDate: d.last_donation_date || undefined,
-                totalDonations: Number(d.total_donations) || 0,
-                experienceNotes: d.experience_notes,
-                privacyConsent: d.privacy_consent ?? d.consent_confirmed ?? true,
-                showPhonePublicly: canShowPhone,
-                approvalStatus: d.approval_status || 'APPROVED',
-                isVerified: d.is_verified ?? false,
-                donationHistory: Array.isArray(d.blood_donation_history) ? d.blood_donation_history.map((h: any) => ({
-                  id: h.id,
-                  donorId: h.donor_id,
-                  donationDate: h.donation_date,
-                  patientName: h.patient_name,
-                  hospitalName: h.hospital_name,
-                  location: h.location,
-                  notes: h.notes,
-                  recordedAt: h.created_at || h.recorded_at
-                })) : [],
-                createdAt: d.created_at,
-                updatedAt: d.updated_at
-              };
-            });
+            .map(d => ({
+              id: d.id,
+              fullName: d.full_name,
+              bloodGroup: d.blood_group,
+              gender: d.gender || 'Male',
+              dateOfBirth: d.date_of_birth || d.dob,
+              dob: d.date_of_birth || d.dob,
+              phone: d.phone || '',
+              email: d.email || undefined,
+              photoUrl: getFreshImageUrl(d.photo_url),
+              district: d.district,
+              upazila: d.upazila,
+              area: d.area,
+              orgCategory: (d.org_category === 'Executive Committee' || d.org_category === 'Standing Committee' || d.org_category === 'Infinity Bangladesh Volunteer')
+                ? 'Infinity Bangladesh Member'
+                : (d.org_category || 'Open Voluntary Blood Donor'),
+              committeePosition: d.committee_position || ((d.org_category === 'Executive Committee' || d.org_category === 'Standing Committee') ? d.org_category : undefined),
+              availabilityStatus: d.availability_status || 'AVAILABLE_EMERGENCY',
+              lastDonationDate: d.last_donation_date || undefined,
+              totalDonations: Number(d.total_donations) || 0,
+              experienceNotes: d.experience_notes,
+              privacyConsent: d.privacy_consent ?? true,
+              showPhonePublicly: Boolean(d.show_phone_publicly ?? (d.phone && !d.phone.includes('*'))),
+              approvalStatus: d.approval_status || 'APPROVED',
+              isVerified: d.is_verified ?? false,
+              donationHistory: Array.isArray(d.blood_donation_history) ? d.blood_donation_history.map((h: any) => ({
+                id: h.id,
+                donorId: h.donor_id,
+                donationDate: h.donation_date,
+                patientName: h.patient_name,
+                hospitalName: h.hospital_name,
+                location: h.location,
+                notes: h.notes,
+                recordedAt: h.created_at || h.recorded_at
+              })) : [],
+              createdAt: d.created_at,
+              updatedAt: d.updated_at
+            }));
 
           blood.setBloodDonors(prevLocal => {
             const remoteIds = new Set(remoteDonors.map(r => r.id));
             const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
             const merged = [...remoteDonors, ...localOnly];
-            try {
-              localStorage.setItem(`${STORAGE_PREFIX}bloodDonors`, JSON.stringify(merged));
-            } catch {}
+            saveToStorage('bloodDonors', merged);
             return merged;
           });
         }
@@ -1113,13 +1103,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // 21. Emergency Blood Requests
       try {
-        const { data: emgData } = await supabase.from('emergency_blood_requests').select('*').order('created_at', { ascending: false });
-        if (emgData && Array.isArray(emgData)) {
+        // In Phase 1.1: Public emergency reads must strictly query public_emergency_requests view only.
+        const query = supabase.from('public_emergency_requests').select('*');
+
+        const { data: emgData, error: emgError } = await query;
+        if (emgError) {
+          if (import.meta.env.DEV) console.warn('Public emergency requests view read notice (fail closed):', emgError.message);
+        } else if (emgData && Array.isArray(emgData)) {
           const remoteRequests: EmergencyBloodRequest[] = emgData.map(r => cleanEmergencyRequest({
             id: r.id,
-            requesterName: r.requester_name,
-            contactNumber: r.contact_number,
-            patientName: r.patient_name,
+            requesterName: r.requester_name || 'Coordinator Desk',
+            contactNumber: r.coordinator_contact || r.contact_number || '',
+            patientName: r.patient_label || r.patient_name || 'Emergency Patient',
             bloodGroup: r.blood_group,
             unitsNeeded: Number(r.units_needed) || 1,
             hospitalName: r.hospital_name,
@@ -1138,9 +1133,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const remoteIds = new Set(remoteRequests.map(r => r.id));
             const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
             const merged = [...remoteRequests, ...localOnly];
-            try {
-              localStorage.setItem(`${STORAGE_PREFIX}emergencyRequests`, JSON.stringify(merged));
-            } catch {}
+            saveToStorage('emergencyRequests', merged);
             return merged;
           });
         }
@@ -1238,133 +1231,173 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Push ALL local state to Supabase
   const pushAllToSupabase = useCallback(async (): Promise<{ success: boolean; message: string }> => {
+    if (REMOTE_CMS_MUTATIONS_LOCKED) {
+      if (import.meta.env?.DEV) {
+        console.warn('[SECURITY] Remote synchronization is locked during Phase 1.1 security baseline.');
+      }
+      return {
+        success: false,
+        message: 'Remote database synchronization is locked during Phase 1.1 security baseline. All modifications are safely preserved in local demonstration state only.'
+      };
+    }
+
     if (!supabase || !isSupabaseConfigured) {
       return { success: false, message: 'Supabase credentials are not configured in .env' };
     }
 
+    if (isSyncInProgressRef.current) {
+      return { success: false, message: 'A synchronization operation is already in progress.' };
+    }
+
+    isSyncInProgressRef.current = true;
     try {
       setIsSyncing(true);
 
       // Site settings
-      await supabase.from('site_settings').upsert({
-        id: 'default',
-        organization_name: setSlice.settings.organizationName,
-        team_identity: setSlice.settings.teamIdentity,
-        tagline: setSlice.settings.tagline,
-        country: setSlice.settings.country,
-        official_address: setSlice.settings.officialAddress,
-        official_phone: setSlice.settings.officialPhone,
-        official_email: setSlice.settings.officialEmail,
-        established_year: setSlice.settings.establishedYear || '2015',
-        logo_url: setSlice.settings.logoUrl || '',
-        favicon_url: setSlice.settings.faviconUrl || '',
-        updated_at: new Date().toISOString()
-      });
+      try {
+        const { error } = await supabase.from('site_settings').upsert({
+          id: 'default',
+          organization_name: setSlice.settings.organizationName,
+          team_identity: setSlice.settings.teamIdentity,
+          tagline: setSlice.settings.tagline,
+          country: setSlice.settings.country,
+          official_address: setSlice.settings.officialAddress,
+          official_phone: setSlice.settings.officialPhone,
+          official_email: setSlice.settings.officialEmail,
+          established_year: setSlice.settings.establishedYear || '2015',
+          logo_url: setSlice.settings.logoUrl || '',
+          favicon_url: setSlice.settings.faviconUrl || '',
+          updated_at: new Date().toISOString()
+        });
+        if (error) console.warn('site_settings push notice:', error.message);
+      } catch (e: any) {
+        console.warn('site_settings push exception:', e.message);
+      }
 
       // Homepage config
-      const safeVolBannerForPush = {
-        ...(setSlice.homepageConfig.volunteerBanner || {}),
-        section_headers: {
-          impact: setSlice.homepageConfig.impactSection,
-          programs: setSlice.homepageConfig.programsSection,
-          campaigns: setSlice.homepageConfig.campaignsSection,
-          stories: setSlice.homepageConfig.storiesSection,
-          lifeline: setSlice.homepageConfig.lifelineSection,
-          gallery: setSlice.homepageConfig.gallerySection,
-          press: setSlice.homepageConfig.pressSection,
-          transparency: setSlice.homepageConfig.transparencySection
-        }
-      };
+      try {
+        const safeVolBannerForPush = {
+          ...(setSlice.homepageConfig.volunteerBanner || {}),
+          section_headers: {
+            impact: setSlice.homepageConfig.impactSection,
+            programs: setSlice.homepageConfig.programsSection,
+            campaigns: setSlice.homepageConfig.campaignsSection,
+            stories: setSlice.homepageConfig.storiesSection,
+            lifeline: setSlice.homepageConfig.lifelineSection,
+            gallery: setSlice.homepageConfig.gallerySection,
+            press: setSlice.homepageConfig.pressSection,
+            transparency: setSlice.homepageConfig.transparencySection
+          }
+        };
 
-      await supabase.from('homepage_config').upsert({
-        id: 'default',
-        hero: setSlice.homepageConfig.hero,
-        about_preview: setSlice.homepageConfig.aboutPreview,
-        volunteer_banner: safeVolBannerForPush,
-        support_banner: setSlice.homepageConfig.supportBanner,
-        section_order: setSlice.homepageConfig.sectionOrder,
-        section_visibility: setSlice.homepageConfig.sectionVisibility,
-        updated_at: new Date().toISOString()
-      });
+        const { error } = await supabase.from('homepage_config').upsert({
+          id: 'default',
+          hero: setSlice.homepageConfig.hero,
+          about_preview: setSlice.homepageConfig.aboutPreview,
+          volunteer_banner: safeVolBannerForPush,
+          support_banner: setSlice.homepageConfig.supportBanner,
+          section_order: setSlice.homepageConfig.sectionOrder,
+          section_visibility: setSlice.homepageConfig.sectionVisibility,
+          updated_at: new Date().toISOString()
+        });
+        if (error) console.warn('homepage_config push notice:', error.message);
+      } catch (e: any) {
+        console.warn('homepage_config push exception:', e.message);
+      }
 
       // Programs
       for (const p of hum.programs) {
-        await supabase.from('programs').upsert({
-          id: p.id,
-          slug: p.slug,
-          title: p.title,
-          category: p.category,
-          short_description: p.shortDescription,
-          full_details: p.fullDetails,
-          impact_highlights: p.impactHighlights,
-          image_url: p.imageUrl,
-          icon_name: p.iconName,
-          status: p.status,
-          display_order: p.displayOrder || 0,
-          updated_at: new Date().toISOString()
-        });
+        try {
+          const { error } = await supabase.from('programs').upsert({
+            id: p.id,
+            slug: p.slug,
+            title: p.title,
+            category: p.category,
+            short_description: p.shortDescription,
+            full_details: p.fullDetails,
+            impact_highlights: p.impactHighlights,
+            image_url: p.imageUrl,
+            icon_name: p.iconName,
+            status: p.status,
+            display_order: p.displayOrder || 0,
+            updated_at: new Date().toISOString()
+          });
+          if (error) console.warn('programs push notice:', error.message);
+        } catch (e: any) {
+          console.warn('programs push exception:', e.message);
+        }
       }
 
       // Campaigns
       for (const c of hum.campaigns) {
-        await supabase.from('campaigns').upsert({
-          id: c.id,
-          slug: c.slug,
-          title: c.title,
-          date: c.date,
-          end_date: c.endDate || '',
-          location: c.location,
-          category: c.category,
-          description: c.description,
-          details: c.details,
-          objectives: c.objectives,
-          activities: c.activities,
-          beneficiaries: c.beneficiaries,
-          beneficiaries_count: c.beneficiariesCount,
-          volunteers_count: c.volunteersCount,
-          impact: c.impact,
-          status: c.status,
-          is_featured: c.isFeatured,
-          target_amount_bdt: c.targetAmountBDT || '',
-          raised_amount_bdt: c.raisedAmountBDT || '',
-          image_url: c.imageUrl,
-          gallery_images: c.galleryImages,
-          video_url: c.videoUrl || '',
-          report_url: c.reportUrl || '',
-          display_order: c.displayOrder || 0,
-          updated_at: new Date().toISOString()
-        });
+        try {
+          const { error } = await supabase.from('campaigns').upsert({
+            id: c.id,
+            slug: c.slug,
+            title: c.title,
+            date: c.date,
+            end_date: c.endDate || '',
+            location: c.location,
+            category: c.category,
+            description: c.description,
+            details: c.details,
+            objectives: c.objectives,
+            activities: c.activities,
+            beneficiaries: c.beneficiaries,
+            beneficiaries_count: c.beneficiariesCount,
+            volunteers_count: c.volunteersCount,
+            impact: c.impact,
+            status: c.status,
+            is_featured: c.isFeatured,
+            target_amount_bdt: c.targetAmountBDT || '',
+            raised_amount_bdt: c.raisedAmountBDT || '',
+            image_url: c.imageUrl,
+            gallery_images: c.galleryImages,
+            video_url: c.videoUrl || '',
+            report_url: c.reportUrl || '',
+            display_order: c.displayOrder || 0,
+            updated_at: new Date().toISOString()
+          });
+          if (error) console.warn('campaigns push notice:', error.message);
+        } catch (e: any) {
+          console.warn('campaigns push exception:', e.message);
+        }
       }
 
       // Blood Donors
       for (const d of blood.bloodDonors) {
-        await supabase.from('blood_donors').upsert({
-          id: d.id,
-          full_name: d.fullName,
-          blood_group: d.bloodGroup,
-          gender: d.gender || null,
-          date_of_birth: d.dateOfBirth || d.dob || null,
-          phone: d.phone,
-          email: d.email || null,
-          photo_url: d.photoUrl || null,
-          district: d.district,
-          upazila: d.upazila,
-          area: d.area,
-          detailed_address: d.detailedAddress || null,
-          org_category: d.orgCategory,
-          committee_position: d.committeePosition || null,
-          availability_status: d.availabilityStatus,
-          first_donation_date: d.firstDonationDate || null,
-          last_donation_date: d.lastDonationDate || null,
-          total_donations: d.totalDonations,
-          experience_notes: d.experienceNotes || null,
-          is_verified: d.isVerified,
-          approval_status: d.approvalStatus,
-          privacy_consent: d.privacyConsent,
-          show_phone_publicly: d.showPhonePublicly,
-          created_at: d.createdAt || new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
+        try {
+          const { error } = await supabase.from('blood_donors').upsert({
+            id: d.id,
+            full_name: d.fullName,
+            blood_group: d.bloodGroup,
+            gender: d.gender || null,
+            date_of_birth: d.dateOfBirth || d.dob || null,
+            phone: d.phone,
+            email: d.email || null,
+            photo_url: d.photoUrl || null,
+            district: d.district,
+            upazila: d.upazila,
+            area: d.area,
+            detailed_address: d.detailedAddress || null,
+            org_category: d.orgCategory,
+            committee_position: d.committeePosition || null,
+            availability_status: d.availabilityStatus,
+            first_donation_date: d.firstDonationDate || null,
+            last_donation_date: d.lastDonationDate || null,
+            total_donations: d.totalDonations,
+            experience_notes: d.experienceNotes || null,
+            is_verified: d.isVerified,
+            approval_status: d.approvalStatus,
+            privacy_consent: d.privacyConsent,
+            show_phone_publicly: d.showPhonePublicly,
+            created_at: d.createdAt || new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+          if (error) console.warn('blood_donors push notice:', error.message);
+        } catch (e: any) {
+          console.warn('blood_donors push exception:', e.message);
+        }
       }
 
       setLastSyncedAt(new Date());
@@ -1374,6 +1407,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Push to Supabase failed:', err);
       return { success: false, message: err.message || 'Failed to push data to Supabase.' };
     } finally {
+      isSyncInProgressRef.current = false;
       setIsSyncing(false);
     }
   }, [setSlice, hum, blood, logAudit]);

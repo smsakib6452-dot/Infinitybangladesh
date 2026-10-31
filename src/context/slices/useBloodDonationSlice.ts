@@ -16,8 +16,9 @@ import {
 import { cleanBloodDonor, cleanEmergencyRequest } from '../../data/bloodDonationData';
 import { getFreshImageUrl } from '../../lib/cloudinary';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
-import { STORAGE_PREFIX, getStoredOrDefault } from '../dataStorage';
-import { safeDbUpsert, safeDbDelete, createAuditLog } from '../dbAdapter';
+import { STORAGE_PREFIX, getStoredOrDefault, saveToStorage } from '../dataStorage';
+import { resolveMediaFieldUpdate, isValidPermanentUrl } from '../../lib/utils/mediaSanitizer';
+import { safeDbUpsert, safeDbInsert, safeDbDelete, createAuditLog, generateSecureId, REMOTE_CMS_MUTATIONS_LOCKED } from '../dbAdapter';
 
 export function useBloodDonationSlice(onAuditLog: (action: string, entity: string, entityId: string, details: string) => void) {
   const deletedDonorIdsRef = useRef<Set<string>>(new Set(getStoredOrDefault<string[]>('deleted_donor_ids', [])));
@@ -148,17 +149,15 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
 
     setBloodDonors(prev => {
       const updated = [newDonor, ...prev.filter(d => d.id !== id)];
-      try {
-        localStorage.setItem(`${STORAGE_PREFIX}bloodDonors`, JSON.stringify(updated));
-      } catch {}
+      saveToStorage('bloodDonors', updated);
       return updated;
     });
 
-    safeDbUpsert('blood_donors', {
+    safeDbInsert('blood_donors', {
       id: newDonor.id,
       full_name: newDonor.fullName,
       blood_group: newDonor.bloodGroup,
-      gender: newDonor.gender || null,
+      gender: newDonor.gender || 'Male',
       date_of_birth: newDonor.dateOfBirth || newDonor.dob || null,
       phone: newDonor.phone,
       email: newDonor.email || null,
@@ -167,19 +166,9 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
       upazila: newDonor.upazila,
       area: newDonor.area,
       detailed_address: newDonor.detailedAddress || null,
-      org_category: newDonor.orgCategory,
-      committee_position: newDonor.committeePosition || null,
-      availability_status: newDonor.availabilityStatus,
-      first_donation_date: newDonor.firstDonationDate || null,
-      last_donation_date: newDonor.lastDonationDate || null,
-      total_donations: newDonor.totalDonations,
       experience_notes: newDonor.experienceNotes || null,
-      is_verified: newDonor.isVerified,
-      approval_status: newDonor.approvalStatus,
-      privacy_consent: newDonor.privacyConsent,
-      show_phone_publicly: newDonor.showPhonePublicly,
-      created_at: newDonor.createdAt,
-      updated_at: newDonor.updatedAt
+      privacy_consent: Boolean(newDonor.privacyConsent),
+      show_phone_publicly: Boolean(newDonor.showPhonePublicly)
     });
 
     onAuditLog('CREATE', 'BloodDonor', id, `Registered blood donor: ${donor.fullName} (${donor.bloodGroup})`);
@@ -246,9 +235,7 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
         });
       }
 
-      try {
-        localStorage.setItem(`${STORAGE_PREFIX}bloodDonors`, JSON.stringify(updated));
-      } catch {}
+      saveToStorage('bloodDonors', updated);
       return updated;
     });
 
@@ -265,13 +252,11 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
 
     setBloodDonors(prev => {
       const filtered = prev.filter(d => d.id !== cleanId && d.id.trim() !== cleanId);
-      try {
-        localStorage.setItem(`${STORAGE_PREFIX}bloodDonors`, JSON.stringify(filtered));
-      } catch {}
+      saveToStorage('bloodDonors', filtered);
       return filtered;
     });
     onAuditLog('DELETE', 'BloodDonor', cleanId, 'Deleted blood donor');
-    if (supabase && isSupabaseConfigured) {
+    if (!REMOTE_CMS_MUTATIONS_LOCKED && supabase && isSupabaseConfigured) {
       Promise.resolve(supabase.from('blood_donation_history').delete().eq('donor_id', cleanId))
         .then(() => (supabase ? Promise.resolve(supabase.from('blood_donors').delete().eq('id', cleanId)) : undefined))
         .catch(err => console.warn('Supabase donor delete error (handled):', err));
@@ -318,9 +303,7 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
         };
       });
 
-      try {
-        localStorage.setItem(`${STORAGE_PREFIX}bloodDonors`, JSON.stringify(updated));
-      } catch {}
+      saveToStorage('bloodDonors', updated);
       return updated;
     });
 
@@ -358,9 +341,7 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
         };
       });
 
-      try {
-        localStorage.setItem(`${STORAGE_PREFIX}bloodDonors`, JSON.stringify(updated));
-      } catch {}
+      saveToStorage('bloodDonors', updated);
       return updated;
     });
 
@@ -369,7 +350,7 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
   }, [onAuditLog]);
 
   const addEmergencyBloodRequest = useCallback((req: Omit<EmergencyBloodRequest, 'id' | 'status' | 'createdAt' | 'updatedAt'>) => {
-    const id = `req-${Date.now()}`;
+    const id = generateSecureId('req');
     const newReq: EmergencyBloodRequest = cleanEmergencyRequest({
       ...req,
       id,
@@ -394,7 +375,7 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
       return updated;
     });
 
-    safeDbUpsert('emergency_blood_requests', {
+    safeDbInsert('emergency_blood_requests', {
       id: newReq.id,
       requester_name: newReq.requesterName,
       contact_number: newReq.contactNumber,
@@ -406,11 +387,7 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
       upazila: newReq.upazila,
       emergency_level: newReq.emergencyLevel,
       required_date: newReq.requiredDate,
-      additional_notes: newReq.additionalNotes || null,
-      status: newReq.status,
-      matched_donor_ids: newReq.matchedDonorIds,
-      created_at: newReq.createdAt,
-      updated_at: newReq.updatedAt
+      additional_notes: newReq.additionalNotes || null
     });
 
     onAuditLog('CREATE', 'EmergencyBloodRequest', id, `Created emergency request for ${newReq.patientName} (${newReq.bloodGroup})`);

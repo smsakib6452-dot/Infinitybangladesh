@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { getAssetUrl } from '../lib/utils/assetHelper';
 import { uploadToCloudinary } from '../lib/cloudinary';
+import { ObjectURLManager, isValidPermanentUrl } from '../lib/utils/mediaSanitizer';
 
 export type AspectRatioType = 'free' | '1:1' | '4:5' | '3:4' | '4:3' | '16:9' | '21:9';
 
@@ -87,6 +88,20 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const imageObjRef = useRef<HTMLImageElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const objectUrlManagerRef = useRef<ObjectURLManager | null>(null);
+
+  const getObjectURLManager = () => {
+    if (!objectUrlManagerRef.current) {
+      objectUrlManagerRef.current = new ObjectURLManager();
+    }
+    return objectUrlManagerRef.current;
+  };
+
+  useEffect(() => {
+    return () => {
+      objectUrlManagerRef.current?.close();
+    };
+  }, []);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Container dimensions for dynamic crop box calculations
@@ -348,18 +363,24 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
     setAspectRatio(defaultAspectRatio);
   };
 
-  // Local File Upload trigger
+  // Local File Upload trigger with deterministic ObjectURLManager
   const handleLocalFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        if (uploadEvent.target?.result) {
-          setCurrentSrc(uploadEvent.target.result as string);
-          handleReset();
-        }
-      };
-      reader.readAsDataURL(file);
+      const previewUrl = getObjectURLManager().replace(file);
+      if (previewUrl) {
+        setCurrentSrc(previewUrl);
+        handleReset();
+      } else {
+        const reader = new FileReader();
+        reader.onload = (uploadEvent) => {
+          if (uploadEvent.target?.result) {
+            setCurrentSrc(uploadEvent.target.result as string);
+            handleReset();
+          }
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -416,21 +437,30 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
         console.warn('Canvas toDataURL failed (possible CORS taint), using currentSrc fallback:', canvasErr);
       }
 
-      let finalUrl = dataUrl;
+      let finalUrl = isValidPermanentUrl(imageUrl) ? imageUrl : '';
       if (dataUrl.startsWith('data:')) {
         try {
-          // Upload cropped high-res image directly to Cloudinary
           const uploadRes = await uploadToCloudinary(dataUrl, {
             tags: ['infinity_crop', 'verified_media']
           });
-          if (uploadRes && uploadRes.secure_url) {
+          if (uploadRes && uploadRes.secure_url && isValidPermanentUrl(uploadRes.secure_url)) {
             finalUrl = uploadRes.secure_url;
+          } else if (isValidPermanentUrl(currentSrc)) {
+            finalUrl = currentSrc;
           }
         } catch (cloudErr) {
-          console.warn('Cloudinary direct upload for crop failed, falling back to data URL:', cloudErr);
+          console.warn('Cloudinary direct upload for crop failed, falling back to permanent source:', cloudErr);
+          if (isValidPermanentUrl(currentSrc)) {
+            finalUrl = currentSrc;
+          }
         }
+      } else if (isValidPermanentUrl(dataUrl)) {
+        finalUrl = dataUrl;
+      } else if (isValidPermanentUrl(currentSrc)) {
+        finalUrl = currentSrc;
       }
 
+      objectUrlManagerRef.current?.close();
       onSave(finalUrl, {
         altText,
         caption,
@@ -442,7 +472,7 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
           rotation,
           flipH,
           flipV,
-          originalSrc: currentSrc
+          originalSrc: isValidPermanentUrl(currentSrc) ? currentSrc : (isValidPermanentUrl(imageUrl) ? imageUrl : '')
         }
       });
       setIsUploadingToCloud(false);
@@ -450,7 +480,9 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
     } catch (err) {
       console.error('Failed to export cropped image:', err);
       setIsUploadingToCloud(false);
-      onSave(currentSrc, { altText, caption, aspectRatio });
+      objectUrlManagerRef.current?.close();
+      const safeFallback = isValidPermanentUrl(currentSrc) ? currentSrc : (isValidPermanentUrl(imageUrl) ? imageUrl : '');
+      onSave(safeFallback, { altText, caption, aspectRatio });
       onClose();
     }
   };

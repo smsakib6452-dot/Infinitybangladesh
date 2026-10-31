@@ -4,6 +4,7 @@
  */
 
 import { uploadToCloudinary, isCloudinaryConfigured } from '../cloudinary';
+import { isValidPermanentUrl } from '../utils/mediaSanitizer';
 
 export interface UploadValidationResult {
   valid: boolean;
@@ -71,6 +72,12 @@ export class StorageService {
 
     try {
       const result = await uploadToCloudinary(file);
+      if (result.placeholder || !result.secure_url || !isValidPermanentUrl(result.secure_url)) {
+        return {
+          success: false,
+          error: 'Cloud uploads are locked during Phase 1.1 containment.'
+        };
+      }
       const name =
         fileName ||
         (file instanceof File ? file.name : result.original_filename || 'uploaded-image.jpg');

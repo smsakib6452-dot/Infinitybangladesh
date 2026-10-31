@@ -26,6 +26,7 @@ import {
   MASTER_ADMIN_PASSCODES
 } from '../data/bloodDonationData';
 import { getAssetUrl } from '../lib/utils/assetHelper';
+import { resolveMediaFieldUpdate, isValidPermanentUrl } from '../lib/utils/mediaSanitizer';
 import { SectionHeading } from '../components/SectionHeading';
 import { BloodDonorProfileModal } from '../components/BloodDonorProfileModal';
 import { DonorAvatar } from '../components/DonorAvatar';
@@ -764,7 +765,7 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
       dob: regDateOfBirth,
       phone: cleanPhone,
       email: regEmail.trim() || undefined,
-      photoUrl: regPhotoUrl.trim() || undefined,
+      photoUrl: isValidPermanentUrl(regPhotoUrl) ? regPhotoUrl.trim() : undefined,
       district: regDistrict,
       upazila: regUpazila,
       area: regArea.trim(),

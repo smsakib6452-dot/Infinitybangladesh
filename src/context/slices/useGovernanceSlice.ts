@@ -14,7 +14,8 @@ import {
   INITIAL_ADMIN_PROFILES
 } from '../../data/initialData';
 import { getFreshImageUrl } from '../../lib/cloudinary';
-import { STORAGE_PREFIX, getStoredOrDefault } from '../dataStorage';
+import { STORAGE_PREFIX, getStoredOrDefault, saveToStorage } from '../dataStorage';
+import { resolveMediaFieldUpdate, isValidPermanentUrl } from '../../lib/utils/mediaSanitizer';
 import { safeDbUpsert, safeDbDelete } from '../dbAdapter';
 
 export function useGovernanceSlice(logAudit: (action: string, entity: string, entityId: string, details: string) => void) {
@@ -56,11 +57,7 @@ export function useGovernanceSlice(logAudit: (action: string, entity: string, en
       clearTimeout(persistQueueRef.current[key]);
     }
     persistQueueRef.current[key] = setTimeout(() => {
-      try {
-        localStorage.setItem(`${STORAGE_PREFIX}${key}`, JSON.stringify(data));
-      } catch (err) {
-        console.warn(`Error persisting ${key} to localStorage:`, err);
-      }
+      saveToStorage(key, data);
       delete persistQueueRef.current[key];
     }, 400);
   }, []);
@@ -160,7 +157,7 @@ export function useGovernanceSlice(logAudit: (action: string, entity: string, en
     const newPerson: Person = {
       ...person,
       id,
-      photoUrl: person.photoUrl ? getFreshImageUrl(person.photoUrl) : ''
+      photoUrl: resolveMediaFieldUpdate('', person.photoUrl, false) || ''
     };
     setPersons(prev => [...prev, newPerson]);
     logAudit('CREATE', 'Person', id, `Added person: ${person.englishName}`);
@@ -196,7 +193,7 @@ export function useGovernanceSlice(logAudit: (action: string, entity: string, en
         return {
           ...p,
           ...person,
-          photoUrl: person.photoUrl ? getFreshImageUrl(person.photoUrl) : p.photoUrl
+          photoUrl: person.photoUrl !== undefined ? (resolveMediaFieldUpdate(p.photoUrl, person.photoUrl, false) || '') : p.photoUrl
         };
       });
       const match = updated.find(p => p.id === id);

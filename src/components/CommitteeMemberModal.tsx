@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { getAssetUrl } from '../lib/utils/assetHelper';
 import { ImageEditorModal } from './ImageEditorModal';
+import { resolveMediaFieldUpdate, isValidPermanentUrl } from '../lib/utils/mediaSanitizer';
 
 export interface CommitteeMemberFormData {
   banglaName: string;
@@ -138,7 +139,9 @@ export const CommitteeMemberModal: React.FC<CommitteeMemberModalProps> = ({
       return;
     }
 
-    onSave(formData, member?.id, member?.personId, member?.positionId);
+    const existingPhoto = member?.person?.photoUrl || '';
+    const safePhoto = resolveMediaFieldUpdate(existingPhoto, formData.photoUrl, false);
+    onSave({ ...formData, photoUrl: safePhoto || '' }, member?.id, member?.personId, member?.positionId);
     onClose();
   };
 

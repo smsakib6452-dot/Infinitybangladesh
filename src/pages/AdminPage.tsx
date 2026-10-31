@@ -155,6 +155,7 @@ import { AdminErrorBoundary } from '../components/AdminErrorBoundary';
 import { supabase, isSupabaseConfigured, signInWithEmail, signOutAdmin } from '../lib/supabase';
 import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL, isPortraitVideo } from '../lib/utils/mediaHelper';
 import { uploadToCloudinary } from '../lib/cloudinary';
+import { isValidPermanentUrl } from '../lib/utils/mediaSanitizer';
 
 export type AdminTab =
   | 'overview'
@@ -619,6 +620,11 @@ export const AdminPage: React.FC = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    setTimeout(() => {
+      try {
+        URL.revokeObjectURL(url);
+      } catch {}
+    }, 200);
     showToast(isBn ? 'রক্তদাতাদের CSV ফাইল ডাউনলোড হয়েছে' : 'Blood Donors CSV exported successfully');
   };
 
@@ -6138,6 +6144,11 @@ export const AdminPage: React.FC = () => {
                         document.body.appendChild(a);
                         a.click();
                         document.body.removeChild(a);
+                        setTimeout(() => {
+                          try {
+                            URL.revokeObjectURL(url);
+                          } catch {}
+                        }, 200);
                         showToast(isBn ? 'ব্যাকআপ ফাইল সফলভাবে ডাউনলোড হয়েছে' : 'JSON Backup exported successfully');
                       }}
                       className="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-warm-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
@@ -8554,7 +8565,7 @@ export const AdminPage: React.FC = () => {
                             setMediaUploadError('');
                             try {
                               const res = await uploadToCloudinary(file);
-                              if (res && res.secure_url) {
+                              if (res && res.secure_url && !res.placeholder && isValidPermanentUrl(res.secure_url)) {
                                 addMediaItem({
                                   fileName: file.name,
                                   url: res.secure_url,
@@ -8572,6 +8583,9 @@ export const AdminPage: React.FC = () => {
                                 setIsUploadingMedia(false);
                                 setIsNewMediaModalOpen(false);
                                 showToast('File uploaded to Cloudinary');
+                              } else {
+                                setMediaUploadError('Cloud uploads are locked during Phase 1.1 security baseline.');
+                                setIsUploadingMedia(false);
                               }
                             } catch (err: any) {
                               setMediaUploadError(err.message || 'Upload failed');
