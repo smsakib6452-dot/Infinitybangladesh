@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { ShieldCheck, Lock, HeartHandshake, UserCheck, FileText, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Lock, HeartHandshake, UserCheck, FileText, CheckCircle2, Trash2, Cookie, Mail } from 'lucide-react';
 
 export const PrivacyPage: React.FC = () => {
   const { isBn } = useLanguage();
@@ -100,6 +100,43 @@ export const PrivacyPage: React.FC = () => {
                 {isBn ? 'আপনার প্রেরিত বার্তা, নাম, বিষয় এবং যোগাযোগের মাধ্যম।' : 'Inquiry subject, sender name, message contents, and email address.'}
               </li>
             </ul>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2 font-display">
+              <Trash2 className="w-5 h-5 text-[#006A4E]" />
+              <span>{isBn ? '৩. তথ্য সংশোধন ও স্থায়ীভাবে মুছে ফেলার অধিকার (Right to be Forgotten)' : '3. Data Rectification & Permanent Deletion Rights'}</span>
+            </h2>
+            <p>
+              {isBn
+                ? 'যেকোনো নিবন্ধিত রক্তদাতা, স্বেচ্ছাসেবী বা সেবাগ্রহীতা যেকোনো সময় তাদের সংরক্ষিত প্রোফাইল বা তথ্য সম্পূর্ণভাবে হালনাগাদ অথবা স্থায়ীভাবে মুছে ফেলার পূর্ণ অধিকার রাখেন। আপনার তথ্য মুছে ফেলতে চাইলে আমাদের জরুরি হেল্পলাইন (+880 1839-008339)-এ কল করে অথবা smsakib6452@gmail.com ঠিকানায় "Data Removal Request" উল্লেখ করে ইমেইল পাঠালে অনতিবিলম্বে তা ডাটাবেজ থেকে অপসারণ করা হবে।'
+                : 'All registered blood donors, volunteers, and supporters possess the absolute right to request rectification, export, or permanent deletion of their personal records at any time. To exercise your right to be forgotten, please contact our helpline at +880 1839-008339 or email smsakib6452@gmail.com with the subject "Data Removal Request". Requests are honored promptly.'}
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2 font-display">
+              <Cookie className="w-5 h-5 text-[#006A4E]" />
+              <span>{isBn ? '৪. জিরো-ট্র্যাকিং কুকি ও লোকালস্টোরেজ নীতিমালা' : '4. Zero-Tracking Cookies & Local Storage Disclosure'}</span>
+            </h2>
+            <p>
+              {isBn
+                ? 'ইনফিনিটি বাংলাদেশ কোনো বাণিজ্যিক ট্র্যাকিং কুকি, রি-টার্গেটিং বিজ্ঞাপন পিক্সেল, বা তথ্য ব্রোকার ব্যবহার করে না। আমাদের ওয়েবসাইট কেবলমাত্র আপনার ব্রাউজারের লোকালস্টোরেজ (LocalStorage) ব্যবহার করে ভাষা পছন্দ (বাংলা/ইংরেজি) এবং অফলাইন ক্যাশ সংরক্ষণের জন্য। আপনার ব্যক্তিগত ডেটা কোনো বিজ্ঞাপনী নেটওয়ার্কের কাছে বিক্রি বা শেয়ার করা হয় না।'
+                : 'Infinity Bangladesh operates under strict privacy-first ethics. We do NOT deploy third-party advertising cookies, behavioural cross-site tracking pixels, or commercial data brokerage scripts. Client storage (LocalStorage/IndexedDB) is utilized strictly for localized language preferences (Bengali/English) and offline application caching.'}
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2 font-display">
+              <Mail className="w-5 h-5 text-[#006A4E]" />
+              <span>{isBn ? '৫. অফিসিয়াল ডাটা কন্ট্রোলার ও যোগাযোগ' : '5. Data Controller & Official Grievance Contact'}</span>
+            </h2>
+            <div className="bg-[#FAF7F2] border border-[#EAE3D9] rounded-2xl p-4 sm:p-5 text-xs text-slate-700 space-y-1.5">
+              <p><strong>{isBn ? 'সংগঠন:' : 'Organization:'}</strong> Infinity Bangladesh (Team Infinity — United for Humanity)</p>
+              <p><strong>{isBn ? 'প্রধান কার্যালয়:' : 'Headquarters:'}</strong> Hathazari, Chattogram - 4330, Bangladesh</p>
+              <p><strong>{isBn ? 'অফিসিয়াল ইমেইল:' : 'Official Email:'}</strong> smsakib6452@gmail.com</p>
+              <p><strong>{isBn ? 'জরুরি হেল্পলাইন:' : 'Helpline:'}</strong> +880 1839-008339</p>
+            </div>
           </section>
         </div>
       </div>

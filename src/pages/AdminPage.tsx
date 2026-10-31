@@ -241,7 +241,9 @@ export const AdminPage: React.FC = () => {
 
   // Auth State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('infinity_bd_admin_auth') === 'true';
+    if (typeof window === 'undefined') return false;
+    if (isSupabaseConfigured && supabase) return false;
+    return sessionStorage.getItem('infinity_admin_user') !== null;
   });
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
@@ -250,13 +252,24 @@ export const AdminPage: React.FC = () => {
 
   // Validate active session on mount if Supabase Auth is enabled
   React.useEffect(() => {
+    localStorage.removeItem('infinity_bd_admin_auth'); // Purge legacy insecure storage key
     if (isSupabaseConfigured && supabase) {
       supabase.auth.getSession().then(({ data: { session } }) => {
-        if (!session && !sessionStorage.getItem('infinity_admin_user')) {
-          setIsAuthenticated(false);
-          localStorage.removeItem('infinity_bd_admin_auth');
+        setIsAuthenticated(Boolean(session));
+        if (!session) {
+          sessionStorage.removeItem('infinity_admin_user');
         }
-      }).catch(() => {});
+      }).catch(() => {
+        setIsAuthenticated(false);
+      });
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setIsAuthenticated(Boolean(session));
+        if (!session) {
+          sessionStorage.removeItem('infinity_admin_user');
+        }
+      });
+      return () => subscription.unsubscribe();
     }
   }, []);
 
@@ -641,7 +654,6 @@ export const AdminPage: React.FC = () => {
         const { data, error } = await signInWithEmail(authEmail, authPassword);
         if (data?.user) {
           setIsAuthenticated(true);
-          localStorage.setItem('infinity_bd_admin_auth', 'true');
           sessionStorage.setItem('infinity_admin_user', data.user.email || authEmail);
           showToast(isBn ? 'সফলভাবে অ্যাডমিন প্যানেলে লগইন হয়েছে' : 'Authenticated as Administrator');
           return;
@@ -655,14 +667,15 @@ export const AdminPage: React.FC = () => {
       }
     }
 
-    // 2. Secondary: Secure environment variable password for local/offline admin access
-    const envAdminPass = typeof import.meta !== 'undefined' ? (import.meta.env?.VITE_ADMIN_PASSWORD || '') : '';
-    if (envAdminPass && inputPass === envAdminPass) {
-      setIsAuthenticated(true);
-      localStorage.setItem('infinity_bd_admin_auth', 'true');
-      sessionStorage.setItem('infinity_admin_user', authEmail.trim() || 'admin@local');
-      showToast(isBn ? 'সফলভাবে অ্যাডমিন প্যানেলে লগইন হয়েছে' : 'Logged in as Administrator');
-      return;
+    // 2. Secondary: Secure environment variable password strictly for local development offline mode
+    if (import.meta.env.DEV) {
+      const envAdminPass = typeof import.meta !== 'undefined' ? (import.meta.env?.VITE_ADMIN_PASSWORD || '') : '';
+      if (envAdminPass && inputPass === envAdminPass) {
+        setIsAuthenticated(true);
+        sessionStorage.setItem('infinity_admin_user', authEmail.trim() || 'admin@local');
+        showToast(isBn ? 'সফলভাবে অ্যাডমিন প্যানেলে লগইন হয়েছে (Local Dev Mode)' : 'Logged in as Administrator (Local Dev Mode)');
+        return;
+      }
     }
 
     setAuthError(
@@ -678,6 +691,7 @@ export const AdminPage: React.FC = () => {
     }
     setIsAuthenticated(false);
     localStorage.removeItem('infinity_bd_admin_auth');
+    sessionStorage.removeItem('infinity_admin_user');
     showToast('Logged out of Admin Portal');
   };
 
@@ -692,9 +706,9 @@ export const AdminPage: React.FC = () => {
             <div className="w-16 h-16 rounded-3xl bg-[#006A4E] text-white flex items-center justify-center mx-auto shadow-warm-md">
               <Lock className="w-8 h-8" />
             </div>
-            <h2 className="text-2xl font-extrabold text-slate-900 font-display">
+            <h1 className="text-2xl font-extrabold text-slate-900 font-display">
               {isBn ? 'ইনফিনিটি বাংলাদেশ অ্যাডমিন প্যানেল' : 'Infinity Bangladesh CMS'}
-            </h2>
+            </h1>
             <p className="text-xs text-slate-500">
               {isBn ? 'ওয়েবসাইটের যাবতীয় কনটেন্ট ও ডেটা ম্যানেজমেন্ট পোর্টাল' : 'Secure Management Portal & Content Management System'}
             </p>
@@ -709,11 +723,14 @@ export const AdminPage: React.FC = () => {
 
           <form onSubmit={handleAuthSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-800">
+              <label htmlFor="admin-login-email" className="block text-xs font-bold text-slate-800">
                 {isBn ? 'অ্যাডমিন ইমেইল' : 'Admin Email'}
               </label>
               <input
+                id="admin-login-email"
+                name="email"
                 type="email"
+                autoComplete="username"
                 value={authEmail}
                 onChange={(e) => setAuthEmail(e.target.value)}
                 placeholder="name@example.com"
@@ -722,11 +739,14 @@ export const AdminPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-800">
+              <label htmlFor="admin-login-password" className="block text-xs font-bold text-slate-800">
                 {isBn ? 'পাসওয়ার্ড *' : 'Password *'}
               </label>
               <input
+                id="admin-login-password"
+                name="password"
                 type="password"
+                autoComplete="current-password"
                 required
                 value={authPassword}
                 onChange={(e) => setAuthPassword(e.target.value)}
@@ -827,9 +847,9 @@ export const AdminPage: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-sm sm:text-base tracking-tight font-display">
+                <h1 className="font-extrabold text-sm sm:text-base tracking-tight font-display">
                   Infinity Bangladesh CMS
-                </span>
+                </h1>
                 <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#006A4E] text-emerald-200">
                   {currentRole.toUpperCase()}
                 </span>

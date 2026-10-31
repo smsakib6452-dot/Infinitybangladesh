@@ -125,7 +125,7 @@ export const Footer: React.FC = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={soc.label || soc.platform}
-                    className="w-8 h-8 rounded-lg bg-emerald-950/80 hover:bg-[#006A4E] text-emerald-200 hover:text-white flex items-center justify-center border border-emerald-800/60 transition-colors"
+                    className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-emerald-950/80 hover:bg-[#006A4E] text-emerald-200 hover:text-white flex items-center justify-center border border-emerald-800/60 transition-colors cursor-pointer p-1.5"
                   >
                     {renderSocialIcon(soc.platform)}
                   </a>

@@ -4,6 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { Link } from '../context/RouterContext';
 import { Calendar, Clock, MapPin, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { getAssetUrl } from '../lib/utils/assetHelper';
+import { OptimizedImage } from './OptimizedImage';
 
 interface EventCardProps {
   event: EventItem;
@@ -20,11 +21,12 @@ export const EventCard: React.FC<EventCardProps> = ({ event }) => {
         slug={event.slug}
         className="relative md:w-5/12 aspect-16/9 md:aspect-auto overflow-hidden bg-slate-100 shrink-0 block"
       >
-        <img
-          src={getAssetUrl(event.imageUrl)}
+        <OptimizedImage
+          src={event.imageUrl}
           alt={tText(event.title)}
+          aspectRatio="16/9"
+          width={480}
           className="w-full h-full object-cover motion-img-zoom"
-          loading="lazy"
         />
         <div className="absolute top-3 left-3 bg-[#006A4E] text-white text-xs font-bold px-3 py-1 rounded-full shadow-xs">
           {event.status === 'upcoming' ? (isBn ? 'আসন্ন ইভেন্ট' : 'Upcoming Event') : event.status}

@@ -6,6 +6,7 @@ interface SectionHeadingProps {
   subtitle?: string;
   alignment?: 'center' | 'left';
   action?: React.ReactNode;
+  as?: 'h1' | 'h2' | 'h3';
 }
 
 export const SectionHeading: React.FC<SectionHeadingProps> = ({
@@ -13,7 +14,8 @@ export const SectionHeading: React.FC<SectionHeadingProps> = ({
   title,
   subtitle,
   alignment = 'center',
-  action
+  action,
+  as: HeadingTag = 'h2'
 }) => {
   const isCenter = alignment === 'center';
 
@@ -32,9 +34,9 @@ export const SectionHeading: React.FC<SectionHeadingProps> = ({
             <span>{badge}</span>
           </div>
         )}
-        <h2 className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-snug sm:leading-tight font-display">
+        <HeadingTag className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-snug sm:leading-tight font-display">
           {title}
-        </h2>
+        </HeadingTag>
         {subtitle && (
           <p className={`text-xs sm:text-base text-slate-600 leading-relaxed max-w-2xl ${isCenter ? 'mx-auto' : ''}`}>
             {subtitle}

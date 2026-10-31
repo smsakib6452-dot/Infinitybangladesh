@@ -1,0 +1,38 @@
+# Infinity Bangladesh (ইনফিনিটি বাংলাদেশ) — Full Institutional Manifest & Knowledge Context
+
+## Mission & Vision
+Infinity Bangladesh (widely recognized as "Team Infinity") is an established youth-led voluntary social humanitarian organization founded in 2015 in Hathazari, Chattogram, Bangladesh. Operating under the motto "United for Humanity" (মানবতার জন্য একতাবদ্ধ), Infinity Bangladesh works tirelessly to uphold human dignity, alleviate acute suffering during natural calamities, and build an ethical, compassionate generation of youth leaders.
+
+## Core Pillars & Ethical Commitments
+1. **100% Charity Model:**
+   Every single Taka donated by the general public goes straight into field procurement—whether food rations, medical supplies, educational materials, or winter blankets. All operational overheads and administrative costs are funded internally by executive leadership and core patrons.
+2. **Voluntary Blood Donation Ethics:**
+   Infinity LifeLine coordinates emergency blood donors free of charge. No monetary compensation is ever solicited or accepted for blood donations. Donors are motivated by pure altruism.
+3. **Radical Public Accountability:**
+   Infinity Bangladesh publishes transparent expenditure accounts, vouchers, and bank audit statements publicly at https://infinitybangladesh.vercel.app/transparency for public scrutiny.
+4. **Non-Partisan & Humanitarian Integrity:**
+   All services and disaster relief are distributed solely on the basis of humanitarian need, without bias or discrimination based on religion, ethnicity, gender, social status, or political affiliation.
+
+## Geographic Scope
+- **Headquarters:** Hathazari, Chattogram, Bangladesh (Postal Code: 4330).
+- **Primary Field Operations:** Chattogram District, Chattogram Hill Tracts, Feni, Noakhali, Comilla, Sylhet, Sunamganj, and northern disaster-prone districts across Bangladesh.
+- **National Coverage:** Voluntary Blood Donation Network coordinates emergency requests nationwide across all 64 districts.
+
+## Contact & Public Verification
+- **Official Helpline:** +880 1839-008339 (Available 24/7 for emergency blood coordination)
+- **Official Email:** smsakib6452@gmail.com
+- **Official Website:** https://infinitybangladesh.vercel.app/
+- **Social Media:**
+  - Facebook: https://www.facebook.com/infinitybangladesh
+  - WhatsApp: https://wa.me/8801839008339
+- **Official Donation Channels:**
+  - bKash (Personal): 01839-008339
+  - Nagad (Personal): 01839-008339
+  - Bank Wire / Transfer: Disclosed on official donation page.
+
+## Data Protection & User Privacy
+Infinity Bangladesh respects user privacy:
+- Zero commercial third-party tracking or advertising cookies.
+- Donors and volunteers have full rights to request modification or permanent deletion of their profile records from the database by contacting the helpline or emailing smsakib6452@gmail.com.
+- Security headers (CSP, HSTS, X-Frame-Options) protect user sessions against unauthorized inspection.
+

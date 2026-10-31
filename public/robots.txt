@@ -1,21 +1,68 @@
 # Robots.txt for Infinity Bangladesh — United for Humanity
 # Official Platform: https://infinitybangladesh.vercel.app
 
-User-agent: *
+# 1. AI Search & Answer Engine Agents (OpenAI, ChatGPT, SearchGPT)
+User-agent: OAI-SearchBot
 Allow: /
 Disallow: /admin
-Disallow: /#/admin
+Disallow: /blood-donation/update-donor
 
-# Specific search crawlers welcome
+User-agent: GPTBot
+Allow: /
+Disallow: /admin
+Disallow: /blood-donation/update-donor
+
+User-agent: ChatGPT-User
+Allow: /
+
+# 2. Perplexity AI Engine
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin
+Disallow: /blood-donation/update-donor
+
+# 3. Anthropic Claude Search & Grounding
+User-agent: ClaudeBot
+Allow: /
+Disallow: /admin
+Disallow: /blood-donation/update-donor
+
+User-agent: anthropic-ai
+Allow: /
+
+# 4. Google Gemini & AI Overviews
+User-agent: Google-Extended
+Allow: /
+
+# 5. Apple Intelligence
+User-agent: Applebot-Extended
+Allow: /
+User-agent: Applebot
+Allow: /
+Disallow: /admin
+Disallow: /blood-donation/update-donor
+
+# 6. Traditional Search Engines & Image Crawlers
 User-agent: Googlebot
+Allow: /
+Disallow: /admin
+Disallow: /blood-donation/update-donor
+
+User-agent: Googlebot-Image
+Allow: /images/
+Allow: /brand/
 Allow: /
 
 User-agent: Bingbot
 Allow: /
+Disallow: /admin
+Disallow: /blood-donation/update-donor
 
-User-agent: Applebot
+# 7. Default for all other compliant web crawlers
+User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /blood-donation/update-donor
 
-# Canonical Sitemap
+# Canonical Sitemap & LLM AI Grounding Directives
 Sitemap: https://infinitybangladesh.vercel.app/sitemap.xml
-Host: https://infinitybangladesh.vercel.app

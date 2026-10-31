@@ -56,7 +56,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-8 lg:gap-12 items-center">
           {/* Left Column: Headline, Description & CTAs */}
-          <ScrollReveal effect="slide-right" className="lg:col-span-7 space-y-3.5 sm:space-y-6 text-left">
+          <div className="lg:col-span-7 space-y-3.5 sm:space-y-6 text-left">
             {/* Eyebrow Pill Badge - Ultra-refined & compact on mobile, expansive on desktop */}
             <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-[#E6F3EF]/90 backdrop-blur-xs border border-[#C2E2D7] text-[#00523C] text-[10px] sm:text-sm font-extrabold shadow-2xs">
               <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#006A4E] animate-pulse shrink-0" />
@@ -70,6 +70,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
 
             {/* Main Headline */}
             <h1 className="text-[22px] sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.22] sm:leading-[1.18] font-display">
+              <span className="block text-xs sm:text-sm font-extrabold uppercase tracking-widest text-[#006A4E] mb-2 sm:mb-3">
+                Infinity Bangladesh • ইনফিনিটি বাংলাদেশ
+              </span>
               {tText(hero.headlineMain)}{' '}
               <span className="text-[#006A4E] relative inline-block">
                 {tText(hero.headlineHighlight)}
@@ -90,9 +93,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
                 <Link
                   to={hero.primaryCta.url}
                   isExternal={hero.primaryCta.openInNewTab}
-                  className="flex-1 sm:flex-initial px-3 sm:px-7 py-1.5 sm:py-3.5 rounded-lg sm:rounded-2xl bg-[#006A4E] hover:bg-[#00523C] active:bg-[#00402E] text-white text-[11px] sm:text-base font-semibold sm:font-bold shadow-warm-xs hover:shadow-warm-md transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2.5 cursor-pointer transform hover:-translate-y-0.5 text-center"
+                  className="flex-1 sm:flex-initial min-h-[44px] px-3.5 sm:px-7 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#006A4E] hover:bg-[#00523C] active:bg-[#00402E] text-white text-xs sm:text-base font-bold shadow-warm-xs hover:shadow-warm-md transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2.5 cursor-pointer transform hover:-translate-y-0.5 text-center touch-manipulation"
                 >
-                  <Heart className="w-3 h-3 sm:w-5 sm:h-5 fill-white text-white shrink-0" />
+                  <Heart className="w-3.5 h-3.5 sm:w-5 sm:h-5 fill-white text-white shrink-0" />
                   <span className="truncate">{tText(hero.primaryCta.text)}</span>
                 </Link>
               )}
@@ -101,9 +104,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
                 <Link
                   to={hero.secondaryCta.url}
                   isExternal={hero.secondaryCta.openInNewTab}
-                  className="flex-1 sm:flex-initial px-3 sm:px-7 py-1.5 sm:py-3.5 rounded-lg sm:rounded-2xl bg-white hover:bg-[#FAF7F2] active:bg-[#F2ECE1] text-slate-800 text-[11px] sm:text-base font-semibold sm:font-bold border border-[#D8CFC4] hover:border-[#006A4E] hover:text-[#006A4E] shadow-2xs transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer transform hover:-translate-y-0.5 text-center whitespace-nowrap"
+                  className="flex-1 sm:flex-initial min-h-[44px] px-3.5 sm:px-7 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-white hover:bg-[#FAF7F2] active:bg-[#F2ECE1] text-slate-800 text-xs sm:text-base font-bold border border-[#D8CFC4] hover:border-[#006A4E] hover:text-[#006A4E] shadow-2xs transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer transform hover:-translate-y-0.5 text-center whitespace-nowrap touch-manipulation"
                 >
-                  <Users className="w-3 h-3 sm:w-5 sm:h-5 text-[#006A4E] shrink-0" />
+                  <Users className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#006A4E] shrink-0" />
                   <span>{isBn ? (hero.secondaryCta.text?.bn || 'স্বেচ্ছাসেবী আবেদন') : 'Join as Volunteer'}</span>
                 </Link>
               )}
@@ -139,10 +142,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
                 </div>
               ))}
             </div>
-          </ScrollReveal>
+          </div>
 
           {/* Right Column: Hero Real Photography Container */}
-          <ScrollReveal effect="slide-left" delay={0.2} className="lg:col-span-5 relative mt-0">
+          <div className="lg:col-span-5 relative mt-0">
             <div className="absolute -inset-3 bg-gradient-to-tr from-[#D97706]/20 via-[#006A4E]/15 to-transparent rounded-[2.5rem] blur-xl" />
             <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-[#D97706]/15 rounded-full blur-2xl" />
 
@@ -186,22 +189,22 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
               </div>
 
               {/* Mobile Dedicated Info Bar (Underneath Photo - Leaves Photo 100% Unobstructed) */}
-              <div className="sm:hidden bg-white px-3 py-2 flex items-center justify-between gap-2 border-t border-[#EAE3D9]">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#006A4E] to-[#004835] text-white flex items-center justify-center font-bold font-display text-[11px] shrink-0 shadow-xs">
+              <div className="sm:hidden bg-white px-3.5 py-2.5 flex items-center justify-between gap-2.5 border-t border-[#EAE3D9]">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#006A4E] to-[#004835] text-white flex items-center justify-center font-bold font-display text-xs shrink-0 shadow-xs">
                     {hero.badgeYear || '2015'}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[11.5px] font-extrabold text-slate-900 font-display tracking-tight truncate">
+                    <p className="text-xs font-extrabold text-slate-900 font-display tracking-tight truncate">
                       {tText(hero.badgeTitle) || (isBn ? `প্রতিষ্ঠিত ${hero.badgeYear || '২০১৫'}` : `Established ${hero.badgeYear || '2015'}`)}
                     </p>
-                    <p className="text-[9.5px] text-slate-500 flex items-center gap-1 font-medium truncate mt-0.2">
-                      <MapPin className="w-2.5 h-2.5 text-[#006A4E] shrink-0" />
+                    <p className="text-[11px] text-slate-500 flex items-center gap-1 font-medium truncate mt-0.5">
+                      <MapPin className="w-3 h-3 text-[#006A4E] shrink-0" />
                       <span className="truncate">{hero.badgeLocation || 'Hathazari, Chattogram'}</span>
                     </p>
                   </div>
                 </div>
-                <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-[#E6F3EF] text-[#00523C] border border-[#C2E2D7]">
+                <span className="shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#E6F3EF] text-[#00523C] border border-[#C2E2D7]">
                   {hero.badgeTag || 'Team Infinity'}
                 </span>
               </div>
@@ -223,7 +226,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
                 </div>
               ))}
             </div>
-          </ScrollReveal>
+          </div>
         </div>
       </div>
     </section>

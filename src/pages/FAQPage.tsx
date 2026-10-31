@@ -12,7 +12,15 @@ export const FAQPage: React.FC = () => {
   const { faqs } = useData();
 
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    try {
+      const q = new URLSearchParams(window.location.search).get('q');
+      return q ? q.slice(0, 100) : '';
+    } catch {
+      return '';
+    }
+  });
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   const activeFaqs = useMemo(() => {
@@ -44,6 +52,7 @@ export const FAQPage: React.FC = () => {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-10 sm:space-y-12">
       <ScrollReveal effect="fade-up">
         <SectionHeading
+          as="h1"
           badge={isBn ? 'সাধারণ প্রশ্নোত্তর' : 'Knowledge Base'}
           title={isBn ? 'সচরাচর জিজ্ঞাসিত প্রশ্নাবলী (FAQ)' : 'Frequently Asked Questions'}
           subtitle={

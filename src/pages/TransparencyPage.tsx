@@ -25,6 +25,7 @@ export const TransparencyPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-12 sm:space-y-16">
       <SectionHeading
+          as="h1"
         badge={isBn ? 'দায়বদ্ধতা ও সততা' : 'Radical Transparency'}
         title={isBn ? 'স্বচ্ছতা ও অডিট রিপোর্ট' : 'Transparency & Governance'}
         subtitle={

@@ -326,6 +326,86 @@ export const ROUTE_METADATA: Record<string, RouteMeta> = {
       bn: 'ইনফিনিটি বাংলাদেশের অভ্যন্তরীণ ব্যবস্থাপনা ও কন্টেন্ট ম্যানেজমেন্ট পোর্টাল।'
     }
   },
+  'media-coverage': {
+    title: {
+      en: 'Media & News Coverage | Infinity Bangladesh',
+      bn: 'গণমাধ্যমে সংবাদ ও প্রতিবেদন | ইনফিনিটি বাংলাদেশ'
+    },
+    description: {
+      en: 'National and local press coverage, television reports, and media features highlighting Infinity Bangladesh humanitarian work.',
+      bn: 'ইনফিনিটি বাংলাদেশের মানবিক ও সামাজিক কার্যক্রম নিয়ে জাতীয় ও স্থানীয় গণমাধ্যমে প্রকাশিত সংবাদের আর্কাইভ।'
+    }
+  },
+  partners: {
+    title: {
+      en: 'Partners & Affiliations | Infinity Bangladesh',
+      bn: 'অংশীদার ও শুভানুধ্যায়ী | ইনফিনিটি বাংলাদেশ'
+    },
+    description: {
+      en: 'Organizations, institutional partners, and generous well-wishers collaborating with Infinity Bangladesh for sustainable human development.',
+      bn: 'ইনফিনিটি বাংলাদেশের মানবিক ও সেবামূলক কার্যক্রমে অংশীদার ও সহযোগী সংস্থাসমূহের বিবরণ।'
+    }
+  },
+  reports: {
+    title: {
+      en: 'Transparency & Audit Reports | Infinity Bangladesh',
+      bn: 'স্বচ্ছতা ও নিরীক্ষা প্রতিবেদন | ইনফিনিটি বাংলাদেশ'
+    },
+    description: {
+      en: 'Official financial audit reports, annual activity accounts, and expenditure vouchers published transparently.',
+      bn: 'ইনফিনিটি বাংলাদেশের বার্ষিক অডিট রিপোর্ট, হিসাব বিবরণী এবং ক্যাম্পেইনের ভাউচার সংরক্ষণাগার।'
+    }
+  },
+  'about/story': {
+    title: {
+      en: 'Our Story & Journey | Infinity Bangladesh',
+      bn: 'আমাদের গল্প ও ১১ বছরের পথচলা | ইনফিনিটি বাংলাদেশ'
+    },
+    description: {
+      en: 'The inspiring story of Infinity Bangladesh: from a youth-led initiative in Hathazari in 2015 to a nationwide humanitarian family.',
+      bn: '২০১৫ সালে হাটহাজারীর তরুণদের হাতে শুরু হওয়া ইনফিনিটি বাংলাদেশের মানবিক অগ্রযাত্রা ও প্রতিষ্ঠার ইতিহাস।'
+    }
+  },
+  'about/mission-vision': {
+    title: {
+      en: 'Mission & Vision | Infinity Bangladesh',
+      bn: 'আমাদের লক্ষ্য ও দর্শন | ইনফিনিটি বাংলাদেশ'
+    },
+    description: {
+      en: 'Our guiding philosophy, fundamental values, and 100% Charity Model dedicated to humanity and child welfare.',
+      bn: 'ইনফিনিটি বাংলাদেশের মূল দর্শন, নীতি ও সুবিধা বঞ্চিত শিশুদের জন্য ভবিষ্যৎ কর্মপরিকল্পনা।'
+    }
+  },
+  'about/team': {
+    title: {
+      en: 'Leadership & Team | Infinity Bangladesh',
+      bn: 'আমাদের টিম ও নেতৃত্ব | ইনফিনিটি বাংলাদেশ'
+    },
+    description: {
+      en: 'Executive leadership, advisors, standing committees, and dedicated coordinators steering Infinity Bangladesh.',
+      bn: 'ইনফিনিটি বাংলাদেশ পরিচালনা পরিষদ, উপদেষ্টা মণ্ডলী এবং দায়িত্বপ্রাপ্ত সমন্বয়কদের পরিচিতি।'
+    }
+  },
+  'programs/event-detail': {
+    title: {
+      en: 'Program Edition & Event Details | Infinity Bangladesh',
+      bn: 'প্রোগ্রাম ইভেন্ট বিস্তারিত | ইনফিনিটি বাংলাদেশ'
+    },
+    description: {
+      en: 'In-depth overview, activities, beneficiary impact, and photo archive of this program event edition.',
+      bn: 'ইনফিনিটি বাংলাদেশ-এর প্রোগ্রাম সংস্করণ ও বিস্তারিত কার্যক্রমের বিবরণ।'
+    }
+  },
+  'blood-donation/update-donor': {
+    title: {
+      en: 'Update Blood Donor Profile | Infinity Bangladesh',
+      bn: 'রক্তদাতা প্রোফাইল আপডেট | ইনফিনিটি বাংলাদেশ'
+    },
+    description: {
+      en: 'Update your voluntary blood donor information, address, and availability status securely.',
+      bn: 'আপনার রক্তদাতা তথ্য, ঠিকানা ও প্রস্তুতি স্ট্যাটাস নিরাপদে হালনাগাদ করুন।'
+    }
+  },
   '404': {
     title: {
       en: 'Page Not Found (404) | Infinity Bangladesh',
@@ -338,12 +418,17 @@ export const ROUTE_METADATA: Record<string, RouteMeta> = {
   }
 };
 
-export function updatePageMetadata(page: PageRoute, slug: string | null = null, isBn: boolean = false) {
+export function updatePageMetadata(
+  page: PageRoute,
+  slug: string | null = null,
+  isBn: boolean = false,
+  override?: { title?: string; description?: string; image?: string }
+) {
   if (typeof document === 'undefined') return;
 
   const meta = ROUTE_METADATA[page] || ROUTE_METADATA.home;
-  const pageTitle = isBn ? meta.title.bn : meta.title.en;
-  const pageDesc = isBn ? meta.description.bn : meta.description.en;
+  const pageTitle = override?.title || (isBn ? meta.title.bn : meta.title.en);
+  const pageDesc = override?.description || (isBn ? meta.description.bn : meta.description.en);
 
   // 1. Update Title
   document.title = pageTitle;
@@ -371,7 +456,25 @@ export function updatePageMetadata(page: PageRoute, slug: string | null = null, 
   const twDesc = document.querySelector('meta[name="twitter:description"]');
   if (twDesc) twDesc.setAttribute('content', pageDesc);
 
-  // 5. Update Canonical URL
+  // 5. Update Canonical URL & OpenGraph / Twitter URLs
+  const CANONICAL_PATH_MAP: Partial<Record<PageRoute, string>> = {
+    'executive-committee': '/team/executive-committee',
+    'about/executive-committee': '/team/executive-committee',
+    'team/executive-committee': '/team/executive-committee',
+    'standing-committees': '/team/standing-committees',
+    'standing-committee': '/team/standing-committees',
+    'about/standing-committees': '/team/standing-committees',
+    'team/standing-committees': '/team/standing-committees',
+    'team/standing-committee': '/team/standing-committees',
+    'past-committees': '/team/past-committees',
+    'about/past-committees': '/team/past-committees',
+    'team/past-committees': '/team/past-committees',
+    'about/story': '/about',
+    'about/mission-vision': '/about',
+    'about/team': '/team',
+    'reports': '/transparency'
+  };
+
   let cleanPath = '';
   if (page === 'home') {
     cleanPath = '';
@@ -384,29 +487,122 @@ export function updatePageMetadata(page: PageRoute, slug: string | null = null, 
       cleanPath = `/${page.replace('/detail', '')}/${slug}`;
     }
   } else {
-    cleanPath = `/${page}`;
+    cleanPath = CANONICAL_PATH_MAP[page] || `/${page}`;
   }
   const canonicalUrl = `https://infinitybangladesh.vercel.app${cleanPath}`;
 
   let canonicalLink = document.querySelector('link[rel="canonical"]');
-  if (!canonicalLink) {
-    canonicalLink = document.createElement('link');
-    canonicalLink.setAttribute('rel', 'canonical');
-    document.head.appendChild(canonicalLink);
+  if (page === '404') {
+    // 404 pages must NEVER self-canonicalize
+    if (canonicalLink) canonicalLink.remove();
+  } else {
+    if (!canonicalLink) {
+      canonicalLink = document.createElement('link');
+      canonicalLink.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonicalLink);
+    }
+    canonicalLink.setAttribute('href', canonicalUrl);
   }
-  canonicalLink.setAttribute('href', canonicalUrl);
 
-  // 6. Update Robots Indexing Directive (Enforce strict noindex on /admin)
+  // Synchronize OpenGraph & Twitter URLs
+  const ogUrl = document.querySelector('meta[property="og:url"]');
+  if (ogUrl) ogUrl.setAttribute('content', page === '404' ? 'https://infinitybangladesh.vercel.app/' : canonicalUrl);
+
+  const twUrl = document.querySelector('meta[name="twitter:url"]');
+  if (twUrl) twUrl.setAttribute('content', page === '404' ? 'https://infinitybangladesh.vercel.app/' : canonicalUrl);
+
+  // Synchronize dynamic og:image if provided
+  if (override?.image) {
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    if (ogImage) ogImage.setAttribute('content', override.image);
+    const twImage = document.querySelector('meta[name="twitter:image"]');
+    if (twImage) twImage.setAttribute('content', override.image);
+  }
+
+  // 6. Update Robots Indexing Directive (Enforce strict noindex on /admin, /404, and /blood-donation/update-donor)
   let robotsMeta = document.querySelector('meta[name="robots"]');
   if (!robotsMeta) {
     robotsMeta = document.createElement('meta');
     robotsMeta.setAttribute('name', 'robots');
     document.head.appendChild(robotsMeta);
   }
-  if (page === 'admin') {
+
+  const NOINDEX_ROUTES = new Set<PageRoute>(['admin', '404', 'blood-donation/update-donor']);
+  if (NOINDEX_ROUTES.has(page)) {
     robotsMeta.setAttribute('content', 'noindex, nofollow, noarchive');
   } else {
     robotsMeta.setAttribute('content', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
   }
+
+  // 7. Dynamic BreadcrumbList Schema (JSON-LD) for Search Engine Rich Snippets
+  updateBreadcrumbSchema(page, slug, isBn, pageTitle, canonicalUrl);
+}
+
+export function updateBreadcrumbSchema(
+  page: PageRoute,
+  slug: string | null,
+  isBn: boolean,
+  pageTitle: string,
+  canonicalUrl: string
+) {
+  if (typeof document === 'undefined') return;
+
+  const scriptId = 'schema-breadcrumbs';
+  let scriptEl = document.getElementById(scriptId) as HTMLScriptElement | null;
+
+  if (page === 'home' || page === '404' || page === 'admin') {
+    if (scriptEl) scriptEl.remove();
+    return;
+  }
+
+  const items: Array<{ '@type': string; position: number; name: string; item: string }> = [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: isBn ? 'হোম' : 'Home',
+      item: 'https://infinitybangladesh.vercel.app/'
+    }
+  ];
+
+  if (slug) {
+    const parentRoute = page.replace('/detail', '');
+    const parentMeta = ROUTE_METADATA[parentRoute] || ROUTE_METADATA[page];
+    const parentName = parentMeta ? (isBn ? parentMeta.title.bn : parentMeta.title.en).split('|')[0].trim() : parentRoute;
+
+    items.push({
+      '@type': 'ListItem',
+      position: 2,
+      name: parentName,
+      item: `https://infinitybangladesh.vercel.app/${parentRoute}`
+    });
+
+    items.push({
+      '@type': 'ListItem',
+      position: 3,
+      name: pageTitle.split('|')[0].trim(),
+      item: canonicalUrl
+    });
+  } else {
+    items.push({
+      '@type': 'ListItem',
+      position: 2,
+      name: pageTitle.split('|')[0].trim(),
+      item: canonicalUrl
+    });
+  }
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items
+  };
+
+  if (!scriptEl) {
+    scriptEl = document.createElement('script');
+    scriptEl.id = scriptId;
+    scriptEl.type = 'application/ld+json';
+    document.head.appendChild(scriptEl);
+  }
+  scriptEl.textContent = JSON.stringify(breadcrumbSchema);
 }
 

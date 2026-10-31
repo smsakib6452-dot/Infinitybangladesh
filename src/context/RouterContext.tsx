@@ -70,6 +70,33 @@ function parseCurrentLocation(): {
     };
   }
 
+  const KNOWN_SINGLE_ROUTES = new Set<string>([
+    'home',
+    'about',
+    'team',
+    'programs',
+    'campaigns',
+    'impact',
+    'stories',
+    'events',
+    'news',
+    'gallery',
+    'videos',
+    'media-coverage',
+    'volunteer',
+    'donate',
+    'partners',
+    'transparency',
+    'reports',
+    'contact',
+    'blood-donation',
+    'privacy',
+    'terms',
+    'faq',
+    'admin',
+    '404'
+  ]);
+
   const parts = rawPath.split('/').filter(Boolean);
 
   if (parts.length === 1) {
@@ -86,7 +113,10 @@ function parseCurrentLocation(): {
     if (single === 'team') {
       return { page: 'team', slug: queryParamSlug, subSlug: null, queryParams: parsedParams };
     }
-    return { page: single as PageRoute, slug: queryParamSlug, subSlug: null, queryParams: parsedParams };
+    if (KNOWN_SINGLE_ROUTES.has(single)) {
+      return { page: single as PageRoute, slug: queryParamSlug, subSlug: null, queryParams: parsedParams };
+    }
+    return { page: '404', slug: null, subSlug: null, queryParams: parsedParams };
   }
 
   const root = parts[0];
@@ -103,7 +133,10 @@ function parseCurrentLocation(): {
     if (sub === 'past-committees') {
       return { page: 'about/past-committees', slug: extra || null, subSlug: null, queryParams: parsedParams };
     }
-    return { page: `about/${sub}` as PageRoute, slug: extra || null, subSlug: null, queryParams: parsedParams };
+    if (sub === 'story' || sub === 'mission-vision' || sub === 'team') {
+      return { page: `about/${sub}` as PageRoute, slug: extra || null, subSlug: null, queryParams: parsedParams };
+    }
+    return { page: '404', slug: null, subSlug: null, queryParams: parsedParams };
   }
 
   if (root === 'team') {
@@ -161,7 +194,7 @@ function parseCurrentLocation(): {
     return { page: 'blood-donation', slug: null, subSlug: null, queryParams: parsedParams };
   }
 
-  return { page: rawPath as PageRoute, slug: extra || null, subSlug: null, queryParams: parsedParams };
+  return { page: '404', slug: null, subSlug: null, queryParams: parsedParams };
 }
 
 export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

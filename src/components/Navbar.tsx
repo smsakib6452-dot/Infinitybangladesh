@@ -71,6 +71,19 @@ export const Navbar: React.FC = () => {
     };
   }, [mobileMenuOpen]);
 
+  // Handle physical Escape key press to dismiss mobile drawer (WCAG 2.2 AA)
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mobileMenuOpen]);
+
   const handleMouseEnterDropdown = (itemId: string) => {
     if (dropdownTimeoutRef.current) {
       clearTimeout(dropdownTimeoutRef.current);
@@ -410,7 +423,9 @@ export const Navbar: React.FC = () => {
               type="button"
               onClick={() => setMobileMenuOpen(prev => !prev)}
               className="lg:hidden w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer transition-colors"
-              aria-label="Toggle Mobile Navigation Menu"
+              aria-label={mobileMenuOpen ? (isBn ? 'মেনু বন্ধ করুন' : 'Close navigation menu') : (isBn ? 'মেনু খুলুন' : 'Open navigation menu')}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-nav-drawer"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -421,6 +436,10 @@ export const Navbar: React.FC = () => {
       {/* 3. Mobile Navigation Drawer (Editorial & Accessible) */}
       {mobileMenuOpen && (
         <div 
+          id="mobile-nav-drawer"
+          role="dialog"
+          aria-modal="true"
+          aria-label={isBn ? 'মোবাইল নেভিগেশন মেনু' : 'Mobile Navigation Menu'}
           className="lg:hidden fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={() => setMobileMenuOpen(false)}
         >

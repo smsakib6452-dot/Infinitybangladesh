@@ -26,15 +26,18 @@ export const ContactPage: React.FC = () => {
   const [subject, setSubject] = useState('General Inquiry');
   const [message, setMessage] = useState('');
   const [isSent, setIsSent] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (honeypot) return; // silent bot trap
+    if (!name.trim() || !email.trim() || !message.trim()) return;
     addContactMessage({
-      name,
-      email,
-      phone,
-      subject,
-      message
+      name: name.trim().slice(0, 120),
+      email: email.trim().slice(0, 120),
+      phone: phone.trim().slice(0, 50),
+      subject: subject.slice(0, 100),
+      message: message.trim().slice(0, 4000)
     });
     setIsSent(true);
   };
@@ -48,6 +51,7 @@ export const ContactPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-12 sm:space-y-16">
       <ScrollReveal effect="fade-up">
         <SectionHeading
+          as="h1"
           badge={isBn ? 'যোগাযোগ ও তথ্যসেবা' : 'Connect With Us'}
         title={tText(contactSettings.title as any) || (isBn ? 'আমাদের সাথে যোগাযোগ করুন' : 'Get in Touch with Team Infinity')}
         subtitle={
@@ -104,10 +108,24 @@ export const ContactPage: React.FC = () => {
                 </p>
               </div>
 
+              {/* Anti-spam honeypot */}
+              <div className="hidden" aria-hidden="true">
+                <input
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={honeypot}
+                  onChange={e => setHoneypot(e.target.value)}
+                />
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">{isBn ? 'আপনার নাম' : 'Your Name'} *</label>
+                  <label htmlFor="contact-name" className="text-xs font-bold text-slate-700">{isBn ? 'আপনার নাম' : 'Your Name'} *</label>
                   <input
+                    id="contact-name"
+                    name="name"
+                    autoComplete="name"
                     type="text"
                     required
                     value={name}
@@ -118,8 +136,11 @@ export const ContactPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">{isBn ? 'ইমেইল' : 'Email'} *</label>
+                  <label htmlFor="contact-email" className="text-xs font-bold text-slate-700">{isBn ? 'ইমেইল' : 'Email'} *</label>
                   <input
+                    id="contact-email"
+                    name="email"
+                    autoComplete="email"
                     type="email"
                     required
                     value={email}
@@ -130,8 +151,11 @@ export const ContactPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">{isBn ? 'ফোন নম্বর' : 'Phone'}</label>
+                  <label htmlFor="contact-phone" className="text-xs font-bold text-slate-700">{isBn ? 'ফোন নম্বর' : 'Phone'}</label>
                   <input
+                    id="contact-phone"
+                    name="phone"
+                    autoComplete="tel"
                     type="tel"
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
@@ -141,8 +165,10 @@ export const ContactPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">{isBn ? 'বিষয়' : 'Subject'}</label>
+                  <label htmlFor="contact-subject" className="text-xs font-bold text-slate-700">{isBn ? 'বিষয়' : 'Subject'}</label>
                   <select
+                    id="contact-subject"
+                    name="subject"
                     value={subject}
                     onChange={e => setSubject(e.target.value)}
                     className="w-full px-4 py-2.5 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] text-base sm:text-sm focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
@@ -156,8 +182,10 @@ export const ContactPage: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">{isBn ? 'আপনার বার্তা' : 'Message'} *</label>
+                <label htmlFor="contact-message" className="text-xs font-bold text-slate-700">{isBn ? 'আপনার বার্তা' : 'Message'} *</label>
                 <textarea
+                  id="contact-message"
+                  name="message"
                   rows={4}
                   required
                   value={message}

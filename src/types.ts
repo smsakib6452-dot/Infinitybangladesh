@@ -758,6 +758,8 @@ export interface VolunteerApplication {
   otherEducation?: string;
 
   // Section 6: Skills & Availability
+  institution?: string;
+  preferredAreas?: string[];
   skills?: string[];
   areasOfInterest?: string[];
   interests?: string[];
@@ -1058,6 +1060,7 @@ export interface BloodDonor {
   privacyConsent: boolean;
   showPhonePublicly: boolean;
   donationHistory?: BloodDonationHistoryEntry[];
+  isDemo?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -1077,8 +1080,56 @@ export interface EmergencyBloodRequest {
   additionalNotes?: string;
   status: EmergencyRequestStatus;
   matchedDonorIds?: string[];
+  isDemo?: boolean;
   createdAt?: string;
   updatedAt?: string;
+}
+
+
+
+export interface DbInsertResult {
+  success: boolean;
+  status?: string;
+  id?: string;
+  error?: string;
+  code?: string;
+}
+
+export interface DbWriteResult {
+  success: boolean;
+  error?: string;
+  code?: string;
+  locked?: boolean;
+}
+
+export interface PublicBloodDonor {
+  id: string;
+  fullName: string;
+  bloodGroup: BloodGroup;
+  gender?: 'Male' | 'Female' | 'Other' | string;
+  age: number | null;
+  photoUrl?: string;
+  district: string;
+  upazila: string;
+  area: string;
+  availabilityStatus: DonorAvailabilityStatus;
+  isVerified: boolean;
+  phone: string | null;
+  cooldownActive: boolean;
+  daysRemainingInCooldown: number;
+}
+
+export interface PublicEmergencyRequest {
+  id: string;
+  bloodGroup: BloodGroup;
+  unitsNeeded: number;
+  emergencyLevel: EmergencyLevel;
+  hospitalName: string;
+  district: string;
+  upazila: string;
+  requiredDate: string;
+  status: EmergencyRequestStatus;
+  coordinatorContact: string | null;
 }
 
 export interface BloodDonationSettings {

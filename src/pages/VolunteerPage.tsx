@@ -674,6 +674,7 @@ export const VolunteerPage: React.FC = () => {
       {/* Header Section */}
       <ScrollReveal effect="fade-up">
         <SectionHeading
+          as="h1"
           badge={isBn ? 'স্বেচ্ছাসেবী পরিবারে স্বাগতম' : 'Be Part of Team Infinity'}
           title={tText(volunteerSettings.ctaText) || (isBn ? 'স্বেচ্ছাসেবী হিসেবে যোগ দিন / সদস্যপদ আবেদন' : 'Join as Volunteer / Membership Application')}
           subtitle={
@@ -953,7 +954,7 @@ export const VolunteerPage: React.FC = () => {
                               <Camera className="w-5 h-5" />
                             </div>
                             <span className="text-[10px] font-extrabold text-slate-700 uppercase tracking-tight">{isBn ? 'ছবি নির্বাচন' : 'Select Photo'}</span>
-                            <span className="text-[9px] text-slate-400 mt-0.5">{isBn ? 'পাসপোর্ট সাইজ' : 'Passport Size'}</span>
+                            <span className="text-[10px] text-slate-600 font-medium mt-0.5">{isBn ? 'পাসপোর্ট সাইজ' : 'Passport Size'}</span>
                           </div>
                         )}
 
@@ -990,10 +991,13 @@ export const VolunteerPage: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* Name Bengali */}
                       <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-800 font-bengali">
+                        <label htmlFor="vol-fullname-bn" className="block text-xs font-bold text-slate-800 font-bengali">
                           {isBn ? 'পূর্ণ নাম (বাংলায়) *' : 'Full Name (in Bengali) *'}
                         </label>
                         <input
+                          id="vol-fullname-bn"
+                          name="fullNameBn"
+                          autoComplete="name"
                           type="text"
                           value={fullNameBn}
                           onChange={(e) => setFullNameBn(e.target.value)}
@@ -1005,10 +1009,13 @@ export const VolunteerPage: React.FC = () => {
 
                       {/* Name English */}
                       <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-800 uppercase">
+                        <label htmlFor="vol-fullname-en" className="block text-xs font-bold text-slate-800 uppercase">
                           {isBn ? 'Name (in English - Capital letters) *' : 'Full Name (English) *'}
                         </label>
                         <input
+                          id="vol-fullname-en"
+                          name="fullNameEn"
+                          autoComplete="name"
                           type="text"
                           value={fullNameEn}
                           onChange={(e) => setFullNameEn(e.target.value)}
@@ -1020,12 +1027,15 @@ export const VolunteerPage: React.FC = () => {
 
                       {/* Email */}
                       <div className="space-y-1.5 sm:col-span-2">
-                        <label className="block text-xs font-bold text-slate-800">
+                        <label htmlFor="vol-email" className="block text-xs font-bold text-slate-800">
                           {isBn ? 'সচল ইমেইল ঠিকানা (Email Address) *' : 'Email Address *'}
                         </label>
                         <div className="relative">
                           <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                           <input
+                            id="vol-email"
+                            name="email"
+                            autoComplete="email"
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -1052,10 +1062,12 @@ export const VolunteerPage: React.FC = () => {
 
                     <div className="space-y-4">
                       <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-800 font-bengali">
+                        <label htmlFor="vol-father-name" className="block text-xs font-bold text-slate-800 font-bengali">
                           {isBn ? 'পিতার নাম (Father\'s Name) *' : "Father's Name *"}
                         </label>
                         <input
+                          id="vol-father-name"
+                          name="fatherName"
                           type="text"
                           value={fatherName}
                           onChange={(e) => setFatherName(e.target.value)}
@@ -1066,10 +1078,12 @@ export const VolunteerPage: React.FC = () => {
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-800 font-bengali">
+                        <label htmlFor="vol-mother-name" className="block text-xs font-bold text-slate-800 font-bengali">
                           {isBn ? 'মাতার নাম (Mother\'s Name) *' : "Mother's Name *"}
                         </label>
                         <input
+                          id="vol-mother-name"
+                          name="motherName"
                           type="text"
                           value={motherName}
                           onChange={(e) => setMotherName(e.target.value)}
@@ -1080,10 +1094,13 @@ export const VolunteerPage: React.FC = () => {
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-800">
+                        <label htmlFor="vol-guardian-phone" className="block text-xs font-bold text-slate-800">
                           {isBn ? 'অভিভাবকের বিকল্প মোবাইল নম্বর (Guardian Phone - ঐচ্ছিক)' : 'Guardian Contact Number (Optional)'}
                         </label>
                         <input
+                          id="vol-guardian-phone"
+                          name="guardianPhone"
+                          autoComplete="tel"
                           type="tel"
                           value={guardianPhone}
                           onChange={(e) => setGuardianPhone(e.target.value)}
@@ -1103,12 +1120,15 @@ export const VolunteerPage: React.FC = () => {
                     {/* Phones & Social */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-800">
+                        <label htmlFor="vol-phone" className="block text-xs font-bold text-slate-800">
                           {isBn ? 'সচল মোবাইল নম্বর (Mobile Number) *' : 'Mobile Phone Number *'}
                         </label>
                         <div className="relative">
                           <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                           <input
+                            id="vol-phone"
+                            name="phone"
+                            autoComplete="tel"
                             type="tel"
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
@@ -1120,10 +1140,13 @@ export const VolunteerPage: React.FC = () => {
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-800">
+                        <label htmlFor="vol-whatsapp" className="block text-xs font-bold text-slate-800">
                           {isBn ? 'হোয়াটসঅ্যাপ নম্বর (WhatsApp Number) *' : 'WhatsApp Number *'}
                         </label>
                         <input
+                          id="vol-whatsapp"
+                          name="whatsapp"
+                          autoComplete="tel"
                           type="tel"
                           value={isSameWhatsapp ? phone : whatsapp}
                           disabled={isSameWhatsapp}
@@ -1147,10 +1170,12 @@ export const VolunteerPage: React.FC = () => {
                       </div>
 
                       <div className="space-y-1.5 sm:col-span-2">
-                        <label className="block text-xs font-bold text-slate-800">
+                        <label htmlFor="vol-facebook-url" className="block text-xs font-bold text-slate-800">
                           {isBn ? 'ফেসবুক প্রোফাইল লিংক (Facebook Profile URL)' : 'Facebook Profile Link'}
                         </label>
                         <input
+                          id="vol-facebook-url"
+                          name="facebookUrl"
                           type="url"
                           value={facebookUrl}
                           onChange={(e) => setFacebookUrl(e.target.value)}

@@ -14,9 +14,6 @@
     <meta name="copyright" content="Infinity Bangladesh" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <link rel="canonical" href="https://infinitybangladesh.vercel.app/" />
-    <link rel="alternate" hreflang="bn" href="https://infinitybangladesh.vercel.app/" />
-    <link rel="alternate" hreflang="en" href="https://infinitybangladesh.vercel.app/" />
-    <link rel="alternate" hreflang="x-default" href="https://infinitybangladesh.vercel.app/" />
 
     <!-- Geo-Targeting & Local SEO (Chattogram, Bangladesh) -->
     <meta name="geo.region" content="BD-13" />
@@ -49,6 +46,9 @@
     <link rel="apple-touch-icon" href="/brand/infinity-logo.png" />
     <meta name="theme-color" content="#006A4E" />
 
+    <!-- LLM Context & AI Search Engine Grounding (llms.txt) -->
+    <link rel="alternate" type="text/markdown" href="/llms.txt" title="LLM Context for AI Search" />
+
     <!-- Security & Performance Meta Tags -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -56,12 +56,16 @@
     <!-- Preload Critical LCP Hero Image for Core Web Vitals -->
     <link rel="preload" as="image" href="/images/infinity-cover-hero.jpg" fetchpriority="high" />
 
-    <!-- Google Fonts: Anek Bangla, Hind Siliguri & Plus Jakarta Sans with font-display: swap -->
+    <!-- Google Fonts: Anek Bangla, Hind Siliguri & Plus Jakarta Sans (Non-blocking CWV loader) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    </noscript>
 
-    <!-- Enterprise Google Knowledge Graph Schema (JSON-LD) -->
+    <!-- Enterprise Google Knowledge Graph & AI Entity Schema (JSON-LD) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -80,12 +84,78 @@
             "Infinity Foundation",
             "Infinity NGO"
           ],
+          "disambiguatingDescription": "Infinity Bangladesh (Team Infinity) is an established youth-led voluntary social humanitarian organization founded in 2015 in Hathazari, Chattogram, Bangladesh. Operating under a strict 100% Charity Model, delivering emergency voluntary blood donation, child education, winter clothing relief, and disaster response nationwide.",
           "url": "https://infinitybangladesh.vercel.app/",
           "logo": "https://infinitybangladesh.vercel.app/brand/infinity-logo.png",
           "image": "https://infinitybangladesh.vercel.app/images/infinity-cover-hero.jpg",
-          "description": "Infinity Bangladesh (Team Infinity) is an established voluntary social humanitarian organization founded in 2015 in Hathazari, Chattogram, Bangladesh. Operating under a strict 100% Charity Model, working on voluntary blood donation, child education, winter relief, and disaster response.",
+          "description": "Official platform of Infinity Bangladesh (Team Infinity). Voluntary emergency blood donation network, underprivileged child education, flood relief, and community welfare since 2015.",
           "slogan": "United for Humanity",
           "foundingDate": "2015",
+          "email": "smsakib6452@gmail.com",
+          "telephone": "+8801839008339",
+          "founder": {
+            "@type": "Person",
+            "name": "Sheikh Mohammad Sakib",
+            "jobTitle": "Founder & General Secretary"
+          },
+          "knowsAbout": [
+            "Infinity",
+            "Infinity Bangladesh",
+            "Team Infinity",
+            "Voluntary Blood Donation",
+            "Blood Donor Directory",
+            "Child Education Support",
+            "Emergency Disaster Relief",
+            "Flood Relief Bangladesh",
+            "Winter Warmth Clothing Distribution",
+            "Youth Volunteer Empowerment",
+            "Hathazari Chattogram Community Service",
+            "100% Charity Model"
+          ],
+          "areaServed": [
+            {
+              "@type": "Country",
+              "name": "Bangladesh"
+            },
+            {
+              "@type": "AdministrativeArea",
+              "name": "Chattogram"
+            }
+          ],
+          "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": "Humanitarian Community Services",
+            "itemListElement": [
+              {
+                "@type": "Offer",
+                "itemOffered": {
+                  "@type": "Service",
+                  "name": "Emergency Voluntary Blood Donor Matching & LifeLine Coordination"
+                }
+              },
+              {
+                "@type": "Offer",
+                "itemOffered": {
+                  "@type": "Service",
+                  "name": "Underprivileged Child Education & School Supply Welfare"
+                }
+              },
+              {
+                "@type": "Offer",
+                "itemOffered": {
+                  "@type": "Service",
+                  "name": "Emergency Flood & Natural Calamity Relief Drives"
+                }
+              },
+              {
+                "@type": "Offer",
+                "itemOffered": {
+                  "@type": "Service",
+                  "name": "Seasonal Winter Warmth & Blanket Distribution"
+                }
+              }
+            ]
+          },
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "Central Office, Hathazari",
@@ -120,7 +190,8 @@
           "@id": "https://infinitybangladesh.vercel.app/#website",
           "url": "https://infinitybangladesh.vercel.app/",
           "name": "Infinity Bangladesh",
-          "alternateName": ["Infinity", "ইনফিনিটি", "ইনফিনিটি বাংলাদেশ"],
+          "alternateName": ["Infinity", "Team Infinity", "ইনফিনিটি", "ইনফিনিটি বাংলাদেশ"],
+          "inLanguage": ["en", "bn"],
           "publisher": {
             "@id": "https://infinitybangladesh.vercel.app/#organization"
           },
@@ -132,6 +203,19 @@
             },
             "query-input": "required name=search_term_string"
           }
+        },
+        {
+          "@type": "WebPage",
+          "@id": "https://infinitybangladesh.vercel.app/#webpage",
+          "url": "https://infinitybangladesh.vercel.app/",
+          "name": "Infinity Bangladesh | United for Humanity — Official Platform",
+          "isPartOf": {
+            "@id": "https://infinitybangladesh.vercel.app/#website"
+          },
+          "about": {
+            "@id": "https://infinitybangladesh.vercel.app/#organization"
+          },
+          "inLanguage": "en"
         }
       ]
     }

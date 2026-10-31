@@ -7,6 +7,7 @@ import { CampaignCard } from '../components/CampaignCard';
 import { ScrollReveal } from '../components/motion/ScrollReveal';
 import { StaggerGroup, StaggerItem } from '../components/motion/StaggerGroup';
 import { getAssetUrl } from '../lib/utils/assetHelper';
+import { OptimizedImage } from '../components/OptimizedImage';
 import {
   ArrowLeft,
   Calendar,
@@ -121,9 +122,12 @@ export const CampaignDetailPage: React.FC = () => {
         {/* Left Column: Media & Story */}
         <div className="lg:col-span-8 space-y-10">
           <ScrollReveal effect="fade-up" className="rounded-[2.5rem] overflow-hidden shadow-warm-xl border-4 border-white aspect-16/9 bg-slate-100">
-            <img
-              src={getAssetUrl(campaign.imageUrl)}
+            <OptimizedImage
+              src={campaign.imageUrl}
               alt={tText(campaign.title)}
+              aspectRatio="16/9"
+              width={960}
+              priority={true}
               className="w-full h-full object-cover"
             />
           </ScrollReveal>
@@ -167,9 +171,11 @@ export const CampaignDetailPage: React.FC = () => {
                       onClick={() => setLightboxIndex(i)}
                       className="aspect-square rounded-2xl overflow-hidden bg-slate-100 cursor-pointer shadow-warm-sm border border-[#EAE3D9] group"
                     >
-                      <img
-                        src={getAssetUrl(img)}
-                        alt={`Gallery ${i + 1}`}
+                      <OptimizedImage
+                        src={img}
+                        alt={`${tText(campaign.title)} — ${isBn ? 'মাঠপর্যায়ের চিত্র' : 'Field Photo'} ${i + 1}`}
+                        aspectRatio="1/1"
+                        width={320}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                       />
                     </div>

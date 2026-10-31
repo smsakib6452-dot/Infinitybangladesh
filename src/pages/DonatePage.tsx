@@ -17,13 +17,15 @@ import {
   Send,
   Building,
   Smartphone,
-  Info
+  Info,
+  Clock,
+  MessageCircle
 } from 'lucide-react';
 import { BkashLogo, NagadLogo, BankLogo } from '../components/PaymentLogos';
 
 export const DonatePage: React.FC = () => {
   const { isBn, tText } = useLanguage();
-  const { campaigns, supportSettings, settings, addDonationRecord } = useData();
+  const { campaigns, supportSettings, settings, submitDonation } = useData();
 
   const [donorName, setDonorName] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
@@ -43,6 +45,8 @@ export const DonatePage: React.FC = () => {
     date: string;
     method: string;
     trxId?: string;
+    status: string;
+    waUrl: string;
   } | null>(null);
 
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -67,15 +71,25 @@ export const DonatePage: React.FC = () => {
       amount: numericAmount,
       amountBDT: numericAmount,
       campaignSlug: selectedCampaign,
+      campaignTitle: selectedCampaign,
+      donationType: 'One-time' as const,
       paymentMethod,
       transactionId: transactionId.trim() || undefined,
       notes: note.trim() || undefined
     };
 
-    const newRecord = addDonationRecord(record);
+    const submissionId = submitDonation(record);
+
+    const financePhone = supportSettings.bKashNumber || settings.bKashNumber || '01839008339';
+    const cleanFinance = financePhone.replace(/[^0-9]/g, '');
+    const waNumber = cleanFinance.startsWith('880') ? cleanFinance : cleanFinance.startsWith('0') ? `88${cleanFinance}` : cleanFinance;
+    const waMessage = encodeURIComponent(
+      `আসসালামু আলাইকুম ইনফিনিটি বাংলাদেশ ফাইন্যান্স টিম,\nআমি ${effectiveName} অনুদান পাঠিয়েছি।\n\n📋 অনুদান খসড়া রেফারেন্স:\n• পরিমাণ: ৳${numericAmount} BDT\n• মাধ্যম: ${paymentMethod}\n• ট্রানজেকশন আইডি: ${transactionId.trim() || 'N/A'}\n• লক্ষ্য তহবিল: ${selectedCampaign}\n• খসড়া আইডি: ${submissionId}\n\nঅনলাইন সাবমিশন সাময়িক স্থগিত থাকায় সরাসরি মেসেজের মাধ্যমে পেমেন্ট যাচাই ও রিসিটের অনুরোধ জানাচ্ছি। ধন্যবাদ।`
+    );
+    const waUrl = `https://wa.me/${waNumber}?text=${waMessage}`;
 
     setReceiptData({
-      receiptNumber: newRecord.receiptNumber,
+      receiptNumber: submissionId,
       donorName: effectiveName,
       amount: numericAmount,
       campaign: selectedCampaign,
@@ -85,7 +99,9 @@ export const DonatePage: React.FC = () => {
         day: 'numeric'
       }),
       method: paymentMethod,
-      trxId: transactionId.trim() || undefined
+      trxId: transactionId.trim() || undefined,
+      status: 'Pending Verification',
+      waUrl
     });
   };
 
@@ -97,6 +113,7 @@ export const DonatePage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-12 sm:space-y-16">
       <ScrollReveal effect="fade-up">
         <SectionHeading
+          as="h1"
           badge={isBn ? 'স্বচ্ছ ও দায়িত্বশীল অনুদান' : 'Honest Fund Stewardship'}
           title={tText(supportSettings.ctaText) || (isBn ? 'আপনার সহায়তায় হাসবে সুবিধাবঞ্চিত মানুষ' : 'Support Our Humanitarian Missions')}
           subtitle={
@@ -504,18 +521,23 @@ export const DonatePage: React.FC = () => {
         <ScrollReveal effect="slide-left" delay={0.2} className="lg:col-span-5 relative">
           <div className="sticky top-24">
             {receiptData ? (
-              <div className="bg-white rounded-3xl border border-emerald-300 p-6 sm:p-8 space-y-6 shadow-warm-lg animate-in zoom-in-95">
+              <div className="bg-white rounded-3xl border border-amber-300 p-6 sm:p-8 space-y-6 shadow-warm-lg animate-in zoom-in-95">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                  <div className="flex items-center gap-2 text-[#006A4E] font-bold text-sm">
+                  <div className="flex items-center gap-2 text-amber-800 font-bold text-sm">
                     <Receipt className="w-5 h-5" />
-                    <span>{isBn ? 'ডিজিটাল মানি রিসিট' : 'Verified Digital Receipt'}</span>
+                    <span>{isBn ? 'অনুদান তথ্যের খসড়া স্লিপ' : 'Donation Draft Reference Slip'}</span>
                   </div>
-                  <span className="text-[11px] font-mono bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full font-bold">
-                    {receiptData.receiptNumber}
+                  <span className="text-[11px] font-mono bg-amber-50 text-amber-900 border border-amber-200 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-amber-600" />
+                    {isBn ? 'খসড়া রেফারেন্স (অফলাইন)' : 'Draft Reference (Offline)'}
                   </span>
                 </div>
 
                 <div className="space-y-3 text-xs sm:text-sm">
+                  <div className="flex justify-between py-1.5 border-b border-slate-50">
+                    <span className="text-slate-500">{isBn ? 'খসড়া রেফারেন্স নং:' : 'Draft Reference No:'}</span>
+                    <span className="font-mono font-bold text-slate-900">{receiptData.receiptNumber}</span>
+                  </div>
                   <div className="flex justify-between py-1.5 border-b border-slate-50">
                     <span className="text-slate-500">{isBn ? 'দাতার নাম:' : 'Donor Name:'}</span>
                     <span className="font-bold text-slate-900">{receiptData.donorName}</span>
@@ -542,13 +564,27 @@ export const DonatePage: React.FC = () => {
                     <span className="text-slate-500">{isBn ? 'তারিখ:' : 'Date:'}</span>
                     <span className="font-medium text-slate-800">{receiptData.date}</span>
                   </div>
+                  <div className="flex justify-between py-1.5 border-b border-slate-50">
+                    <span className="text-slate-500">{isBn ? 'স্ট্যাটাস:' : 'Status:'}</span>
+                    <span className="font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md text-xs">{isBn ? 'যাচাই প্রক্রিয়াধীন (Pending)' : 'Pending Verification'}</span>
+                  </div>
                 </div>
 
-                <div className="p-3 bg-[#FAF7F2] rounded-2xl border border-[#EAE3D9] text-[11px] text-slate-600 text-center">
+                <div className="p-3 bg-amber-50/70 rounded-2xl border border-amber-200 text-[11px] text-amber-950 text-center leading-relaxed">
                   {isBn
-                    ? 'টিম ইনফিনিটিতে আস্থা রাখার জন্য আপনাকে আন্তরিক ধন্যবাদ।'
-                    : 'Infinity Bangladesh thanks you for standing united for humanity.'}
+                    ? 'অনলাইন ডাটাবেজ সাবমিশন সাময়িকভাবে স্থগিত রয়েছে। এটি আপনার ডিভাইসে তৈরি একটি খসড়া রেফারেন্স। অনুদান নিশ্চিত করতে অনুগ্রহ করে নিচের বোতাম চেপে সরাসরি ফাইন্যান্স টিমের সাথে যোগাযোগ করুন।'
+                    : 'Direct online database submission is temporarily paused for security hardening. This is a local draft reference. Please contact our Finance Team directly via WhatsApp to verify your contribution.'}
                 </div>
+
+                <a
+                  href={receiptData.waUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>{isBn ? 'হোয়াটসঅ্যাপে ফাইন্যান্স টিমের সাথে যাচাই করুন' : 'Verify via WhatsApp with Finance Team'}</span>
+                </a>
 
                 <button
                   type="button"
@@ -556,7 +592,7 @@ export const DonatePage: React.FC = () => {
                   className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  <span>{isBn ? 'রিসিট প্রিন্ট / সংরক্ষণ করুন' : 'Print / Save Official Receipt'}</span>
+                  <span>{isBn ? 'রিসিট প্রিন্ট / সংরক্ষণ করুন' : 'Print / Save Acknowledgement'}</span>
                 </button>
               </div>
             ) : (

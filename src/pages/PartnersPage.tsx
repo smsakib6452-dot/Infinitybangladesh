@@ -9,7 +9,8 @@ import { Toast } from '../components/Toast';
 
 export const PartnersPage: React.FC = () => {
   const { isBn, tText } = useLanguage();
-  const { partners } = useData();
+  const { partners, addContactMessage } = useData();
+  const [honeypot, setHoneypot] = useState('');
   const { navigate } = useRouter();
 
   const [activeCategory, setActiveCategory] = useState<string>('All');
@@ -36,6 +37,17 @@ export const PartnersPage: React.FC = () => {
 
   const handleInquirySubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (honeypot) return; // Silent bot defense
+    if (!partnerOrgName.trim() || !contactPerson.trim() || !email.trim() || !proposalDetails.trim()) return;
+
+    addContactMessage({
+      name: `${contactPerson.trim()} (${partnerOrgName.trim()})`.slice(0, 120),
+      email: email.trim().slice(0, 120),
+      phone: phone.trim().slice(0, 50),
+      subject: `Institutional Partnership: ${partnershipType}`.slice(0, 100),
+      message: proposalDetails.trim().slice(0, 4000)
+    });
+
     setToastMessage(
       isBn
         ? 'আপনার পার্টনারশিপ প্রস্তাবনাটি সফলভাবে জমা হয়েছে। আমাদের প্রতিনিধি যোগাযোগ করবেন।'
@@ -143,7 +155,7 @@ export const PartnersPage: React.FC = () => {
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   ) : (
-                    <span className="text-slate-400 font-medium">{isBn ? 'স্থানীয় সহযোগী সংস্থা' : 'Local Community Partner'}</span>
+                    <span className="text-slate-500 font-medium">{isBn ? 'স্থানীয় সহযোগী সংস্থা' : 'Local Community Partner'}</span>
                   )}
                 </div>
               </StaggerItem>
@@ -165,10 +177,24 @@ export const PartnersPage: React.FC = () => {
           </div>
 
           <form onSubmit={handleInquirySubmit} className="space-y-6">
+            {/* Anti-spam honeypot */}
+            <div className="hidden" aria-hidden="true">
+              <input
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+              />
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">{isBn ? 'সংস্থার নাম *' : 'Organization Name *'}</label>
+                <label htmlFor="partner-org-name" className="text-xs font-bold text-slate-700">{isBn ? 'সংস্থার নাম *' : 'Organization Name *'}</label>
                 <input
+                  id="partner-org-name"
+                  name="partnerOrgName"
+                  autoComplete="organization"
                   type="text"
                   required
                   value={partnerOrgName}
@@ -178,8 +204,11 @@ export const PartnersPage: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">{isBn ? 'যোগাযোগকারী ব্যক্তি *' : 'Contact Person *'}</label>
+                <label htmlFor="partner-contact-person" className="text-xs font-bold text-slate-700">{isBn ? 'যোগাযোগকারী ব্যক্তি *' : 'Contact Person *'}</label>
                 <input
+                  id="partner-contact-person"
+                  name="contactPerson"
+                  autoComplete="name"
                   type="text"
                   required
                   value={contactPerson}
@@ -189,8 +218,11 @@ export const PartnersPage: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">{isBn ? 'অফিসিয়াল ইমেইল *' : 'Official Email *'}</label>
+                <label htmlFor="partner-email" className="text-xs font-bold text-slate-700">{isBn ? 'অফিসিয়াল ইমেইল *' : 'Official Email *'}</label>
                 <input
+                  id="partner-email"
+                  name="email"
+                  autoComplete="email"
                   type="email"
                   required
                   value={email}
@@ -200,8 +232,11 @@ export const PartnersPage: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">{isBn ? 'ফোন নম্বর *' : 'Phone Number *'}</label>
+                <label htmlFor="partner-phone" className="text-xs font-bold text-slate-700">{isBn ? 'ফোন নম্বর *' : 'Phone Number *'}</label>
                 <input
+                  id="partner-phone"
+                  name="phone"
+                  autoComplete="tel"
                   type="tel"
                   required
                   value={phone}
@@ -212,8 +247,10 @@ export const PartnersPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">{isBn ? 'প্রস্তাবনার বিবরণ *' : 'Collaboration Proposal *'}</label>
+              <label htmlFor="partner-proposal" className="text-xs font-bold text-slate-700">{isBn ? 'প্রস্তাবনার বিবরণ *' : 'Collaboration Proposal *'}</label>
               <textarea
+                id="partner-proposal"
+                name="proposalDetails"
                 rows={4}
                 required
                 value={proposalDetails}
@@ -229,8 +266,7 @@ export const PartnersPage: React.FC = () => {
             >
               <Send className="w-4 h-4" />
               <span>{isBn ? 'পার্টনারশিপ প্রস্তাবনা পাঠান' : 'Submit Partnership Inquiry'}</span>
-            </button>
-          </form>
+            </button></form>
         </ScrollReveal>
 
         {/* Toast */}

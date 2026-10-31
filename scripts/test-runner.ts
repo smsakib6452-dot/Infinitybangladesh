@@ -811,6 +811,50 @@ async function runTestSuite() {
   assert(settingsSliceSource.includes('saveToStorage(key, data)'), '8.6.9: useSettingsSlice persistEntity routes through saveToStorage');
   assert(settingsSliceSource.includes("saveToStorage('homepageConfig'"), '8.6.9: useSettingsSlice homepageConfig routes through saveToStorage');
 
+  // ==========================================================================
+  // SUITE 9: AI Search (GEO), Entity Knowledge Graph & Security Compliance
+  // ==========================================================================
+  console.log('\n📌 [Suite 9: AI Search (GEO), Entity Knowledge Graph & Security Compliance]');
+
+  // 9.1: llms.txt and llms-full.txt
+  assert(fs.existsSync(path.resolve(rootDir, 'public/llms.txt')), '9.1.1: public/llms.txt exists for AI models');
+  const llmsContent = fs.readFileSync(path.resolve(rootDir, 'public/llms.txt'), 'utf-8');
+  assert(llmsContent.includes('Infinity Bangladesh'), '9.1.2: llms.txt defines official brand entity');
+  assert(llmsContent.includes('100% Charity Model'), '9.1.3: llms.txt defines operating model');
+  assert(fs.existsSync(path.resolve(rootDir, 'public/llms-full.txt')), '9.1.4: public/llms-full.txt exists for deep research agents');
+
+  // 9.2: Robots.txt AI bot permissions
+  const robotsTxt = fs.readFileSync(path.resolve(rootDir, 'public/robots.txt'), 'utf-8');
+  assert(robotsTxt.includes('User-agent: OAI-SearchBot'), '9.2.1: robots.txt allows OpenAI SearchBot');
+  assert(robotsTxt.includes('User-agent: GPTBot'), '9.2.2: robots.txt allows GPTBot');
+  assert(robotsTxt.includes('User-agent: PerplexityBot'), '9.2.3: robots.txt allows PerplexityBot');
+  assert(robotsTxt.includes('User-agent: ClaudeBot'), '9.2.4: robots.txt allows ClaudeBot');
+  assert(robotsTxt.includes('User-agent: Google-Extended'), '9.2.5: robots.txt allows Google-Extended (Gemini)');
+
+  // 9.3: Military-grade security headers in vercel.json
+  const vercelCfg = JSON.parse(fs.readFileSync(path.resolve(rootDir, 'vercel.json'), 'utf-8'));
+  const rootHeaders = vercelCfg.headers.find((h: any) => h.source === '/(.*)').headers;
+  assert(rootHeaders.some((h: any) => h.key === 'X-Permitted-Cross-Domain-Policies' && h.value === 'none'), '9.3.1: vercel.json enforces X-Permitted-Cross-Domain-Policies: none');
+  assert(rootHeaders.some((h: any) => h.key === 'Permissions-Policy' && h.value.includes('interest-cohort=()')), '9.3.2: Permissions-Policy disables Google FLoC browser tracking');
+  assert(rootHeaders.some((h: any) => h.key === 'Content-Security-Policy' && h.value.includes('upgrade-insecure-requests;')), '9.3.3: CSP enforces automatic upgrade of insecure requests');
+
+  // 9.4: Knowledge Graph Schema in index.html
+  const indexHtml = fs.readFileSync(path.resolve(rootDir, 'index.html'), 'utf-8');
+  assert(indexHtml.includes('/llms.txt'), '9.4.1: index.html links to /llms.txt for AI discovery');
+  assert(indexHtml.includes('disambiguatingDescription'), '9.4.2: index.html specifies disambiguatingDescription for LLM reasoning');
+  assert(indexHtml.includes('knowsAbout'), '9.4.3: index.html defines entity knowsAbout topics');
+  assert(indexHtml.includes('hasOfferCatalog'), '9.4.4: index.html defines public service offer catalog');
+
+  // 9.5: BreadcrumbList Dynamic Generator in seo.ts
+  const seoSource = fs.readFileSync(path.resolve(rootDir, 'src/lib/seo.ts'), 'utf-8');
+  assert(seoSource.includes('export function updateBreadcrumbSchema'), '9.5.1: seo.ts exports updateBreadcrumbSchema');
+  assert(seoSource.includes('BreadcrumbList'), '9.5.2: seo.ts generates schema.org/BreadcrumbList');
+
+  // 9.6: Privacy Page Compliance
+  const privacySource = fs.readFileSync(path.resolve(rootDir, 'src/pages/PrivacyPage.tsx'), 'utf-8');
+  assert(privacySource.includes('Right to be Forgotten'), '9.6.1: PrivacyPage includes statutory Right to be Forgotten');
+  assert(privacySource.includes('Zero-Tracking Cookies'), '9.6.2: PrivacyPage declares zero commercial tracking cookies');
+
   // SUMMARY REPORT
   // --------------------------------------------------------------------------
   console.log('\n========================================================');

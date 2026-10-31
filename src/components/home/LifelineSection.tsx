@@ -91,7 +91,7 @@ export const LifelineSection: React.FC<LifelineSectionProps> = ({
                 <div className="grid grid-cols-2 gap-2 sm:hidden">
                   <Link
                     to={lifelineSection?.findDonorBtnUrl || "blood-donation/find-donor"}
-                    className="px-2.5 py-2 rounded-xl bg-gradient-to-r from-rose-600 via-rose-500 to-red-600 hover:from-rose-500 text-white text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-98 transition-all"
+                    className="min-h-[44px] px-3 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 via-rose-500 to-red-600 hover:from-rose-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-98 transition-all touch-manipulation"
                   >
                     <Search className="w-3.5 h-3.5 shrink-0" />
                     <span className="truncate">{tText(lifelineSection?.findDonorBtnText) || (isBn ? 'রক্তদাতা খুঁজুন' : 'Find a Donor')}</span>
@@ -99,7 +99,7 @@ export const LifelineSection: React.FC<LifelineSectionProps> = ({
 
                   <Link
                     to={lifelineSection?.emergencyReqBtnUrl || "blood-donation/emergency-request"}
-                    className="px-2.5 py-2 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-rose-700 hover:from-red-500 text-white text-[11px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-98 shadow-md"
+                    className="min-h-[44px] px-3 py-2.5 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-rose-700 hover:from-red-500 text-white text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-98 shadow-md touch-manipulation"
                   >
                     <ShieldAlert className="w-3.5 h-3.5 text-white shrink-0" />
                     <span className="truncate">{tText(lifelineSection?.emergencyReqBtnText) || (isBn ? 'জরুরি আবেদন' : 'Emergency Request')}</span>
@@ -107,9 +107,9 @@ export const LifelineSection: React.FC<LifelineSectionProps> = ({
 
                   <Link
                     to={lifelineSection?.becomeDonorBtnUrl || "blood-donation/become-donor"}
-                    className="col-span-2 px-3 py-1.5 rounded-xl bg-[#006A4E]/85 hover:bg-[#008763] text-emerald-100 border border-emerald-400/30 text-[11px] font-semibold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-98 transition-all"
+                    className="col-span-2 min-h-[42px] px-3 py-2.5 rounded-xl bg-[#006A4E]/85 hover:bg-[#008763] text-emerald-100 border border-emerald-400/30 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-98 transition-all touch-manipulation"
                   >
-                    <Droplet className="w-3 h-3 text-rose-300 fill-rose-300 shrink-0" />
+                    <Droplet className="w-3.5 h-3.5 text-rose-300 fill-rose-300 shrink-0" />
                     <span>{tText(lifelineSection?.becomeDonorBtnText) || (isBn ? 'রক্তদাতা হিসেবে নিবন্ধন করুন' : 'Become a Blood Donor')}</span>
                   </Link>
                 </div>

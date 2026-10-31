@@ -680,7 +680,7 @@ CREATE TABLE IF NOT EXISTS public.donation_records (
   donation_type TEXT DEFAULT 'one-time',
   payment_method TEXT NOT NULL DEFAULT 'bKash',
   transaction_id TEXT DEFAULT '',
-  status TEXT NOT NULL DEFAULT 'Successful',
+  status TEXT NOT NULL DEFAULT 'Pending',
   is_anonymous BOOLEAN NOT NULL DEFAULT FALSE,
   notes TEXT DEFAULT '',
   donated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -861,8 +861,21 @@ ALTER TABLE public.blood_donation_settings ADD COLUMN IF NOT EXISTS stat_impact_
 ALTER TABLE public.blood_donation_settings ADD COLUMN IF NOT EXISTS helpline_label JSONB DEFAULT '{"en": "24/7 Helpline:", "bn": "২৪/৭ ব্লাড হেল্পলাইন:"}'::jsonb;
 
 -- ==============================================================================
--- 6. ROW LEVEL SECURITY (RLS) POLICIES — FULL READ & WRITE ACCESS FOR ALL CMS TABLES
+-- 6. ROW LEVEL SECURITY (RLS) POLICIES — HARDENED ACCESS CONTROL & SECURE VIEWS
 -- ==============================================================================
+
+-- 6.0 Server-Side Admin Predicate (SECURITY DEFINER eliminates RLS recursion)
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.admin_profiles ap
+    WHERE lower(ap.email) = lower(auth.jwt() ->> 'email')
+      AND ap.is_active = true
+  );
+$$;
+REVOKE ALL ON FUNCTION public.is_admin() FROM public;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
 
 -- Enable RLS across all tables in public schema and drop legacy blanket policies
 DO $
@@ -877,7 +890,7 @@ BEGIN
   END LOOP;
 END $;
 
--- 6.1 Public Read-Only Content Tables (Anyone can read, only authenticated admin can mutate)
+-- 6.1 Public Read-Only Content Tables (Anyone can read, only verified admin can mutate)
 DO $
 DECLARE
   pub_tbl TEXT;
@@ -898,7 +911,7 @@ BEGIN
       EXECUTE format('DROP POLICY IF EXISTS "Public read-only %I" ON public.%I;', pub_tbl, pub_tbl);
       EXECUTE format('CREATE POLICY "Public read-only %I" ON public.%I FOR SELECT USING (true);', pub_tbl, pub_tbl);
       EXECUTE format('DROP POLICY IF EXISTS "Admin full access %I" ON public.%I;', pub_tbl, pub_tbl);
-      EXECUTE format('CREATE POLICY "Admin full access %I" ON public.%I FOR ALL TO authenticated USING (true) WITH CHECK (true);', pub_tbl, pub_tbl);
+      EXECUTE format('CREATE POLICY "Admin full access %I" ON public.%I FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());', pub_tbl, pub_tbl);
     END IF;
   END LOOP;
 END $;
@@ -908,55 +921,106 @@ END $;
 DROP POLICY IF EXISTS "Public insert volunteer application" ON public.volunteer_applications;
 CREATE POLICY "Public insert volunteer application" ON public.volunteer_applications FOR INSERT WITH CHECK (true);
 DROP POLICY IF EXISTS "Admin manage volunteer applications" ON public.volunteer_applications;
-CREATE POLICY "Admin manage volunteer applications" ON public.volunteer_applications FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin manage volunteer applications" ON public.volunteer_applications FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
--- donation_records
+-- donation_records (Default status is 'Pending', capped reasonable amount)
 DROP POLICY IF EXISTS "Public submit donation record" ON public.donation_records;
-CREATE POLICY "Public submit donation record" ON public.donation_records FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public submit donation record" ON public.donation_records FOR INSERT TO anon, authenticated
+  WITH CHECK (status = 'Pending' AND amount_bdt > 0 AND amount_bdt < 10000000);
 DROP POLICY IF EXISTS "Admin manage donation records" ON public.donation_records;
-CREATE POLICY "Admin manage donation records" ON public.donation_records FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin manage donation records" ON public.donation_records FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- contact_messages
 DROP POLICY IF EXISTS "Public submit contact message" ON public.contact_messages;
 CREATE POLICY "Public submit contact message" ON public.contact_messages FOR INSERT WITH CHECK (true);
 DROP POLICY IF EXISTS "Admin manage contact messages" ON public.contact_messages;
-CREATE POLICY "Admin manage contact messages" ON public.contact_messages FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin manage contact messages" ON public.contact_messages FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
--- 6.3 Blood Donation Network Security
--- blood_donors (Public read approved donors, public self-register, admin full management)
+-- 6.3 Blood Donation Network Security & Sanitized Public Views
+-- Base table: raw blood_donors table is NOT readable by public anon key directly.
+-- Public client applications query the security-barrier view `public_blood_donors`.
 DROP POLICY IF EXISTS "Public read approved blood donors" ON public.blood_donors;
-CREATE POLICY "Public read approved blood donors" ON public.blood_donors FOR SELECT USING (approval_status = 'APPROVED' OR approval_status IS NULL);
 DROP POLICY IF EXISTS "Public register as blood donor" ON public.blood_donors;
-CREATE POLICY "Public register as blood donor" ON public.blood_donors FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public register as blood donor" ON public.blood_donors FOR INSERT TO anon, authenticated
+  WITH CHECK (approval_status = 'PENDING' AND is_verified = false AND total_donations BETWEEN 0 AND 200);
 DROP POLICY IF EXISTS "Admin manage blood donors" ON public.blood_donors;
-CREATE POLICY "Admin manage blood donors" ON public.blood_donors FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin manage blood donors" ON public.blood_donors FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
--- emergency_blood_requests (Public read, public submit, admin manage)
+-- Sanitized Public Blood Donors View (Protects PII, masks phone numbers unless consent given, excludes unapproved rows)
+CREATE OR REPLACE VIEW public.public_blood_donors WITH (security_barrier = true) AS
+SELECT
+  id,
+  full_name,
+  blood_group,
+  gender,
+  photo_url,
+  district,
+  upazila,
+  area,
+  org_category,
+  committee_position,
+  availability_status,
+  last_donation_date,
+  total_donations,
+  is_verified,
+  show_phone_publicly,
+  CASE WHEN show_phone_publicly = true THEN phone ELSE '' END AS phone,
+  created_at,
+  updated_at
+FROM public.blood_donors
+WHERE approval_status = 'APPROVED';
+
+GRANT SELECT ON public.public_blood_donors TO anon, authenticated;
+
+-- Emergency Blood Requests: raw table public submission, sanitized public view
 DROP POLICY IF EXISTS "Public read emergency requests" ON public.emergency_blood_requests;
-CREATE POLICY "Public read emergency requests" ON public.emergency_blood_requests FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Public submit emergency request" ON public.emergency_blood_requests;
-CREATE POLICY "Public submit emergency request" ON public.emergency_blood_requests FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public submit emergency request" ON public.emergency_blood_requests FOR INSERT TO anon, authenticated WITH CHECK (true);
 DROP POLICY IF EXISTS "Admin manage emergency requests" ON public.emergency_blood_requests;
-CREATE POLICY "Admin manage emergency requests" ON public.emergency_blood_requests FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin manage emergency requests" ON public.emergency_blood_requests FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+-- Sanitized Public Emergency Requests View (Protects private patient identity while facilitating emergency coordination)
+CREATE OR REPLACE VIEW public.public_emergency_requests WITH (security_barrier = true) AS
+SELECT
+  id,
+  blood_group,
+  units_needed,
+  hospital_name,
+  district,
+  upazila,
+  emergency_level,
+  required_date,
+  additional_notes,
+  status,
+  contact_number,
+  requester_name,
+  matched_donor_ids,
+  created_at,
+  updated_at
+FROM public.emergency_blood_requests
+WHERE status IN ('PENDING', 'URGENT', 'ACTIVE');
+
+GRANT SELECT ON public.public_emergency_requests TO anon, authenticated;
 
 -- blood_donation_history
 DROP POLICY IF EXISTS "Public read blood donation history" ON public.blood_donation_history;
 CREATE POLICY "Public read blood donation history" ON public.blood_donation_history FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admin manage donation history" ON public.blood_donation_history;
-CREATE POLICY "Admin manage donation history" ON public.blood_donation_history FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin manage donation history" ON public.blood_donation_history FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
--- 6.4 Private Administration & Audit Logs (Restricted entirely to authenticated admin sessions)
--- admin_profiles
+-- 6.4 Private Administration & Audit Logs (Restricted entirely to verified admin sessions)
+-- admin_profiles: Users can read their own profile or if verified admin; modifications require is_admin()
 DROP POLICY IF EXISTS "Admin read profiles" ON public.admin_profiles;
-CREATE POLICY "Admin read profiles" ON public.admin_profiles FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Self read profile" ON public.admin_profiles FOR SELECT TO authenticated
+  USING (lower(email) = lower(auth.jwt() ->> 'email') OR public.is_admin());
 DROP POLICY IF EXISTS "Admin manage profiles" ON public.admin_profiles;
-CREATE POLICY "Admin manage profiles" ON public.admin_profiles FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin manage profiles" ON public.admin_profiles FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
--- audit_logs
+-- audit_logs: Restricted to verified admin
 DROP POLICY IF EXISTS "Admin read audit logs" ON public.audit_logs;
-CREATE POLICY "Admin read audit logs" ON public.audit_logs FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Admin read audit logs" ON public.audit_logs FOR SELECT TO authenticated USING (public.is_admin());
 DROP POLICY IF EXISTS "System insert audit logs" ON public.audit_logs;
-CREATE POLICY "System insert audit logs" ON public.audit_logs FOR INSERT WITH CHECK (true);
+CREATE POLICY "Admin insert audit logs" ON public.audit_logs FOR INSERT TO authenticated WITH CHECK (public.is_admin());
 
 -- Default Singletons Seed
 INSERT INTO public.site_settings (id) VALUES ('default') ON CONFLICT (id) DO NOTHING;

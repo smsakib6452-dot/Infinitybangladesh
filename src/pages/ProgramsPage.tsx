@@ -14,6 +14,7 @@ export const ProgramsPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-12">
       <ScrollReveal effect="fade-up">
         <SectionHeading
+          as="h1"
           badge={isBn ? 'স্থায়ী ও মৌসুমী উদ্যোগ' : 'Core Humanitarian Initiatives'}
           title={isBn ? 'আমাদের মানবিক কার্যক্রমসমূহ' : 'Our Programs & Focus Areas'}
           subtitle={

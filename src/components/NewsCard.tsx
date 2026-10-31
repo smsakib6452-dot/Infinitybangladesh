@@ -4,6 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { Link } from '../context/RouterContext';
 import { Calendar, User, ArrowRight, Tag } from 'lucide-react';
 import { getAssetUrl } from '../lib/utils/assetHelper';
+import { OptimizedImage } from './OptimizedImage';
 
 interface NewsCardProps {
   article: NewsArticle;
@@ -15,11 +16,12 @@ export const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
   return (
     <article className="group bg-white rounded-3xl border border-[#EAE3D9] overflow-hidden shadow-warm-sm hover:shadow-warm-lg motion-card-hover transition-all duration-300 flex flex-col justify-between w-full h-full">
       <Link to="news/detail" slug={article.slug} className="block relative aspect-16/9 overflow-hidden bg-slate-100 shrink-0">
-        <img
-          src={getAssetUrl(article.imageUrl)}
+        <OptimizedImage
+          src={article.imageUrl}
           alt={tText(article.title)}
+          aspectRatio="16/9"
+          width={480}
           className="w-full h-full object-cover motion-img-zoom"
-          loading="lazy"
         />
         <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold bg-[#006A4E] text-white backdrop-blur-xs shadow-xs">
           {article.category}

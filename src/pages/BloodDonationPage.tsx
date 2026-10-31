@@ -83,6 +83,7 @@ import {
 import { ScrollReveal } from '../components/motion/ScrollReveal';
 import { AnimatedCounter } from '../components/motion/AnimatedCounter';
 import { LifeLineHeroLogoAnimation } from '../components/motion/LifeLineHeroLogoAnimation';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 interface BloodDonationPageProps {
   initialTab?: 'find-donor' | 'become-donor' | 'update-donor' | 'emergency-request' | 'donors' | 'statistics' | 'guidelines';
@@ -219,7 +220,7 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
   const [regLastDonationDate, setRegLastDonationDate] = useState('');
   const [regTotalDonations, setRegTotalDonations] = useState<number>(0);
   const [regExperienceNotes, setRegExperienceNotes] = useState('');
-  const [regConsent, setRegConsent] = useState(true);
+  const [regConsent, setRegConsent] = useState(false);
   const [regShowPhone, setRegShowPhone] = useState(true);
   const [regSubmitted, setRegSubmitted] = useState(false);
   const [regRefId, setRegRefId] = useState('');
@@ -315,7 +316,7 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
     setRegLastDonationDate('');
     setRegTotalDonations(0);
     setRegExperienceNotes('');
-    setRegConsent(true);
+    setRegConsent(false);
     setRegShowPhone(true);
     setRegFormError(null);
     setRegSubmitted(false);
@@ -350,10 +351,12 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
   const [updTotalDonations, setUpdTotalDonations] = useState<number>(0);
   const [updExperienceNotes, setUpdExperienceNotes] = useState('');
   const [updShowPhone, setUpdShowPhone] = useState(true);
+  const [updPin, setUpdPin] = useState('');
   const [updFormError, setUpdFormError] = useState<string | null>(null);
   const [updSubmitted, setUpdSubmitted] = useState(false);
   const [isUpdatingDonor, setIsUpdatingDonor] = useState(false);
   const updPhotoInputRef = useRef<HTMLInputElement>(null);
+  const updPinInputRef = useRef<HTMLInputElement>(null);
 
   // Dynamic Upazilas for Update form
   const availableUpazilasForUpdate = useMemo(() => {
@@ -381,7 +384,11 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
     setUpdLastDonationDate(toSafeString(donor.lastDonationDate, ''));
     setUpdTotalDonations(Number(donor.totalDonations) || 0);
     setUpdExperienceNotes(toSafeString(donor.experienceNotes, ''));
-    setUpdShowPhone(donor.gender === 'Male' ? true : Boolean(donor.showPhonePublicly));
+    setUpdShowPhone(Boolean(donor.showPhonePublicly));
+    setUpdPin('');
+    if (updPinInputRef.current) {
+      updPinInputRef.current.value = '';
+    }
     setUpdFormError(null);
     setUpdSubmitted(false);
     setUpdSearchError(null);
@@ -425,6 +432,10 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
     setMatchedDonor(null);
     setUpdSearchQuery('');
     setUpdSubmitted(false);
+    setUpdPin('');
+    if (updPinInputRef.current) {
+      updPinInputRef.current.value = '';
+    }
     setUpdFormError(null);
     setUpdSearchError(null);
     setSubmittedWhatsAppUrl('');
@@ -492,7 +503,7 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
     }
   };
 
-  const handleDonorUpdateSubmit = (e: React.FormEvent) => {
+  const handleDonorUpdateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!matchedDonor) return;
     setUpdFormError(null);
@@ -541,34 +552,52 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
       return;
     }
 
+    if (!/^\d{6}$/.test(updPin.trim())) {
+      setUpdFormError(
+        isBn
+          ? 'অনুগ্রহ করে আপনার ৬-ডিজিটের গোপন পিন (PIN) সঠিকভাবে প্রদান করুন।'
+          : 'Please enter your 6-digit secret PIN.'
+      );
+      return;
+    }
+
+    let localPin = updPin.trim();
+    // Synchronously clear React state and DOM element immediately
+    setUpdPin('');
+    if (updPinInputRef.current) {
+      updPinInputRef.current.value = '';
+    }
+
     setIsUpdatingDonor(true);
+    setUpdFormError(null);
     try {
-      // 1. Update with PENDING status so Admin verifies & approves
-      updateBloodDonor(matchedDonor.id, {
-        fullName: updFullName.trim(),
-        bloodGroup: updBloodGroup,
-        gender: updGender,
-        dateOfBirth: updDateOfBirth || undefined,
-        dob: updDateOfBirth || undefined,
-        phone: cleanPhone,
-        email: updEmail.trim() || undefined,
-        photoUrl: updPhotoUrl.trim() || undefined,
-        district: updDistrict,
-        upazila: updUpazila,
-        area: updArea.trim(),
-        detailedAddress: updDetailedAddress.trim() || undefined,
-        orgCategory: updOrgCategory,
-        committeePosition: updCommitteePosition.trim() || undefined,
-        availabilityStatus: updAvailability,
-        lastDonationDate: updLastDonationDate || undefined,
-        totalDonations: Number(updTotalDonations) || 0,
-        experienceNotes: updExperienceNotes.trim() || undefined,
-        showPhonePublicly: updGender === 'Male' ? true : updShowPhone,
-        approvalStatus: 'APPROVED', // Live immediately across Directory and Stats
-        updatedAt: new Date().toISOString()
+      if (!isSupabaseConfigured) {
+        throw { code: 'PGRST202', message: 'Database service not configured' };
+      }
+
+      const { data, error } = await supabase.rpc('verify_and_update_donor', {
+        p_donor_id: matchedDonor.id,
+        p_pin: localPin,
+        p_payload: {
+          full_name: updFullName.trim(),
+          blood_group: updBloodGroup,
+          gender: updGender,
+          date_of_birth: updDateOfBirth || null,
+          district: updDistrict,
+          upazila: updUpazila,
+          area: updArea.trim() || null,
+          detailed_address: updDetailedAddress.trim() || null,
+          availability_status: updAvailability,
+          last_donation_date: updLastDonationDate || null,
+          show_phone_publicly: Boolean(updShowPhone)
+        }
       });
 
-      // 2. Generate WhatsApp message for Admin
+      if (error) {
+        throw error;
+      }
+
+      // Generate WhatsApp message for Admin
       const cleanHelpline = (bloodDonationSettings.emergencyHelpline || '+8801839008339').replace(/[^0-9]/g, '');
       const lastDonationText = updLastDonationDate
         ? `${updLastDonationDate} (${updLastDonationDate === todayStr ? 'আজকে রক্তদান করেছি' : 'সর্বশেষ তারিখ'})`
@@ -580,7 +609,9 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
         : 'সাময়িক অনুপলব্ধ';
 
       const whatsappMsg = encodeURIComponent(
-        `আসসালামু আলাইকুম অ্যাডমিন,\nআমি ${updFullName.trim()} (রক্তদাতা আইডি: ${matchedDonor.id}, মোবাইল: ${cleanPhone})।\nআমি ইনফিনিটি বাংলাদেশ ব্লাড নেটওয়ার্কে আমার রক্তদানের তথ্য / প্রোফাইল আপডেট করেছি।\n\n📋 আপডেটের বিবরণ:\n• রক্ত গ্রুপ: ${updBloodGroup}\n• সর্বশেষ রক্তদান: ${lastDonationText}\n• মোট রক্তদান: ${updTotalDonations || 0} বার\n• অবস্থান: ${updArea ? updArea + ', ' : ''}${updUpazila}, ${updDistrict}\n• প্রাপ্যতা: ${availabilityText}\n\nঅনুগ্রহ করে আমার মোবাইল নম্বর যাচাই করে অ্যাডমিন ড্যাশবোর্ড থেকে আমার প্রোফাইল আপডেটটি অনুমোদন (Approve) করুন। ধন্যবাদ।`
+        isBn
+          ? `আসসালামু আলাইকুম ইনফিনিটি বাংলাদেশ লাইফলাইন কোঅর্ডিনেটর,\nআমি ব্লাড ডোনার রেজিস্ট্রি সংক্রান্ত বিষয়ে আমার প্রোফাইল তথ্য হালনাগাদ বা নাম প্রত্যাহারের আবেদন জানাতে যোগাযোগ করছি।\n\nঅনুগ্রহ করে পরিচয় ও তথ্য যাচাই সাপেক্ষে আমাকে সহায়তা করুন। ধন্যবাদ।`
+          : `Hello Infinity Bangladesh LifeLine Coordinator,\nI am contacting to request an update or record removal for the blood donor registry.\n\nPlease verify my identity and assist with the request. Thank you.`
       );
       const waUrl = `https://wa.me/${cleanHelpline}?text=${whatsappMsg}`;
       setSubmittedWhatsAppUrl(waUrl);
@@ -593,9 +624,22 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
       }
 
       setUpdSubmitted(true);
-    } catch (err) {
-      setUpdFormError(isBn ? 'তথ্য হালনাগাদ করতে ত্রুটি হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।' : 'Failed to update donor information. Please try again.');
+    } catch (err: any) {
+      if (err?.code === 'PGRST202' || err?.message?.includes('schema cache') || err?.message?.includes('not found') || !isSupabaseConfigured) {
+        setUpdFormError(
+          isBn
+            ? 'রক্তদাতা অনলাইন প্রোফাইল আপডেট সার্ভিসটি বর্তমানে নিরাপত্তা আপগ্রেডের অধীনে সাময়িক স্থগিত রয়েছে। অনুগ্রহ করে হটলাইনে যোগাযোগ করুন।'
+            : 'Donor self-update is temporarily unavailable during security maintenance. Please contact our 24/7 helpline.'
+        );
+      } else {
+        setUpdFormError(
+          isBn
+            ? 'পিন (PIN) ভুল হয়েছে অথবা প্রোফাইল আপডেট করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।'
+            : 'Incorrect PIN or failed to update donor profile. Please check credentials and try again.'
+        );
+      }
     } finally {
+      localPin = '';
       setIsUpdatingDonor(false);
     }
   };
@@ -666,12 +710,14 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
   const [copiedReqId, setCopiedReqId] = useState<string | null>(null);
 
   const handleCopyEmergencyDetails = useCallback((req: EmergencyBloodRequest) => {
+    const patientDisplay = (req as any).patientLabel || req.patientName || 'জরুরি রোগী';
+    const contactDisplay = (req as any).coordinatorContact || bloodDonationSettings.emergencyHelpline || '+8801839008339';
     const text = `🚨 অতি জরুরি রক্তের আবেদন! 🚨
 🩸 রক্তের গ্রুপ: ${req.bloodGroup} (${req.unitsNeeded} ব্যাগ প্রয়োজন)
-👤 রোগী: ${req.patientName}
+👤 রোগী: ${patientDisplay}
 🏥 হাসপাতাল: ${req.hospitalName} (${req.upazila}, ${req.district})
 📅 তারিখ: ${req.requiredDate}
-📞 জরুরি যোগাযোগের নম্বর: ${req.contactNumber}
+📞 জরুরি সমন্বয় হটলাইন: ${contactDisplay}
 ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalNotes}\n` : ''}
 🌐 যাচাইকৃত প্ল্যাটফর্ম: ইনফিনিটি লাইফলাইন (ইনফিনিটি বাংলাদেশ)
 🔗 লাইভ লিংক: https://infinitybangladesh.vercel.app/blood-donation`;
@@ -679,7 +725,7 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
     navigator.clipboard.writeText(text);
     setCopiedReqId(req.id);
     setTimeout(() => setCopiedReqId(null), 2500);
-  }, []);
+  }, [bloodDonationSettings.emergencyHelpline]);
 
   // ----------------------------------------------------
   // FILTERED DONORS FOR SEARCH
@@ -757,6 +803,15 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
       return;
     }
 
+    if (!regConsent) {
+      setRegFormError(
+        isBn
+          ? 'রক্তদাতা হিসেবে নিবন্ধনের জন্য আপনাকে অবশ্যই গোপনীয়তা নীতি ও ব্যবহারের শর্তাবলীতে সম্মতি দিতে হবে।'
+          : 'You must agree to the privacy policy and terms to register as a donor.'
+      );
+      return;
+    }
+
     const newDonor = addBloodDonor({
       fullName: regFullName.trim(),
       bloodGroup: regBloodGroup,
@@ -779,14 +834,16 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
       isVerified: false,
       approvalStatus: 'PENDING', // Sent to Admin Pending Queue for review & approval
       privacyConsent: regConsent,
-      showPhonePublicly: regGender === 'Male' ? true : regShowPhone,
+      showPhonePublicly: Boolean(regShowPhone),
       donationHistory: []
     });
 
     const cleanHelpline = (bloodDonationSettings.emergencyHelpline || '+8801839008339').replace(/[^0-9]/g, '');
     const lastDonationText = regLastDonationDate ? `${regLastDonationDate}` : 'রেকর্ড নেই';
     const whatsappMsg = encodeURIComponent(
-      `আসসালামু আলাইকুম অ্যাডমিন,\nআমি ${regFullName.trim()} (রক্তের গ্রুপ: ${regBloodGroup}, মোবাইল: ${cleanPhone})।\nআমি ইনফিনিটি বাংলাদেশ রক্তদান নেটওয়ার্কে নতুন রক্তদাতা হিসেবে রেজিস্ট্রেশন করেছি।\n\n📋 রেজিস্ট্রেশন বিবরণ:\n• রেফারেন্স আইডি: ${newDonor.id}\n• রক্তের গ্রুপ: ${regBloodGroup}\n• অবস্থান: ${regArea ? regArea.trim() + ', ' : ''}${regUpazila}, ${regDistrict}\n• সর্বশেষ রক্তদান: ${lastDonationText}\n\nঅনুগ্রহ করে আমার আবেদনটি যাচাই করে অ্যাডমিন ড্যাশবোর্ড থেকে অনুমোদন (Approve) করুন। ধন্যবাদ।`
+      isBn
+        ? `আসসালামু আলাইকুম ইনফিনিটি বাংলাদেশ কোঅর্ডিনেটর,\nআমি রক্তদান নেটওয়ার্কে নতুন রক্তদাতা হিসেবে যুক্ত হতে আবেদন করেছি।\n\nঅনুগ্রহ করে পরিচয় ও তথ্য যাচাই সাপেক্ষে আমার আবেদনটি প্রক্রিয়া করুন। ধন্যবাদ।`
+        : `Hello Infinity Bangladesh Coordinator,\nI have submitted an application to join the Voluntary Blood Donor Network.\n\nPlease verify my identity and process the registration. Thank you.`
     );
     const waUrl = `https://wa.me/${cleanHelpline}?text=${whatsappMsg}`;
     setRegWhatsAppUrl(waUrl);
@@ -877,8 +934,15 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                   />
                 </div>
 
-                {/* Initiative Subtitle */}
+                {/* Initiative Subtitle & Semantic H1 */}
                 <div className="mt-3 text-center lg:text-left">
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight font-display mb-1.5">
+                    {tText(bloodDonationSettings.heroTitle as any) || (
+                      isBn
+                        ? 'ইনফিনিটি লাইফলাইন — জরুরি রক্তদান ও সমন্বয় নেটওয়ার্ক'
+                        : 'Infinity LifeLine — Voluntary Blood Donation Network'
+                    )}
+                  </h1>
                   <p className="text-xs sm:text-sm text-emerald-100/85 font-medium max-w-xl leading-relaxed flex items-center justify-center lg:justify-start gap-1.5">
                     <span>
                       {tText(bloodDonationSettings.heroSubtitle) || (
@@ -1911,13 +1975,7 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                         <label className="block text-xs font-bold text-slate-800">{isBn ? 'লিঙ্গ (Gender) *' : 'Gender *'}</label>
                         <select
                           value={regGender}
-                          onChange={(e) => {
-                            const newGender = e.target.value;
-                            setRegGender(newGender);
-                            if (newGender === 'Male') {
-                              setRegShowPhone(true);
-                            }
-                          }}
+                          onChange={(e) => setRegGender(e.target.value)}
                           className="w-full px-4 py-2.5 rounded-xl border border-[#EAE3D9] bg-[#FAF7F2] text-xs sm:text-sm font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
                         >
                           <option value="Male">{isBn ? 'পুরুষ (Male)' : 'Male'}</option>
@@ -2243,42 +2301,26 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                       </span>
                     </label>
 
-                    {regGender === 'Male' ? (
-                      <div className="p-3.5 rounded-2xl bg-emerald-50/90 border border-emerald-200 text-xs text-emerald-950 flex items-start gap-2.5 leading-relaxed">
-                        <ShieldCheck className="w-4 h-4 text-[#006A4E] shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold text-[#00523C]">
-                            {isBn ? 'মোবাইল নম্বর স্বয়ংক্রিয়ভাবে উন্মুক্ত (পাবলিক) থাকবে' : 'Mobile number will be automatically public'}
-                          </span>
-                          <p className="text-[11px] text-slate-600 mt-0.5">
-                            {isBn
-                              ? 'পুরুষ রক্তদাতাদের ক্ষেত্রে জরুরি প্রয়োজনে দ্রুত রক্ত পাওয়ার স্বার্থে যোগাযোগের নম্বর উন্মুক্ত রাখা হয় (তবে রক্তদানের পর ৯০ দিন সবার নম্বরই স্বয়ংক্রিয়ভাবে হাইড থাকবে)।'
-                              : 'Male donor contact numbers are automatically public for rapid emergency coordination (kept hidden for 90 days after each donation).'}
-                          </p>
-                        </div>
+                    <label className="flex items-start gap-2.5 cursor-pointer text-xs text-slate-700 leading-relaxed p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                      <input
+                        type="checkbox"
+                        checked={regShowPhone}
+                        onChange={(e) => setRegShowPhone(e.target.checked)}
+                        className="w-4 h-4 text-[#006A4E] rounded-md mt-0.5 focus:ring-[#006A4E]"
+                      />
+                      <div>
+                        <span className="font-bold text-slate-800">
+                          {isBn
+                            ? 'পাবলিক ডিরেক্টরিতে সরাসরি যোগাযোগের ফোন নম্বর উন্মুক্ত রাখুন'
+                            : 'Display phone number publicly in the donor directory'}
+                        </span>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          {isBn
+                            ? 'আনচেক থাকলে আপনার নম্বর ডিরেক্টরিতে গোপন থাকবে এবং শুধুমাত্র হেল্পলাইনের মাধ্যমে জরুরি সমন্বয় করা হবে।'
+                            : 'If unchecked, your phone number remains hidden and coordination is routed via the helpline.'}
+                        </p>
                       </div>
-                    ) : (
-                      <label className="flex items-start gap-2.5 cursor-pointer text-xs text-slate-700 leading-relaxed p-3.5 rounded-2xl bg-rose-50/40 border border-rose-200/60">
-                        <input
-                          type="checkbox"
-                          checked={regShowPhone}
-                          onChange={(e) => setRegShowPhone(e.target.checked)}
-                          className="w-4 h-4 text-[#006A4E] rounded-md mt-0.5 focus:ring-[#006A4E]"
-                        />
-                        <div>
-                          <span className="font-bold text-slate-800">
-                            {isBn
-                              ? 'নারী রক্তদাতা প্রাইভেসি: পাবলিক ডিরেক্টরিতে সরাসরি কল অপশন ও নম্বর উন্মুক্ত রাখুন'
-                              : 'Female Donor Privacy: Allow direct public call button and phone number'}
-                          </span>
-                          <p className="text-[11px] text-slate-500 mt-0.5">
-                            {isBn
-                              ? 'প্রাইভেসি সুরক্ষায় এটি আনচেক রাখলে আপনার নম্বর জনসাধারণের কাছে গোপন থাকবে এবং হেল্পলাইনের মাধ্যমে রক্তের ব্যবস্থা করা হবে।'
-                              : 'For privacy, keeping this unchecked hides your phone number from the public; requests route through 24/7 Helpline.'}
-                          </p>
-                        </div>
-                      </label>
-                    )}
+                    </label>
                   </div>
 
                   {/* Prominent Error Banner */}
@@ -2885,13 +2927,7 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                         <label className="block text-xs font-bold text-slate-800">{isBn ? 'লিঙ্গ (Gender) *' : 'Gender *'}</label>
                         <select
                           value={updGender}
-                          onChange={(e) => {
-                            const newGender = e.target.value;
-                            setUpdGender(newGender);
-                            if (newGender === 'Male') {
-                              setUpdShowPhone(true);
-                            }
-                          }}
+                          onChange={(e) => setUpdGender(e.target.value)}
                           className="w-full px-4 py-2.5 rounded-xl border border-[#EAE3D9] bg-[#FAF7F2] text-xs sm:text-sm font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
                         >
                           <option value="Male">{isBn ? 'পুরুষ (Male)' : 'Male'}</option>
@@ -2998,42 +3034,47 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                       />
                     </div>
 
-                    {updGender === 'Male' ? (
-                      <div className="p-3.5 rounded-2xl bg-emerald-50/90 border border-emerald-200 text-xs text-emerald-950 flex items-start gap-2.5 leading-relaxed pt-1">
-                        <ShieldCheck className="w-4 h-4 text-[#006A4E] shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold text-[#00523C]">
-                            {isBn ? 'মোবাইল নম্বর স্বয়ংক্রিয়ভাবে উন্মুক্ত (পাবলিক) থাকবে' : 'Mobile number will be automatically public'}
-                          </span>
-                          <p className="text-[11px] text-slate-600 mt-0.5">
-                            {isBn
-                              ? 'পুরুষ রক্তদাতাদের যোগাযোগের নম্বর উন্মুক্ত রাখা হয় যাতে প্রয়োজনে দ্রুত যোগাযোগ করা যায় (তবে রক্তদানের পর ৯০ দিন সবার নম্বরই স্বয়ংক্রিয়ভাবে হাইড থাকবে)।'
-                              : 'Male donor phone numbers remain public for direct emergency access (hidden for 90 days after donation).'}
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <label className="flex items-start gap-2.5 cursor-pointer text-xs text-slate-700 leading-relaxed p-3.5 rounded-2xl bg-rose-50/40 border border-rose-200/60 pt-1">
-                        <input
-                          type="checkbox"
-                          checked={updShowPhone}
-                          onChange={(e) => setUpdShowPhone(e.target.checked)}
-                          className="w-4 h-4 text-[#006A4E] rounded-md mt-0.5 focus:ring-[#006A4E]"
-                        />
-                        <div>
-                          <span className="font-bold text-slate-800">
-                            {isBn
-                              ? 'নারী রক্তদাতা প্রাইভেসি: পাবলিক ডিরেক্টরিতে সরাসরি কল অপশন ও নম্বর উন্মুক্ত রাখুন'
-                              : 'Female Donor Privacy: Allow direct public call button and phone number'}
-                          </span>
-                          <p className="text-[11px] text-slate-500 mt-0.5">
-                            {isBn
-                              ? 'প্রাইভেসি সুরক্ষায় এটি আনচেক রাখলে আপনার নম্বর জনসাধারণের কাছে গোপন থাকবে এবং হেল্পলাইনের মাধ্যমে রক্তের ব্যবস্থা করা হবে।'
-                              : 'For privacy, keeping this unchecked hides your phone number from the public; requests route through 24/7 Helpline.'}
-                          </p>
-                        </div>
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-800">
+                        {isBn ? 'আপনার ৬-ডিজিটের গোপন পিন (Secret PIN) *' : 'Your 6-Digit Secret PIN *'}
                       </label>
-                    )}
+                      <input
+                        ref={updPinInputRef}
+                        type="password"
+                        maxLength={6}
+                        inputMode="numeric"
+                        pattern="\d{6}"
+                        value={updPin}
+                        onChange={(e) => setUpdPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        placeholder="••••••"
+                        required
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-[#EAE3D9] bg-[#FAF7F2] text-xs sm:text-sm tracking-widest font-mono font-bold focus:bg-white focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
+                      />
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        {isBn ? 'নিবন্ধনের সময় নির্ধারিত ৬-সংখ্যার পিন নম্বরটি লিখুন।' : 'Enter the 6-digit security PIN set during registration.'}
+                      </p>
+                    </div>
+
+                    <label className="flex items-start gap-2.5 cursor-pointer text-xs text-slate-700 leading-relaxed p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 pt-1">
+                      <input
+                        type="checkbox"
+                        checked={updShowPhone}
+                        onChange={(e) => setUpdShowPhone(e.target.checked)}
+                        className="w-4 h-4 text-[#006A4E] rounded-md mt-0.5 focus:ring-[#006A4E]"
+                      />
+                      <div>
+                        <span className="font-bold text-slate-800">
+                          {isBn
+                            ? 'পাবলিক ডিরেক্টরিতে সরাসরি যোগাযোগের ফোন নম্বর উন্মুক্ত রাখুন'
+                            : 'Display phone number publicly in the donor directory'}
+                        </span>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          {isBn
+                            ? 'আনচেক থাকলে আপনার নম্বর ডিরেক্টরিতে গোপন থাকবে এবং শুধুমাত্র হেল্পলাইনের মাধ্যমে জরুরি সমন্বয় করা হবে।'
+                            : 'If unchecked, your phone number remains hidden and coordination is routed via the helpline.'}
+                        </p>
+                      </div>
+                    </label>
                   </div>
 
                   {/* Form Error Banner */}
@@ -3383,7 +3424,7 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                             </div>
 
                             <p className="text-xs font-extrabold text-slate-900 pt-0.5">
-                              {req.patientName}
+                              {(req as any).patientLabel || req.patientName || (isBn ? 'জরুরি রোগী' : 'Emergency Patient')}
                             </p>
                           </div>
 
@@ -3439,30 +3480,39 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                           </button>
 
                           <div className="flex items-center gap-1.5">
-                            <a
-                              href={`https://wa.me/${(() => {
-                                const c = (req.contactNumber || '').replace(/[^0-9]/g, '');
-                                return c.startsWith('880') ? c : c.startsWith('0') ? `88${c}` : c;
-                              })()}?text=${encodeURIComponent(
-                                isBn
-                                  ? `আসসালামু আলাইকুম। ইনফিনিটি লাইফলাইনে ${req.patientName} রোগীর জন্য ${req.bloodGroup} রক্তের জরুরি আবেদন দেখে যোগাযোগ করছি...`
-                                  : `Hello, contacting regarding the emergency ${req.bloodGroup} blood request on Infinity LifeLine.`
-                              )}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white font-extrabold text-xs shadow-xs transition-all cursor-pointer"
-                              title="WhatsApp"
-                            >
-                              <MessageCircle className="w-3.5 h-3.5" />
-                              <span className="hidden xs:inline">WhatsApp</span>
-                            </a>
-                            <a
-                              href={`tel:${req.contactNumber}`}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-xs transition-all cursor-pointer"
-                            >
-                              <Phone className="w-3.5 h-3.5" />
-                              <span>{isBn ? 'কল' : 'Call'}</span>
-                            </a>
+                            {(() => {
+                              const coordinatorPhone = (req as any).coordinatorContact || bloodDonationSettings.emergencyHelpline || '+8801839008339';
+                              const cleanCoordinator = coordinatorPhone.replace(/[^0-9]/g, '');
+                              const formattedWaNumber = cleanCoordinator.startsWith('880') ? cleanCoordinator : cleanCoordinator.startsWith('0') ? `88${cleanCoordinator}` : cleanCoordinator;
+                              const patientLabel = (req as any).patientLabel || req.patientName || (isBn ? 'জরুরি রোগী' : 'Emergency Patient');
+
+                              return (
+                                <>
+                                  <a
+                                    href={`https://wa.me/${formattedWaNumber}?text=${encodeURIComponent(
+                                      isBn
+                                        ? `আসসালামু আলাইকুম। ইনফিনিটি লাইফলাইনে ${patientLabel} রোগীর জন্য ${req.bloodGroup} রক্তের জরুরি আবেদন দেখে যোগাযোগ করছি...`
+                                        : `Hello, contacting regarding the emergency ${req.bloodGroup} blood request on Infinity LifeLine.`
+                                    )}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white font-extrabold text-xs shadow-xs transition-all cursor-pointer"
+                                    title="WhatsApp Helpline"
+                                  >
+                                    <MessageCircle className="w-3.5 h-3.5" />
+                                    <span className="hidden xs:inline">WhatsApp</span>
+                                  </a>
+                                  <a
+                                    href={`tel:${coordinatorPhone}`}
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-xs transition-all cursor-pointer"
+                                    title={isBn ? 'সমন্বয় হটলাইন' : 'Helpline'}
+                                  >
+                                    <Phone className="w-3.5 h-3.5" />
+                                    <span>{isBn ? 'হটলাইন' : 'Helpline'}</span>
+                                  </a>
+                                </>
+                              );
+                            })()}
                           </div>
                         </div>
                       </div>

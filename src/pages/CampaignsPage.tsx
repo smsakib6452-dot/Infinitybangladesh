@@ -22,6 +22,7 @@ export const CampaignsPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-10">
       <ScrollReveal effect="fade-up">
         <SectionHeading
+          as="h1"
           badge={isBn ? 'মাঠপর্যায়ের উদ্যোগ' : 'Field Initiatives'}
           title={isBn ? 'আমাদের ক্যাম্পেইনসমূহ' : 'Our Campaigns'}
           subtitle={

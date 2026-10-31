@@ -208,6 +208,12 @@ export function maskPhoneNumber(phone?: string): string {
 
 export type DonorPhoneVisibilityReason =
   | 'WITHIN_90_DAYS_COOLDOWN'
+  | 'PENDING_APPROVAL'
+  | 'UNVERIFIED_DONOR'
+  | 'CONSENT_WITHHELD'
+  | 'INVALID_DONATION_DATE'
+  | 'DONOR_PREFERENCE_PRIVATE'
+  | 'OPTED_IN_ELIGIBLE'
   | 'MALE_PUBLIC'
   | 'FEMALE_OPTED_IN'
   | 'FEMALE_PRIVATE'
@@ -226,12 +232,143 @@ export interface DonorPhoneVisibility {
   isWithin90Days: boolean;
 }
 
+export interface DonationCooldownEvaluation {
+  isValidDate: boolean;
+  isNeverDonated: boolean;
+  isFutureDate: boolean;
+  isMalformedOrImpossible: boolean;
+  cooldownActive: boolean;
+  isEligible: boolean;
+  daysPassed: number | null;
+  daysRemaining: number;
+}
+
 /**
- * Determines whether a donor's mobile number is publicly callable or hidden:
- * 1. If within 90 days of last blood donation: ALWAYS hidden for both male and female!
- * 2. If >= 90 days or never donated:
- *    - Male: automatically public!
- *    - Female / Other: follows privacy option (showPhonePublicly)
+ * Deterministic Asia/Dhaka 90-Day Blood Donation Cooldown Evaluator
+ * Partitions date input into 5 distinct states:
+ * 1. Never Donated (NULL / empty) -> Eligible
+ * 2. Valid Past Date < 90 days -> Cooldown Active
+ * 3. Valid Past Date >= 90 days -> Eligible
+ * 4. Future Date -> Invalid / Fail Closed
+ * 5. Malformed or Impossible Date (e.g. 2023-02-29) -> Invalid / Fail Closed
+ */
+export function evaluateDonationCooldown(lastDonationDateStr?: string | null): DonationCooldownEvaluation {
+  if (!lastDonationDateStr || !lastDonationDateStr.trim()) {
+    return {
+      isValidDate: true,
+      isNeverDonated: true,
+      isFutureDate: false,
+      isMalformedOrImpossible: false,
+      cooldownActive: false,
+      isEligible: true,
+      daysPassed: null,
+      daysRemaining: 0
+    };
+  }
+
+  const trimmed = lastDonationDateStr.trim();
+  const match = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.exec(trimmed);
+  if (!match) {
+    return {
+      isValidDate: false,
+      isNeverDonated: false,
+      isFutureDate: false,
+      isMalformedOrImpossible: true,
+      cooldownActive: true,
+      isEligible: false,
+      daysPassed: null,
+      daysRemaining: 90
+    };
+  }
+
+  const y = parseInt(match[1], 10);
+  const m = parseInt(match[2], 10);
+  const d = parseInt(match[3], 10);
+
+  // Calendar validation (leap year, impossible days)
+  const dateObj = new Date(Date.UTC(y, m - 1, d));
+  if (
+    dateObj.getUTCFullYear() !== y ||
+    dateObj.getUTCMonth() !== m - 1 ||
+    dateObj.getUTCDate() !== d
+  ) {
+    return {
+      isValidDate: false,
+      isNeverDonated: false,
+      isFutureDate: false,
+      isMalformedOrImpossible: true,
+      cooldownActive: true,
+      isEligible: false,
+      daysPassed: null,
+      daysRemaining: 90
+    };
+  }
+
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Dhaka',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric'
+  });
+  const parts = formatter.formatToParts(new Date());
+  let dhakaY = 0, dhakaM = 0, dhakaD = 0;
+  for (const part of parts) {
+    if (part.type === 'year') dhakaY = parseInt(part.value, 10);
+    if (part.type === 'month') dhakaM = parseInt(part.value, 10);
+    if (part.type === 'day') dhakaD = parseInt(part.value, 10);
+  }
+
+  const donationEpochDay = Math.floor(Date.UTC(y, m - 1, d) / 86400000);
+  const currentEpochDay = Math.floor(Date.UTC(dhakaY, dhakaM - 1, dhakaD) / 86400000);
+  const diffDays = currentEpochDay - donationEpochDay;
+
+  if (diffDays < 0) {
+    return {
+      isValidDate: false,
+      isNeverDonated: false,
+      isFutureDate: true,
+      isMalformedOrImpossible: false,
+      cooldownActive: true,
+      isEligible: false,
+      daysPassed: null,
+      daysRemaining: 90
+    };
+  }
+
+  if (diffDays < 90) {
+    return {
+      isValidDate: true,
+      isNeverDonated: false,
+      isFutureDate: false,
+      isMalformedOrImpossible: false,
+      cooldownActive: true,
+      isEligible: false,
+      daysPassed: diffDays,
+      daysRemaining: 90 - diffDays
+    };
+  }
+
+  return {
+    isValidDate: true,
+    isNeverDonated: false,
+    isFutureDate: false,
+    isMalformedOrImpossible: false,
+    cooldownActive: false,
+    isEligible: true,
+    daysPassed: diffDays,
+    daysRemaining: 0
+  };
+}
+
+/**
+ * 6-Condition Fail-Closed Phone Visibility Gate (Gender Neutral)
+ * Reveals raw phone ONLY when all 6 conditions pass:
+ * 1. approvalStatus === 'APPROVED'
+ * 2. isVerified === true
+ * 3. privacyConsent === true
+ * 4. Valid, non-future last donation date
+ * 5. 90-day cooldown expired (or never donated)
+ * 6. showPhonePublicly === true
  */
 export function getDonorPhoneVisibility(donor: Partial<BloodDonor> | null | undefined): DonorPhoneVisibility {
   const rawPhone = donor?.phone ? String(donor.phone).trim() : '';
@@ -251,80 +388,105 @@ export function getDonorPhoneVisibility(donor: Partial<BloodDonor> | null | unde
     };
   }
 
-  // Step 1: Check 90-day post-donation cooldown rule (applies to ALL donors, male & female)
-  if (donor.lastDonationDate) {
-    const lastDate = new Date(donor.lastDonationDate);
-    if (!isNaN(lastDate.getTime())) {
-      const today = new Date();
-      const diffMs = today.getTime() - lastDate.getTime();
-      const daysPassed = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const cooldown = evaluateDonationCooldown(donor.lastDonationDate);
 
-      if (daysPassed >= 0 && daysPassed < BLOOD_DONATION_PHONE_HIDE_DAYS) {
-        const daysRemaining = BLOOD_DONATION_PHONE_HIDE_DAYS - daysPassed;
-        return {
-          isPublic: false,
-          reason: 'WITHIN_90_DAYS_COOLDOWN',
-          messageBn: `রক্তদানের পর ৯০ দিন শারীরিক বিশ্রামের নিয়ম থাকায় নম্বর গোপন রাখা হয়েছে (আর ${daysRemaining} দিন পর নম্বর উন্মুক্ত হবে)।`,
-          messageEn: `Phone number is hidden during the 90-day post-donation recovery period (${daysRemaining} days remaining).`,
-          maskedPhone,
-          displayPhone: maskedPhone,
-          daysPassedSinceDonation: daysPassed,
-          daysRemainingIn90Days: daysRemaining,
-          isWithin90Days: true
-        };
-      }
-    }
-  }
-
-  // Step 2: If NOT within 90 days of donation, check gender rules
-  const gender = donor.gender || 'Male';
-
-  if (gender === 'Male') {
-    // Male donors are automatically public
+  if (donor.approvalStatus !== 'APPROVED') {
     return {
-      isPublic: true,
-      reason: 'MALE_PUBLIC',
-      messageBn: 'পুরুষ রক্তদাতার যোগাযোগের নম্বর উন্মুক্ত (পাবলিক) রয়েছে।',
-      messageEn: 'Male donor phone number is public for direct emergency contact.',
+      isPublic: false,
+      reason: 'PENDING_APPROVAL',
+      messageBn: 'রক্তদাতার আবেদনটি অ্যাডমিন দ্বারা যাচাই ও অনুমোদনের অপেক্ষায় রয়েছে।',
+      messageEn: 'Donor profile is pending administrative verification and approval.',
       maskedPhone,
-      displayPhone: rawPhone,
-      daysPassedSinceDonation: null,
-      daysRemainingIn90Days: null,
-      isWithin90Days: false
+      displayPhone: maskedPhone,
+      daysPassedSinceDonation: cooldown.daysPassed,
+      daysRemainingIn90Days: cooldown.daysRemaining,
+      isWithin90Days: cooldown.cooldownActive
     };
   }
 
-  // Female or Other: check privacy consent
-  if (donor.showPhonePublicly) {
+  if (donor.isVerified !== true) {
     return {
-      isPublic: true,
-      reason: 'FEMALE_OPTED_IN',
-      messageBn: 'রক্তদাতা সরাসরি যোগাযোগের অনুমতি দিয়েছেন।',
-      messageEn: 'Donor has allowed direct public contact.',
+      isPublic: false,
+      reason: 'UNVERIFIED_DONOR',
+      messageBn: 'রক্তদাতার প্রোফাইলটি এখনো যাচাই সম্পন্ন হয়নি।',
+      messageEn: 'Donor profile verification has not been completed.',
       maskedPhone,
-      displayPhone: rawPhone,
+      displayPhone: maskedPhone,
+      daysPassedSinceDonation: cooldown.daysPassed,
+      daysRemainingIn90Days: cooldown.daysRemaining,
+      isWithin90Days: cooldown.cooldownActive
+    };
+  }
+
+  if (donor.privacyConsent !== true) {
+    return {
+      isPublic: false,
+      reason: 'CONSENT_WITHHELD',
+      messageBn: 'রক্তদাতা যোগাযোগের তথ্য প্রকাশের সম্মতি প্রত্যাহার বা প্রদান করেননি।',
+      messageEn: 'Donor privacy consent is not active.',
+      maskedPhone,
+      displayPhone: maskedPhone,
+      daysPassedSinceDonation: cooldown.daysPassed,
+      daysRemainingIn90Days: cooldown.daysRemaining,
+      isWithin90Days: cooldown.cooldownActive
+    };
+  }
+
+  if (!cooldown.isValidDate) {
+    return {
+      isPublic: false,
+      reason: 'INVALID_DONATION_DATE',
+      messageBn: 'রক্তদানের তারিখে অসংগতি থাকায় সুরক্ষার্থে নম্বর গোপন রাখা হয়েছে।',
+      messageEn: 'Phone number is hidden due to invalid donation date record.',
+      maskedPhone,
+      displayPhone: maskedPhone,
       daysPassedSinceDonation: null,
+      daysRemainingIn90Days: 90,
+      isWithin90Days: true
+    };
+  }
+
+  if (cooldown.cooldownActive) {
+    return {
+      isPublic: false,
+      reason: 'WITHIN_90_DAYS_COOLDOWN',
+      messageBn: `রক্তদানের পর ৯০ দিন শারীরিক বিশ্রামের নিয়ম থাকায় নম্বর গোপন রাখা হয়েছে (আর ${cooldown.daysRemaining} দিন পর নম্বর উন্মুক্ত হবে)।`,
+      messageEn: `Phone number is hidden during the 90-day post-donation recovery period (${cooldown.daysRemaining} days remaining).`,
+      maskedPhone,
+      displayPhone: maskedPhone,
+      daysPassedSinceDonation: cooldown.daysPassed,
+      daysRemainingIn90Days: cooldown.daysRemaining,
+      isWithin90Days: true
+    };
+  }
+
+  if (!donor.showPhonePublicly) {
+    return {
+      isPublic: false,
+      reason: 'DONOR_PREFERENCE_PRIVATE',
+      messageBn: 'রক্তদাতার ব্যক্তিগত পছন্দের কারণে সরাসরি নম্বর গোপন রাখা হয়েছে। হেল্পলাইনের মাধ্যমে যোগাযোগ করুন।',
+      messageEn: 'Phone number is kept private by donor choice. Please contact via 24/7 Helpline.',
+      maskedPhone,
+      displayPhone: maskedPhone,
+      daysPassedSinceDonation: cooldown.daysPassed,
       daysRemainingIn90Days: null,
       isWithin90Days: false
     };
   }
 
   return {
-    isPublic: false,
-    reason: gender === 'Female' ? 'FEMALE_PRIVATE' : 'OTHER_PRIVATE',
-    messageBn: 'নারী রক্তদাতার ব্যক্তিগত প্রাইভেসি সুরক্ষার স্বার্থে নম্বর গোপন রাখা হয়েছে। হেল্পলাইনের মাধ্যমে যোগাযোগ করুন।',
-    messageEn: 'Phone number is kept hidden for donor privacy. Please contact via 24/7 Helpline.',
+    isPublic: true,
+    reason: 'OPTED_IN_ELIGIBLE',
+    messageBn: 'যাচাইকৃত রক্তদাতার সাথে সরাসরি যোগাযোগের নম্বর উন্মুক্ত রয়েছে।',
+    messageEn: 'Verified donor phone number is public for direct emergency contact.',
     maskedPhone,
-    displayPhone: maskedPhone,
-    daysPassedSinceDonation: null,
-    daysRemainingIn90Days: null,
+    displayPhone: rawPhone,
+    daysPassedSinceDonation: cooldown.daysPassed,
+    daysRemainingIn90Days: 0,
     isWithin90Days: false
   };
 }
 
-/**
- * Calculate blood donation eligibility based on 90 days (3 months) interval
- */
 export function isEligibleToDonate(lastDonationDate?: string): {
   eligible: boolean;
   daysRemaining: number;
@@ -420,23 +582,48 @@ export function getCooldownStatusInfo(lastDonationDate?: string, isBn: boolean =
 
 /**
  * Calculate age in years from a Date of Birth string (YYYY-MM-DD)
+ * Evaluated deterministically at Asia/Dhaka midnight with strict calendar validation.
  */
 export function calculateAge(dobString?: string): number | null {
-  if (!dobString) return null;
-  const birthDate = new Date(dobString);
-  if (isNaN(birthDate.getTime())) return null;
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+  if (!dobString || typeof dobString !== 'string') return null;
+  const match = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.exec(dobString.trim());
+  if (!match) return null;
+
+  const birthYear = parseInt(match[1], 10);
+  const birthMonth = parseInt(match[2], 10);
+  const birthDay = parseInt(match[3], 10);
+
+  // Calendar validation (leap year, impossible days)
+  const testDate = new Date(Date.UTC(birthYear, birthMonth - 1, birthDay));
+  if (
+    testDate.getUTCFullYear() !== birthYear ||
+    testDate.getUTCMonth() !== birthMonth - 1 ||
+    testDate.getUTCDate() !== birthDay
+  ) {
+    return null;
+  }
+
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Dhaka',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric'
+  });
+  const parts = formatter.formatToParts(new Date());
+  let dhakaY = 0, dhakaM = 0, dhakaD = 0;
+  for (const part of parts) {
+    if (part.type === 'year') dhakaY = parseInt(part.value, 10);
+    if (part.type === 'month') dhakaM = parseInt(part.value, 10);
+    if (part.type === 'day') dhakaD = parseInt(part.value, 10);
+  }
+
+  let age = dhakaY - birthYear;
+  if (dhakaM < birthMonth || (dhakaM === birthMonth && dhakaD < birthDay)) {
     age--;
   }
   return age >= 0 ? age : null;
 }
 
-/**
- * Predefined Organization Categories for Blood Donors
- */
 export const DEFAULT_DONOR_CATEGORIES: DonorCategoryOption[] = [
   {
     id: 'cat-open',
@@ -542,87 +729,11 @@ export const INITIAL_BLOOD_SETTINGS: BloodDonationSettings = {
 };
 
 /**
- * Initial Seed Blood Donors (Real donor records added by admin)
+ * Initial Seed Blood Donors: Real donor records are managed dynamically via Supabase
+ * with server-side Row Level Security. Never commit personal contact numbers or home
+ * addresses into client-side production JavaScript bundles.
  */
-export const INITIAL_BLOOD_DONORS: BloodDonor[] = [
-  {
-    id: 'donor-1787850707660',
-    fullName: 'Salimur Rahaman Opi',
-    bloodGroup: 'A+',
-    gender: 'Male',
-    phone: '01815847049',
-    email: 'selimurrahmanopi@gmail.com',
-    photoUrl: '/brand/infinity-logo.png',
-    district: 'Chattogram',
-    upazila: 'Hathazari',
-    area: 'Hathazari College Gate',
-    detailedAddress: 'Hasmat Ali Chowdhury Bari',
-    orgCategory: 'Infinity Bangladesh Member',
-    committeePosition: 'Executive Member',
-    availabilityStatus: 'AVAILABLE_EMERGENCY',
-    lastDonationDate: '2025-07-12',
-    totalDonations: 6,
-    experienceNotes: undefined,
-    privacyConsent: true,
-    showPhonePublicly: false,
-    approvalStatus: 'APPROVED',
-    isVerified: true,
-    donationHistory: [],
-    createdAt: '2026-08-27T17:11:47.661+00:00',
-    updatedAt: '2026-08-27T17:42:12.633+00:00'
-  },
-  {
-    id: 'donor-1787850356625',
-    fullName: 'MD. Shahadad Alam',
-    bloodGroup: 'B+',
-    gender: 'Male',
-    phone: '01842312364',
-    photoUrl: 'https://res.cloudinary.com/evj6fhsf/image/upload/v1787461653/c0sywzwjmt4gyi0uesch.jpg',
-    district: 'Chattogram',
-    upazila: 'Hathazari',
-    area: 'Hathazari',
-    detailedAddress: 'Krisi farm road',
-    orgCategory: 'Infinity Bangladesh Member',
-    committeePosition: undefined,
-    availabilityStatus: 'AVAILABLE_EMERGENCY',
-    lastDonationDate: '2024-05-13',
-    totalDonations: 4,
-    experienceNotes: undefined,
-    privacyConsent: true,
-    showPhonePublicly: false,
-    approvalStatus: 'APPROVED',
-    isVerified: true,
-    donationHistory: [],
-    createdAt: '2026-08-27T17:05:56.625+00:00',
-    updatedAt: '2026-08-27T17:13:02.628+00:00'
-  },
-  {
-    id: 'donor-1787831352728',
-    fullName: 'Md Shahidul Alam Sakib',
-    bloodGroup: 'B+',
-    gender: 'Male',
-    phone: '01839008339',
-    email: 'sa.sakib360@gmail.com',
-    photoUrl: 'https://res.cloudinary.com/evj6fhsf/image/upload/v1787464356/nvdp2wahmmvef9d80mzr.jpg',
-    district: 'Chattogram',
-    upazila: 'Hathazari',
-    area: 'Hathazari',
-    detailedAddress: 'Rangipara',
-    orgCategory: 'Infinity Bangladesh Member',
-    committeePosition: 'Executive Member',
-    availabilityStatus: 'AVAILABLE_EMERGENCY',
-    lastDonationDate: '2026-03-07',
-    totalDonations: 10,
-    experienceNotes: undefined,
-    privacyConsent: true,
-    showPhonePublicly: false,
-    approvalStatus: 'APPROVED',
-    isVerified: true,
-    donationHistory: [],
-    createdAt: '2026-08-27T11:49:12.728+00:00',
-    updatedAt: '2026-08-27T17:07:47.357+00:00'
-  }
-];
+export const INITIAL_BLOOD_DONORS: BloodDonor[] = [];
 
 /**
  * Initial Active Emergency Blood Requests (Real requests submitted via form or admin)
