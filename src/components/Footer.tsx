@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Link } from '../context/RouterContext';
+import { Link, useRouter } from '../context/RouterContext';
 import { useData } from '../context/DataContext';
 import { BrandLogo } from './BrandLogo';
 import {
@@ -24,6 +24,7 @@ import { SocialPlatform } from '../types';
 export const Footer: React.FC = () => {
   const { isBn, tText } = useLanguage();
   const { footerSettings, socialLinks, settings, programs, bloodDonationSettings } = useData();
+  const { currentPage } = useRouter();
 
   const renderSocialIcon = (platform: SocialPlatform) => {
     switch (platform) {
@@ -49,7 +50,7 @@ export const Footer: React.FC = () => {
   return (
     <footer className="bg-[#11241E] text-emerald-100 border-t border-emerald-900/60 selection:bg-emerald-800 selection:text-white">
       {/* 1. Top Callout Banner: United for Humanity */}
-      {footerSettings?.showCallout !== false && (
+      {footerSettings?.showCallout !== false && currentPage !== 'volunteer' && !currentPage?.startsWith('volunteer') && (
         <div className="bg-gradient-to-r from-[#0D1C17] via-[#132A23] to-[#0D1C17] py-10 sm:py-12 border-b border-emerald-900/40 relative overflow-hidden">
           {/* Subtle ambient background glow */}
           <div className="absolute top-0 right-1/4 w-80 h-80 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none" />

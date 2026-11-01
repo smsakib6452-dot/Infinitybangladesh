@@ -3,6 +3,7 @@ import { ImpactMetric } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { Users, HeartHandshake, Flag, Sparkles, Award, MapPin } from 'lucide-react';
 import { AnimatedCounter } from './motion/AnimatedCounter';
+import { SpotlightBentoCard } from './motion/SpotlightBentoCard';
 
 const METRIC_ICONS: Record<string, React.ReactNode> = {
   Users: <Users className="w-5 h-5 sm:w-6 sm:h-6 text-[#006A4E]" />,
@@ -23,14 +24,17 @@ export const ImpactCounter: React.FC<ImpactCounterProps> = ({ metric }) => {
   const icon = METRIC_ICONS[metric.iconName] || <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-[#006A4E]" />;
 
   return (
-    <div className="bg-white/95 backdrop-blur-xs rounded-2xl sm:rounded-3xl border border-[#EAE3D9] p-3.5 sm:p-7 shadow-warm-sm hover:shadow-warm-lg hover:-translate-y-1.5 transition-all duration-300 flex flex-col items-center text-center space-y-2.5 sm:space-y-4 relative overflow-hidden group w-full h-full">
+    <SpotlightBentoCard
+      glowColor="rgba(0, 106, 78, 0.15)"
+      className="flex flex-col items-center text-center space-y-2.5 sm:space-y-4 w-full h-full"
+    >
       {/* Decorative top accent */}
-      <div className="w-8 sm:w-14 h-1 bg-gradient-to-r from-[#006A4E] via-[#008562] to-[#D97706] rounded-full" />
+      <div className="w-8 sm:w-14 h-1 bg-gradient-to-r from-[#006A4E] via-[#008562] to-[#D97706] rounded-full mx-auto" />
 
       {/* Icon & Counter Body */}
       <div className="space-y-2 sm:space-y-3 flex flex-col items-center w-full my-auto">
         {/* Icon */}
-        <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-[#E6F3EF] border border-[#C2E2D7] shadow-xs flex items-center justify-center group-hover:scale-105 group-hover:border-[#006A4E]/40 transition-all duration-300">
+        <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-[#E6F3EF] border border-[#C2E2D7] shadow-xs flex items-center justify-center group-hover:scale-110 group-hover:border-[#006A4E]/50 group-hover:shadow-warm-sm transition-all duration-300">
           {icon}
         </div>
 
@@ -49,6 +53,6 @@ export const ImpactCounter: React.FC<ImpactCounterProps> = ({ metric }) => {
           {tText(metric.description)}
         </p>
       </div>
-    </div>
+    </SpotlightBentoCard>
   );
 };

@@ -412,9 +412,9 @@ export const ExecutiveCommitteePage: React.FC = () => {
                     'সহ-সভাপতি পরিষদ'
                   )}
 
-                  <StaggerGroup className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                  <StaggerGroup className="flex flex-wrap justify-center gap-6 max-w-4xl mx-auto">
                     {members2to4.map(m => (
-                      <StaggerItem key={m.id}>
+                      <StaggerItem key={m.id} className="w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)] max-w-xs">
                         <div
                           onClick={() => setSelectedMember(m)}
                           className="group cursor-pointer bg-white text-slate-900 rounded-3xl p-5 sm:p-6 text-center shadow-warm-sm border border-[#EAE3D9] hover:border-[#006A4E] transition-all transform hover:-translate-y-1 relative h-full flex flex-col justify-between items-center"
@@ -511,7 +511,7 @@ export const ExecutiveCommitteePage: React.FC = () => {
                   'যুগ্ম সাধারণ সম্পাদক পরিষদ'
                 )}
 
-                <StaggerGroup className="flex flex-wrap lg:flex-nowrap justify-center items-start gap-3 sm:gap-3.5 lg:gap-4 max-w-5xl mx-auto">
+                <StaggerGroup className="flex flex-wrap justify-center items-start gap-3 sm:gap-3.5 lg:gap-4 max-w-5xl mx-auto">
                   {members6to10.map(m => (
                     <StaggerItem
                       key={m.id}
@@ -565,7 +565,7 @@ export const ExecutiveCommitteePage: React.FC = () => {
                   'অন্যান্য কার্যনির্বাহী কমিটির সদস্যবৃন্দ'
                 )}
 
-                <StaggerGroup className="flex flex-wrap lg:flex-nowrap justify-center items-center gap-2.5 sm:gap-3 lg:gap-3.5 xl:gap-4 max-w-6xl mx-auto">
+                <StaggerGroup className="flex flex-wrap justify-center items-center gap-2.5 sm:gap-3 lg:gap-3.5 xl:gap-4 max-w-6xl mx-auto">
                   {section3Items.map(({ member: m, isHighlighted }) => (
                     <StaggerItem
                       key={m.id}
@@ -651,7 +651,7 @@ export const ExecutiveCommitteePage: React.FC = () => {
                   'প্রচার, তথ্য ও প্রযুক্তি বিভাগ'
                 )}
 
-                <StaggerGroup className="flex flex-wrap lg:flex-nowrap justify-center items-center gap-2.5 sm:gap-3 lg:gap-3.5 xl:gap-4 max-w-6xl mx-auto">
+                <StaggerGroup className="flex flex-wrap justify-center items-center gap-2.5 sm:gap-3 lg:gap-3.5 xl:gap-4 max-w-6xl mx-auto">
                   {section4Items.map(({ member: m, isHighlighted }) => (
                     <StaggerItem
                       key={m.id}

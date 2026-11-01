@@ -204,6 +204,7 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
   const [regBloodGroup, setRegBloodGroup] = useState<BloodGroup>('O+');
   const [regGender, setRegGender] = useState<'Male' | 'Female' | 'Other' | string>('Male');
   const [regDateOfBirth, setRegDateOfBirth] = useState('');
+  const [regAge, setRegAge] = useState('');
   const [regPhone, setRegPhone] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPhotoUrl, setRegPhotoUrl] = useState('');
@@ -299,6 +300,7 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
     setRegBloodGroup('O+');
     setRegGender('Male');
     setRegDateOfBirth('');
+    setRegAge('');
     setRegPhone('');
     setRegEmail('');
     setRegPhotoUrl('');
@@ -1831,7 +1833,7 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                       {isBn ? '১. ব্যক্তিগত তথ্য ও রক্তের গ্রুপ' : '1. Personal Details & Blood Group'}
                     </h4>
 
-                    {/* Optional Profile Photo Upload & URL */}
+                    {/* Profile Photo Uploader (Square / Rounded-2xl) */}
                     <div className="space-y-2.5 p-4 rounded-3xl bg-[#FAF7F2] border-2 border-dashed border-[#EAE3D9] hover:border-[#006A4E] transition-colors">
                       <div className="flex items-center justify-between">
                         <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
@@ -1845,7 +1847,7 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
 
                       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
                         {regPhotoUrl ? (
-                          <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-2 border-[#006A4E] shadow-warm-sm shrink-0 bg-white group">
+                          <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-[#006A4E] shadow-warm-sm shrink-0 bg-white group">
                             <img
                               src={getAssetUrl(regPhotoUrl)}
                               alt="Donor Preview"
@@ -1864,12 +1866,12 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                         ) : (
                           <div
                             onClick={() => regPhotoInputRef.current?.click()}
-                            className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-white border border-slate-200 flex flex-col items-center justify-center text-slate-400 hover:text-[#006A4E] hover:border-[#006A4E] transition-all cursor-pointer shrink-0 shadow-2xs group"
+                            className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white border border-slate-200 flex flex-col items-center justify-center text-slate-400 hover:text-[#006A4E] hover:border-[#006A4E] transition-all cursor-pointer shrink-0 shadow-2xs group"
                             title={isBn ? 'ছবি আপলোড করতে ক্লিক করুন' : 'Click to upload photo'}
                           >
-                            <Camera className="w-7 h-7 mb-1 text-slate-400 group-hover:scale-110 group-hover:text-[#006A4E] transition-all" />
+                            <Camera className="w-6 h-6 mb-1 text-slate-400 group-hover:scale-110 group-hover:text-[#006A4E] transition-all" />
                             <span className="text-[10px] font-bold uppercase text-center px-1 text-slate-600 group-hover:text-[#006A4E]">
-                              {isBn ? 'ছবি আপলোড' : 'Upload'}
+                              {isBn ? 'ছবি যোগ' : 'Upload'}
                             </span>
                           </div>
                         )}
@@ -1882,17 +1884,17 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                             onChange={handleDonorPhotoUpload}
                             className="hidden"
                           />
-                          <div className="flex flex-wrap sm:flex-nowrap gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <button
                               type="button"
                               onClick={() => regPhotoInputRef.current?.click()}
-                              className="px-4 py-2.5 rounded-xl bg-white border border-[#EAE3D9] hover:bg-slate-100 text-slate-800 text-xs font-bold shadow-2xs inline-flex items-center justify-center gap-2 cursor-pointer transition-colors shrink-0"
+                              className="px-4 py-2 rounded-xl bg-white border border-[#EAE3D9] hover:bg-slate-100 text-slate-800 text-xs font-bold shadow-2xs inline-flex items-center justify-center gap-2 cursor-pointer transition-colors shrink-0"
                             >
                               <Upload className="w-3.5 h-3.5 text-[#006A4E]" />
                               <span>
                                 {regPhotoUrl
                                   ? (isBn ? 'ছবি পরিবর্তন করুন' : 'Change Photo')
-                                  : (isBn ? 'ডিভাইস থেকে ছবি আপলোড' : 'Upload from Device')}
+                                  : (isBn ? 'ডিভাইস থেকে ছবি নির্বাচন' : 'Choose Photo')}
                               </span>
                             </button>
 
@@ -1900,30 +1902,19 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                               <button
                                 type="button"
                                 onClick={() => handleOpenPhotoCropper(regPhotoUrl, false)}
-                                className="px-3.5 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#006A4E] border border-emerald-300 text-xs font-bold shadow-2xs inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors shrink-0"
+                                className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#006A4E] border border-emerald-300 text-xs font-bold shadow-2xs inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors shrink-0"
                                 title={isBn ? 'ছবি জুম ও ক্রপ করুন' : 'Crop & Zoom Photo'}
                               >
                                 <Crop className="w-3.5 h-3.5" />
                                 <span>{isBn ? 'ক্রপ / জুম করুন' : 'Crop / Zoom'}</span>
                               </button>
                             )}
-
-                            <input
-                              type="url"
-                              value={regPhotoUrl.startsWith('data:') ? '' : regPhotoUrl}
-                              onChange={(e) => {
-                                setRegPhotoUrl(e.target.value);
-                                setRegPhotoFileName('');
-                              }}
-                              placeholder={isBn ? 'অথবা সরাসরি ছবির লিঙ্ক দিন (URL)' : 'Or paste direct Image URL...'}
-                              className="flex-1 min-w-0 px-3.5 py-2 rounded-xl border border-[#EAE3D9] bg-white text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
-                            />
                           </div>
 
                           <p className="text-[11px] text-slate-500">
                             {isBn
-                              ? 'JPG, PNG বা WebP ফরম্যাট। জুম ইন/আউট ও ১:১ স্কয়ার ক্রপিং সুবিধা উপলব্ধ। (ছবি না দিলেও নিবন্ধন সম্পন্ন হবে)'
-                              : 'Supported: JPG, PNG, WebP. Full Zoom & 1:1 Square Cropper included. Photo is optional.'}
+                              ? 'JPG, PNG বা WebP ফরম্যাট। ছবি ছাড়াও নিবন্ধন সম্পন্ন করা যাবে।'
+                              : 'Supported formats: JPG, PNG, WebP. Photo is optional.'}
                           </p>
 
                           {regPhotoFileName && (
@@ -1936,117 +1927,186 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                       </div>
                     </div>
 
-                    {/* Name & Blood Group */}
-                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
-                      <div className="sm:col-span-8 space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-800">{isBn ? 'পূর্ণ নাম *' : 'Full Name *'}</label>
-                        <input
-                          type="text"
-                          required
-                          value={regFullName}
-                          onChange={(e) => setRegFullName(e.target.value)}
-                          placeholder="e.g. Tanvir Hossain"
-                          className="w-full px-4 py-2.5 rounded-xl border border-[#EAE3D9] bg-[#FAF7F2] text-xs sm:text-sm focus:bg-white focus:ring-2 focus:ring-[#006A4E] focus:outline-none font-medium"
-                        />
-                      </div>
+                    {/* Full Name */}
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-800">{isBn ? 'পূর্ণ নাম *' : 'Full Name *'}</label>
+                      <input
+                        type="text"
+                        required
+                        value={regFullName}
+                        onChange={(e) => setRegFullName(e.target.value)}
+                        placeholder="e.g. Tanvir Hossain"
+                        className="w-full px-4 py-2.5 rounded-xl border border-[#EAE3D9] bg-[#FAF7F2] text-xs sm:text-sm focus:bg-white focus:ring-2 focus:ring-[#006A4E] focus:outline-none font-medium"
+                      />
+                    </div>
 
-                      <div className="sm:col-span-4 space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-800">{isBn ? 'রক্তের গ্রুপ *' : 'Blood Group *'}</label>
-                        <select
-                          value={regBloodGroup}
-                          onChange={(e) => setRegBloodGroup(e.target.value as BloodGroup)}
-                          className="w-full px-4 py-2.5 rounded-xl border border-[#EAE3D9] bg-[#FAF7F2] text-xs sm:text-sm font-black text-rose-700 focus:bg-white focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
-                        >
-                          <option value="A+">A+ (Positive)</option>
-                          <option value="A-">A- (Negative)</option>
-                          <option value="B+">B+ (Positive)</option>
-                          <option value="B-">B- (Negative)</option>
-                          <option value="O+">O+ (Positive)</option>
-                          <option value="O-">O- (Negative)</option>
-                          <option value="AB+">AB+ (Positive)</option>
-                          <option value="AB-">AB- (Negative)</option>
-                        </select>
+                    {/* 1-Tap Tactile Blood Group Pill Selector */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold text-slate-800">
+                        {isBn ? 'রক্তের গ্রুপ নির্বাচন করুন *' : 'Select Blood Group *'}
+                      </label>
+                      <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                        {(['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'] as BloodGroup[]).map(bg => {
+                          const isSelected = regBloodGroup === bg;
+                          return (
+                            <button
+                              key={bg}
+                              type="button"
+                              onClick={() => setRegBloodGroup(bg)}
+                              className={`py-2.5 px-1 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer border flex flex-col items-center justify-center font-display ${
+                                isSelected
+                                  ? 'bg-rose-600 text-white border-rose-700 shadow-sm scale-105 ring-2 ring-rose-400/30'
+                                  : 'bg-white text-slate-800 border-[#EAE3D9] hover:bg-rose-50 hover:text-rose-700'
+                              }`}
+                            >
+                              <span>{bg}</span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
-                    {/* Gender & Date of Birth (with Age Indicator) */}
-                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
-                      <div className="sm:col-span-4 space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-800">{isBn ? 'লিঙ্গ (Gender) *' : 'Gender *'}</label>
-                        <select
-                          value={regGender}
-                          onChange={(e) => setRegGender(e.target.value)}
-                          className="w-full px-4 py-2.5 rounded-xl border border-[#EAE3D9] bg-[#FAF7F2] text-xs sm:text-sm font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
-                        >
-                          <option value="Male">{isBn ? 'পুরুষ (Male)' : 'Male'}</option>
-                          <option value="Female">{isBn ? 'নারী (Female)' : 'Female'}</option>
-                          <option value="Other">{isBn ? 'অন্যান্য (Other)' : 'Other'}</option>
-                        </select>
+                    {/* 1-Tap Gender Pills */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold text-slate-800">
+                        {isBn ? 'লিঙ্গ (Gender) *' : 'Gender *'}
+                      </label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { val: 'Male', labelBn: '👨 পুরুষ', labelEn: 'Male' },
+                          { val: 'Female', labelBn: '👩 নারী', labelEn: 'Female' },
+                          { val: 'Other', labelBn: '⚧ অন্যান্য', labelEn: 'Other' }
+                        ].map(g => {
+                          const isSelected = regGender === g.val;
+                          return (
+                            <button
+                              key={g.val}
+                              type="button"
+                              onClick={() => {
+                                setRegGender(g.val);
+                                if (g.val === 'Female') setRegShowPhone(false);
+                                else setRegShowPhone(true);
+                              }}
+                              className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
+                                isSelected
+                                  ? 'bg-[#006A4E] text-white border-[#006A4E] shadow-sm'
+                                  : 'bg-white text-slate-700 border-[#EAE3D9] hover:bg-slate-50'
+                              }`}
+                            >
+                              <span>{isBn ? g.labelBn : g.labelEn}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {regGender === 'Male' ? (
+                        <p className="text-[11px] text-slate-500 pt-0.5">
+                          {isBn
+                            ? '📢 পুরুষ রক্তদাতাদের নম্বর জরুরি রক্তের প্রয়োজনে রোগীর স্বজনদের কাছে ডিরেক্টরিতে দৃশ্যমান থাকবে।'
+                            : 'Phone numbers of male donors are displayed for emergency patient contacts.'}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-emerald-700 pt-0.5 font-medium">
+                          {isBn
+                            ? '🛡️ নারী রক্তদাতাদের ফোন নম্বর সম্পূর্ণ সুরক্ষিত ও গোপন থাকবে; কেবলমাত্র নারী সমন্বয়ক যোগাযোগ করবেন।'
+                            : 'Female donor numbers remain protected; coordination is routed exclusively via female coordinators.'}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Dual Age / Date of Birth Input */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-[#006A4E]" />
+                          <span>{isBn ? 'বয়স / জন্ম তারিখ (Age / DOB) *' : 'Age / Date of Birth *'}</span>
+                        </label>
+                        {regDateOfBirth && (() => {
+                          const age = calculateAge(regDateOfBirth);
+                          if (age === null) return null;
+                          const isEligible = age >= 18;
+                          return (
+                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                              isEligible
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                : 'bg-rose-50 text-rose-800 border-rose-300 animate-pulse'
+                            }`}>
+                              <span>{isBn ? `বয়স: ${age} বছর` : `Age: ${age} yrs`}</span>
+                              <span>{isEligible ? (isBn ? '✓ (১৮+ যোগ্য)' : '✓ (Eligible)') : (isBn ? '⚠️ (১৮ এর কম)' : '⚠️ (< 18 yrs)')}</span>
+                            </span>
+                          );
+                        })()}
                       </div>
 
-                      <div className="sm:col-span-8 space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-[#006A4E]" />
-                            <span>{isBn ? 'জন্ম তারিখ (Date of Birth) *' : 'Date of Birth *'}</span>
-                          </label>
-                          {regDateOfBirth && (() => {
-                            const age = calculateAge(regDateOfBirth);
-                            if (age === null) return null;
-                            const isEligible = age >= 18;
-                            return (
-                              <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
-                                isEligible
-                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                                  : 'bg-rose-50 text-rose-800 border-rose-300 animate-pulse'
-                              }`}>
-                                <span>{isBn ? `বয়স: ${age} বছর` : `Age: ${age} yrs`}</span>
-                                <span>{isEligible ? (isBn ? '✓ (১৮+ যোগ্য)' : '✓ (Eligible)') : (isBn ? '⚠️ (১৮ এর কম)' : '⚠️ (< 18 yrs)')}</span>
-                              </span>
-                            );
-                          })()}
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                        {/* Direct Age Number Input */}
+                        <div className="sm:col-span-4">
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min="18"
+                              max="65"
+                              value={regAge}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setRegAge(val);
+                                const num = parseInt(val, 10);
+                                if (!isNaN(num) && num >= 10 && num <= 100) {
+                                  const currentYear = new Date().getFullYear();
+                                  const birthYear = currentYear - num;
+                                  setRegDateOfBirth(`${birthYear}-01-01`);
+                                  if (num < 18) {
+                                    setRegFormError(isBn ? 'রক্তদানের জন্য সর্বনিম্ন বয়স ১৮ বছর।' : 'Minimum age required is 18 years.');
+                                  } else {
+                                    setRegFormError(null);
+                                  }
+                                } else if (!val) {
+                                  setRegDateOfBirth('');
+                                }
+                              }}
+                              placeholder={isBn ? 'বয়স (যেমন: ২৫)' : 'Age (e.g. 25)'}
+                              className="w-full px-3.5 py-2.5 rounded-xl border border-[#EAE3D9] bg-[#FAF7F2] text-xs sm:text-sm font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
+                            />
+                            <span className="absolute right-3 top-2.5 text-[11px] font-bold text-slate-400 pointer-events-none">
+                              {isBn ? 'বছর' : 'yrs'}
+                            </span>
+                          </div>
                         </div>
 
-                        <DateInput
-                          value={regDateOfBirth}
-                          onChange={(val) => {
-                            setRegDateOfBirth(val);
-                            if (!val) {
-                              setRegFormError(null);
-                              return;
-                            }
-                            const age = calculateAge(val);
-                            if (age !== null && age < 18) {
-                              setRegFormError(
-                                isBn
-                                  ? `সতর্কতা: স্বেচ্ছায় রক্তদানের জন্য প্রার্থীর বয়স কমপক্ষে ১৮ বছর হতে হবে (আপনার বর্তমান বয়স ${age} বছর)।`
-                                  : `Warning: Minimum age for voluntary blood donation is 18 years (current calculated age is ${age} years).`
-                              );
-                            } else if (regFormError?.includes('১৮') || regFormError?.includes('18')) {
-                              setRegFormError(null);
-                            }
-                          }}
-                          isBn={isBn}
-                          required
-                          max={new Date().toISOString().split('T')[0]}
-                          minYear={1940}
-                          maxYear={new Date().getFullYear()}
-                        />
-
-                        {regDateOfBirth && calculateAge(regDateOfBirth) !== null && calculateAge(regDateOfBirth)! < 18 ? (
-                          <p className="text-[11px] font-bold text-rose-600 flex items-center gap-1">
-                            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                            <span>{isBn ? 'রক্তদানের জন্য সর্বনিম্ন বয়স ১৮ বছর হতে হবে।' : 'Minimum age required for donating blood is 18 years.'}</span>
-                          </p>
-                        ) : (
-                          <p className="text-[10px] text-slate-400 font-medium">
-                            {isBn ? 'সঠিক জন্ম তারিখ দিন (রক্তদানের বয়স যাচাইয়ের জন্য আবশ্যক)' : 'Required to verify donor age eligibility (18+)'}
-                          </p>
-                        )}
+                        {/* Exact Birthdate Picker */}
+                        <div className="sm:col-span-8">
+                          <DateInput
+                            value={regDateOfBirth}
+                            onChange={(val) => {
+                              setRegDateOfBirth(val);
+                              if (val) {
+                                const age = calculateAge(val);
+                                if (age !== null) {
+                                  setRegAge(String(age));
+                                  if (age < 18) {
+                                    setRegFormError(isBn ? 'রক্তদানের জন্য সর্বনিম্ন বয়স ১৮ বছর।' : 'Minimum age required is 18 years.');
+                                  } else {
+                                    setRegFormError(null);
+                                  }
+                                }
+                              } else {
+                                setRegAge('');
+                              }
+                            }}
+                            isBn={isBn}
+                            required
+                            max={new Date().toISOString().split('T')[0]}
+                            minYear={1950}
+                            maxYear={new Date().getFullYear()}
+                          />
+                        </div>
                       </div>
+
+                      <p className="text-[10px] text-slate-400 font-medium">
+                        {isBn ? 'সরাসরি বয়স লিখুন অথবা সঠিক জন্ম তারিখ নির্বাচন করুন (১৮+ আবশ্যক)' : 'Enter age directly or pick exact birthdate (18+ required)'}
+                      </p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                         <label className="block text-xs font-bold text-slate-800">{isBn ? 'মোবাইল নম্বর *' : 'Mobile Number *'}</label>
                         <input
@@ -2184,90 +2244,132 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {/* Total Donations with 0-Donation Pill */}
                       <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-800">{isBn ? 'পূর্বে মোট রক্তদান করেছেন' : 'Total Previous Donations'}</label>
-                        <input
-                          type="number"
-                          min="0"
-                          value={regTotalDonations}
-                          onChange={(e) => setRegTotalDonations(Number(e.target.value))}
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-[#EAE3D9] bg-[#FAF7F2] text-xs sm:text-sm focus:bg-white focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-800 flex items-center justify-between">
-                          <span>{isBn ? 'সর্বশেষ রক্তদানের তারিখ' : 'Last Donation Date'}</span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const today = new Date().toISOString().split('T')[0];
-                              setRegLastDonationDate(today);
-                              setRegTotalDonations(prev => (Number(prev) || 0) + 1);
-                              setRegAvailability('UNAVAILABLE');
-                              if (regFormError?.includes('তারিখ') || regFormError?.includes('date')) {
-                                setRegFormError(null);
+                        <label className="block text-xs font-bold text-slate-800">
+                          {isBn ? 'পূর্বে মোট রক্তদান করেছেন' : 'Total Previous Donations'}
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            value={regTotalDonations}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setRegTotalDonations(val);
+                              if (val === 0) {
+                                setRegLastDonationDate('');
+                                setRegAvailability('AVAILABLE_EMERGENCY');
                               }
                             }}
-                            className="text-[10px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded-lg border border-rose-200 cursor-pointer flex items-center gap-1"
-                            title={isBn ? 'আজকে রক্তদান করেছেন হিসেবে সেট করুন' : 'Mark as Donated Today'}
-                          >
-                            <Droplet className="w-3 h-3 fill-current text-rose-600" />
-                            <span>{isBn ? 'আজকে রক্তদান করেছি' : 'Donated Today'}</span>
-                          </button>
-                        </label>
-                        <DateInput
-                          value={regLastDonationDate}
-                          onChange={(val) => {
-                            setRegLastDonationDate(val);
-                            const today = new Date().toISOString().split('T')[0];
-                            if (val && val > today) {
-                              setRegFormError(
-                                isBn
-                                  ? 'সর্বশেষ রক্তদানের তারিখ আজকের বা অতীতের তারিখ হতে হবে, ভবিষ্যতের নয়।'
-                                  : 'Last donation date cannot be in the future.'
-                              );
-                            } else if (regFormError?.includes('তারিখ') || regFormError?.includes('date')) {
-                              setRegFormError(null);
-                            }
-                          }}
-                          isBn={isBn}
-                          max={new Date().toISOString().split('T')[0]}
-                          minYear={2010}
-                          maxYear={new Date().getFullYear()}
-                          showQuickToday
-                        />
-                        {regLastDonationDate && regLastDonationDate > new Date().toISOString().split('T')[0] ? (
-                          <div className="p-2 rounded-xl bg-rose-100/90 border border-rose-300 text-rose-900 text-[11px] font-bold flex items-center gap-1.5 animate-in fade-in">
-                            <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-                            <span>
-                              {isBn
-                                ? 'ভবিষ্যতের কোনো তারিখ রক্তদানের তারিখ হতে পারে না। অনুগ্রহ করে অতীতের বা আজকের সঠিক তারিখ দিন।'
-                                : 'Future date cannot be a past blood donation date. Please select today or a past date.'}
+                            className="w-28 px-3.5 py-2.5 rounded-xl border border-[#EAE3D9] bg-[#FAF7F2] text-xs sm:text-sm font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
+                          />
+                          {Number(regTotalDonations) === 0 ? (
+                            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-emerald-200">
+                              {isBn ? '✨ প্রথমবার রক্তদান করবেন' : '✨ First-time Donor'}
                             </span>
+                          ) : (
+                            <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-1.5 rounded-xl border border-slate-200">
+                              {isBn ? `${regTotalDonations} বার রক্তদান` : `${regTotalDonations} donations`}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Last Donation Date (Hidden/disabled if 0 donations) */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-xs font-bold text-slate-800">
+                            {isBn ? 'সর্বশেষ রক্তদানের তারিখ' : 'Last Donation Date'}
+                          </label>
+                          {Number(regTotalDonations) > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const today = new Date().toISOString().split('T')[0];
+                                setRegLastDonationDate(today);
+                                setRegAvailability('UNAVAILABLE');
+                                if (regFormError?.includes('তারিখ') || regFormError?.includes('date')) {
+                                  setRegFormError(null);
+                                }
+                              }}
+                              className="text-[10px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded-lg border border-rose-200 cursor-pointer flex items-center gap-1"
+                              title={isBn ? 'আজকে রক্তদান করেছেন হিসেবে সেট করুন' : 'Mark as Donated Today'}
+                            >
+                              <Droplet className="w-3 h-3 fill-current text-rose-600" />
+                              <span>{isBn ? 'আজকে রক্তদান করেছি' : 'Donated Today'}</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {Number(regTotalDonations) === 0 ? (
+                          <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-emerald-950 text-xs">
+                            <p className="font-bold flex items-center gap-1.5 text-emerald-900">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[#006A4E] shrink-0" />
+                              <span>{isBn ? 'তারিখ নির্বাচনের প্রয়োজন নেই' : 'No date required'}</span>
+                            </p>
+                            <p className="text-[11px] text-emerald-800/90 mt-0.5">
+                              {isBn
+                                ? 'নতুন রক্তদাতা হিসেবে আপনি তাৎক্ষণিকভাবে রক্তদানে প্রস্তুত হিসেবে নিবন্ধিত হবেন।'
+                                : 'As a new donor, you will be registered as immediately ready to donate.'}
+                            </p>
                           </div>
-                        ) : regLastDonationDate ? (() => {
-                          const cooldown = getCooldownStatusInfo(regLastDonationDate, isBn);
-                          return (
-                            <div className={`p-3 rounded-2xl border text-xs flex items-start gap-2.5 shadow-2xs ${cooldown.badgeColorClass} animate-in fade-in`}>
-                              <HeartPulse className="w-4 h-4 shrink-0 mt-0.5" />
-                              <div className="space-y-0.5 flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-1">
-                                  <p className="font-extrabold text-[11.5px]">{cooldown.badgeText}</p>
-                                  {cooldown.daysPassed !== null && (
-                                    <span className="text-[9.5px] font-bold opacity-80 font-mono">
-                                      {isBn ? `${cooldown.daysPassed} দিন পার` : `${cooldown.daysPassed}d`}
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-[10.5px] opacity-90 leading-tight">{cooldown.description}</p>
+                        ) : (
+                          <>
+                            <DateInput
+                              value={regLastDonationDate}
+                              onChange={(val) => {
+                                setRegLastDonationDate(val);
+                                const today = new Date().toISOString().split('T')[0];
+                                if (val && val > today) {
+                                  setRegFormError(
+                                    isBn
+                                      ? 'সর্বশেষ রক্তদানের তারিখ আজকের বা অতীতের তারিখ হতে হবে, ভবিষ্যতের নয়।'
+                                      : 'Last donation date cannot be in the future.'
+                                  );
+                                } else if (regFormError?.includes('তারিখ') || regFormError?.includes('date')) {
+                                  setRegFormError(null);
+                                }
+                              }}
+                              isBn={isBn}
+                              max={new Date().toISOString().split('T')[0]}
+                              minYear={2010}
+                              maxYear={new Date().getFullYear()}
+                              showQuickToday
+                            />
+                            {regLastDonationDate && regLastDonationDate > new Date().toISOString().split('T')[0] ? (
+                              <div className="p-2 rounded-xl bg-rose-100/90 border border-rose-300 text-rose-900 text-[11px] font-bold flex items-center gap-1.5 animate-in fade-in">
+                                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                                <span>
+                                  {isBn
+                                    ? 'ভবিষ্যতের কোনো তারিখ রক্তদানের তারিখ হতে পারে না। অনুগ্রহ করে অতীতের বা আজকের সঠিক তারিখ দিন।'
+                                    : 'Future date cannot be a past blood donation date. Please select today or a past date.'}
+                                </span>
                               </div>
-                            </div>
-                          );
-                        })() : (
-                          <p className="text-[10px] text-slate-400 font-medium">
-                            {isBn ? 'রক্তদানের তারিখ দিলে ৯০ দিনের (৩ মাস) কুলডাউন হিসাব স্বয়ংক্রিয়ভাবে দেখাবে' : 'Cooldown status calculated on 90-day interval rule'}
-                          </p>
+                            ) : regLastDonationDate ? (() => {
+                              const cooldown = getCooldownStatusInfo(regLastDonationDate, isBn);
+                              return (
+                                <div className={`p-3 rounded-2xl border text-xs flex items-start gap-2.5 shadow-2xs ${cooldown.badgeColorClass} animate-in fade-in`}>
+                                  <HeartPulse className="w-4 h-4 shrink-0 mt-0.5" />
+                                  <div className="space-y-0.5 flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-1">
+                                      <p className="font-extrabold text-[11.5px]">{cooldown.badgeText}</p>
+                                      {cooldown.daysPassed !== null && (
+                                        <span className="text-[9.5px] font-bold opacity-80 font-mono">
+                                          {isBn ? `${cooldown.daysPassed} দিন পার` : `${cooldown.daysPassed}d`}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-[10.5px] opacity-90 leading-tight">{cooldown.description}</p>
+                                  </div>
+                                </div>
+                              );
+                            })() : (
+                              <p className="text-[10px] text-slate-400 font-medium">
+                                {isBn ? 'রক্তদানের তারিখ দিলে ৯০ দিনের (৩ মাস) কুলডাউন হিসাব স্বয়ংক্রিয়ভাবে দেখাবে' : 'Cooldown status calculated on 90-day interval rule'}
+                              </p>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>

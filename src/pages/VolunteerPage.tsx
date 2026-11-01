@@ -284,6 +284,7 @@ export const VolunteerPage: React.FC = () => {
   const validateStep = (stepNumber: number): boolean => {
     setStepError(null);
 
+    // STEP 1: IDENTITY & CONTACT (Name, Email, Photo, Phone, Parents)
     if (stepNumber === 1) {
       if (!fullNameBn.trim() && !fullNameEn.trim()) {
         setStepError(isBn ? 'অনুগ্রহ করে আপনার সম্পূর্ণ নাম লিখুন।' : 'Please enter your full name.');
@@ -302,10 +303,15 @@ export const VolunteerPage: React.FC = () => {
         setStepError(isBn ? 'অনুগ্রহ করে আপনার একটি পাসপোর্ট সাইজের স্পষ্ট ছবি আপলোড করুন।' : 'Please upload a clear passport-sized photo.');
         return false;
       }
-      return true;
-    }
-
-    if (stepNumber === 2) {
+      if (!phone.trim()) {
+        setStepError(isBn ? 'অনুগ্রহ করে আপনার সচল মোবাইল নম্বর দিন।' : 'Please enter your mobile phone number.');
+        return false;
+      }
+      const phoneClean = phone.replace(/[^0-9+]/g, '');
+      if (phoneClean.length < 10) {
+        setStepError(isBn ? 'অনুগ্রহ করে একটি সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন (উদা: 01XXXXXXXXX)।' : 'Please provide a valid 11-digit mobile number.');
+        return false;
+      }
       if (!fatherName.trim()) {
         setStepError(isBn ? 'অনুগ্রহ করে পিতার নাম লিখুন।' : "Please enter your father's name.");
         return false;
@@ -317,16 +323,8 @@ export const VolunteerPage: React.FC = () => {
       return true;
     }
 
-    if (stepNumber === 3) {
-      if (!phone.trim()) {
-        setStepError(isBn ? 'অনুগ্রহ করে আপনার সচল মোবাইল নম্বর দিন।' : 'Please enter your mobile phone number.');
-        return false;
-      }
-      const phoneClean = phone.replace(/[^0-9+]/g, '');
-      if (phoneClean.length < 10) {
-        setStepError(isBn ? 'অনুগ্রহ করে একটি সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন (উদা: 01XXXXXXXXX)।' : 'Please provide a valid 11-digit mobile number.');
-        return false;
-      }
+    // STEP 2: LOCATION, EDUCATION & LIFELINE (Address, DOB, Blood Group, Education)
+    if (stepNumber === 2) {
       if (!presentAddressDetails.trim()) {
         setStepError(isBn ? 'অনুগ্রহ করে আপনার বর্তমান ঠিকানা বিস্তারিত লিখুন।' : 'Please enter your present address details.');
         return false;
@@ -335,10 +333,6 @@ export const VolunteerPage: React.FC = () => {
         setStepError(isBn ? 'অনুগ্রহ করে আপনার স্থায়ী ঠিকানা বিস্তারিত লিখুন।' : 'Please enter your permanent address details.');
         return false;
       }
-      return true;
-    }
-
-    if (stepNumber === 4) {
       if (!dob) {
         setStepError(isBn ? 'অনুগ্রহ করে আপনার জন্ম তারিখ নির্বাচন করুন।' : 'Please select your date of birth.');
         return false;
@@ -347,10 +341,6 @@ export const VolunteerPage: React.FC = () => {
         setStepError(isBn ? 'অনুগ্রহ করে আপনার রক্তের গ্রুপ নির্বাচন করুন।' : 'Please select your blood group.');
         return false;
       }
-      return true;
-    }
-
-    if (stepNumber === 5) {
       if (!educationCategory) {
         setStepError(isBn ? 'অনুগ্রহ করে আপনার শিক্ষাগত অবস্থা নির্বাচন করুন।' : 'Please select your educational status.');
         return false;
@@ -410,23 +400,16 @@ export const VolunteerPage: React.FC = () => {
       return true;
     }
 
-    if (stepNumber === 6) {
+    // STEP 3: SKILLS, MOTIVATION & PLEDGE
+    if (stepNumber === 3) {
       if (skills.length === 0) {
         setStepError(isBn ? 'অনুগ্রহ করে অন্তত একটি আগ্রহ বা দক্ষতার ক্ষেত্র নির্বাচন করুন।' : 'Please select at least one skill or interest area.');
         return false;
       }
-      return true;
-    }
-
-    if (stepNumber === 7) {
       if (!motivation.trim()) {
         setStepError(isBn ? 'অনুগ্রহ করে ইনফিনিটি বাংলাদেশে যোগদানের কারণ ও উদ্দেশ্য সংক্ষেপে লিখুন।' : 'Please briefly write your motivation for joining.');
         return false;
       }
-      return true;
-    }
-
-    if (stepNumber === 8) {
       if (!agreedCodeOfConduct) {
         setStepError(isBn ? 'অনুগ্রহ করে সংগঠনের শপথ ও নৈতিক আচরণবিধির সাথে সম্মতি প্রকাশ করুন।' : 'Please accept the code of conduct and organizational oath.');
         return false;
@@ -444,7 +427,7 @@ export const VolunteerPage: React.FC = () => {
   const handleNext = () => {
     if (validateStep(currentStep)) {
       setStepError(null);
-      setCurrentStep(prev => Math.min(prev + 1, 8));
+      setCurrentStep(prev => Math.min(prev + 1, 3));
       window.scrollTo({ top: 350, behavior: 'smooth' });
     }
   };
@@ -466,7 +449,7 @@ export const VolunteerPage: React.FC = () => {
       return;
     }
 
-    for (let step = 1; step <= 8; step++) {
+    for (let step = 1; step <= 3; step++) {
       if (!validateStep(step)) {
         setCurrentStep(step);
         window.scrollTo({ top: 350, behavior: 'smooth' });
@@ -478,7 +461,7 @@ export const VolunteerPage: React.FC = () => {
     setSubmitError(null);
 
     const fullApplicantName = fullNameBn.trim() || fullNameEn.trim() || 'Volunteer Applicant';
-    const trackingRefId = `INF-VOL-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const trackingRefId = `INF-VOL-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
     const applicationPayload: Partial<VolunteerApplication> = {
       fullName: fullApplicantName,
@@ -631,16 +614,11 @@ export const VolunteerPage: React.FC = () => {
     setAgreedTruthfulness(false);
   };
 
-  // Step Section Labels
+  // Step Section Labels (3-Step High-Conversion Architecture)
   const sectionSteps = [
-    { num: 1, titleBn: 'পরিচিতি ও ছবি', titleEn: 'Profile & Photo', icon: User },
-    { num: 2, titleBn: 'পারিবারিক তথ্য', titleEn: 'Family Info', icon: Home },
-    { num: 3, titleBn: 'ঠিকানা ও যোগাযোগ', titleEn: 'Address & Contact', icon: MapPin },
-    { num: 4, titleBn: 'ব্যক্তিগত তথ্য', titleEn: 'Personal Info', icon: Calendar },
-    { num: 5, titleBn: 'শিক্ষাগত যোগ্যতা', titleEn: 'Education', icon: GraduationCap },
-    { num: 6, titleBn: 'দক্ষতা ও সময়', titleEn: 'Skills & Availability', icon: Briefcase },
-    { num: 7, titleBn: 'ইনফিনিটি ও প্রেরণা', titleEn: 'Infinity & Motivation', icon: Sparkles },
-    { num: 8, titleBn: 'শপথ ও চুক্তি', titleEn: 'Oath & Submit', icon: ShieldCheck }
+    { num: 1, titleBn: 'পরিচয় ও যোগাযোগ', titleEn: 'Identity & Contact', icon: User },
+    { num: 2, titleBn: 'অবস্থান, শিক্ষা ও রক্তদান', titleEn: 'Location, Education & LifeLine', icon: GraduationCap },
+    { num: 3, titleBn: 'দক্ষতা, আগ্রহ ও অঙ্গীকার', titleEn: 'Skills, Motivation & Pledge', icon: ShieldCheck }
   ];
 
   const benefitsList = isBn
@@ -764,7 +742,7 @@ export const VolunteerPage: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] font-extrabold text-[#006A4E] uppercase tracking-widest bg-[#E6F3EF] px-3 py-1 rounded-full border border-[#C2E2D7] inline-flex items-center gap-1.5 shadow-2xs">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#006A4E] animate-pulse" />
-                        {isBn ? `ধাপ ${currentStep} / ৮` : `Section ${currentStep} of 8`}
+                        {isBn ? `ধাপ ${currentStep} / ৩` : `Section ${currentStep} of 3`}
                       </span>
                       <span className="text-xs text-slate-500 font-medium">
                         {isBn ? 'ইনফিনিটি ভলান্টিয়ার আবেদন' : 'Volunteer Application'}
@@ -780,7 +758,7 @@ export const VolunteerPage: React.FC = () => {
                       {isBn ? 'অগ্রগতি:' : 'Progress:'}
                     </span>
                     <span className="text-xs font-mono font-extrabold text-[#006A4E]">
-                      {Math.round((currentStep / 8) * 100)}%
+                      {Math.round((currentStep / 3) * 100)}%
                     </span>
                   </div>
                 </div>
@@ -789,13 +767,13 @@ export const VolunteerPage: React.FC = () => {
                 <div className="w-full bg-[#FAF7F2] h-2.5 rounded-full overflow-hidden border border-[#EAE3D9] p-0.5">
                   <div
                     className="bg-gradient-to-r from-[#006A4E] via-[#008966] to-[#00A878] h-full transition-all duration-500 rounded-full shadow-xs"
-                    style={{ width: `${(currentStep / 8) * 100}%` }}
+                    style={{ width: `${(currentStep / 3) * 100}%` }}
                   />
                 </div>
 
-                {/* Step Icons Pill Bar: Adaptive Mobile Stepper (WCAG 2.2 AA SC 2.5.8 Compliant 44x44px touch targets) */}
+                {/* Step Icons Pill Bar: Adaptive 3-Step Stepper (WCAG 2.2 AA SC 2.5.8 Compliant 44x44px touch targets) */}
                 <div className="p-1.5 sm:p-2 bg-[#FAF7F2] rounded-2xl border border-[#EAE3D9] shadow-inner">
-                  {/* Mobile View: Horizontal smooth scrollable track with accessible 44px touch targets */}
+                  {/* Mobile View: Horizontal smooth scrollable track */}
                   <div className="flex sm:hidden items-center gap-2 overflow-x-auto no-scrollbar py-1 px-0.5 scroll-smooth">
                     {sectionSteps.map((s) => {
                       const Icon = s.icon;
@@ -838,8 +816,8 @@ export const VolunteerPage: React.FC = () => {
                     })}
                   </div>
 
-                  {/* Tablet/Desktop View: Refined 8-Column Grid */}
-                  <div className="hidden sm:grid grid-cols-8 gap-1.5">
+                  {/* Tablet/Desktop View: Refined 3-Column Grid */}
+                  <div className="hidden sm:grid grid-cols-3 gap-2">
                     {sectionSteps.map((s) => {
                       const Icon = s.icon;
                       const isActive = s.num === currentStep;
@@ -854,7 +832,7 @@ export const VolunteerPage: React.FC = () => {
                             }
                           }}
                           disabled={s.num > currentStep}
-                          className={`flex flex-col items-center gap-1 p-1.5 rounded-xl transition-all duration-200 select-none min-h-[44px] ${
+                          className={`flex items-center gap-2.5 p-2.5 rounded-xl transition-all duration-200 select-none min-h-[44px] ${
                             isActive
                               ? 'bg-white shadow-warm-xs ring-2 ring-[#006A4E] text-[#006A4E]'
                               : isDone
@@ -864,7 +842,7 @@ export const VolunteerPage: React.FC = () => {
                           title={isBn ? s.titleBn : s.titleEn}
                         >
                           <div
-                            className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs transition-all ${
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs transition-all shrink-0 ${
                               isActive
                                 ? 'bg-[#006A4E] text-white shadow-2xs font-extrabold'
                                 : isDone
@@ -872,10 +850,10 @@ export const VolunteerPage: React.FC = () => {
                                 : 'bg-slate-200/70 text-slate-500'
                             }`}
                           >
-                            {isDone ? <Check className="w-3.5 h-3.5" /> : <Icon className="w-3.5 h-3.5" />}
+                            {isDone ? <Check className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
                           </div>
-                          <span className="text-[10px] font-bold hidden md:inline truncate max-w-full text-center">
-                            {s.num}. {isBn ? s.titleBn.split(' ')[0] : s.titleEn.split(' ')[0]}
+                          <span className="text-xs font-bold truncate">
+                            {s.num}. {isBn ? s.titleBn : s.titleEn}
                           </span>
                         </button>
                       );
@@ -1025,8 +1003,24 @@ export const VolunteerPage: React.FC = () => {
                         />
                       </div>
 
+                      {/* Gender */}
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-slate-800">
+                          {isBn ? 'লিঙ্গ (Gender) *' : 'Gender *'}
+                        </label>
+                        <select
+                          value={gender}
+                          onChange={(e) => setGender(e.target.value)}
+                          className="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EAE3D9] rounded-2xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
+                        >
+                          <option value="Male">{isBn ? 'পুরুষ (Male)' : 'Male'}</option>
+                          <option value="Female">{isBn ? 'নারী (Female)' : 'Female'}</option>
+                          <option value="Other">{isBn ? 'অন্যান্য (Other)' : 'Other'}</option>
+                        </select>
+                      </div>
+
                       {/* Email */}
-                      <div className="space-y-1.5 sm:col-span-2">
+                      <div className="space-y-1.5">
                         <label htmlFor="vol-email" className="block text-xs font-bold text-slate-800">
                           {isBn ? 'সচল ইমেইল ঠিকানা (Email Address) *' : 'Email Address *'}
                         </label>
@@ -1046,79 +1040,9 @@ export const VolunteerPage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
 
-                {/* -------------------------------------------------------- */}
-                {/* SECTION 2: Family & Guardian Information                 */}
-                {/* -------------------------------------------------------- */}
-                {currentStep === 2 && (
-                  <div className="space-y-5 animate-in fade-in">
-                    <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] text-xs text-slate-600 leading-relaxed">
-                      {isBn
-                        ? 'সংগঠনের অভ্যন্তরীণ ডাটাবেজ ও জরুরি যোগাযোগের জন্য অভিভাবক সম্পর্কিত তথ্য প্রদান করুন।'
-                        : 'Please provide parent and guardian information for internal records and emergency contacts.'}
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="space-y-1.5">
-                        <label htmlFor="vol-father-name" className="block text-xs font-bold text-slate-800 font-bengali">
-                          {isBn ? 'পিতার নাম (Father\'s Name) *' : "Father's Name *"}
-                        </label>
-                        <input
-                          id="vol-father-name"
-                          name="fatherName"
-                          type="text"
-                          value={fatherName}
-                          onChange={(e) => setFatherName(e.target.value)}
-                          placeholder={isBn ? 'পিতার সম্পূর্ণ নাম লিখুন' : "Enter father's full name"}
-                          className="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EAE3D9] rounded-2xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
-                          required
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <label htmlFor="vol-mother-name" className="block text-xs font-bold text-slate-800 font-bengali">
-                          {isBn ? 'মাতার নাম (Mother\'s Name) *' : "Mother's Name *"}
-                        </label>
-                        <input
-                          id="vol-mother-name"
-                          name="motherName"
-                          type="text"
-                          value={motherName}
-                          onChange={(e) => setMotherName(e.target.value)}
-                          placeholder={isBn ? 'মাতার সম্পূর্ণ নাম লিখুন' : "Enter mother's full name"}
-                          className="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EAE3D9] rounded-2xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
-                          required
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <label htmlFor="vol-guardian-phone" className="block text-xs font-bold text-slate-800">
-                          {isBn ? 'অভিভাবকের বিকল্প মোবাইল নম্বর (Guardian Phone - ঐচ্ছিক)' : 'Guardian Contact Number (Optional)'}
-                        </label>
-                        <input
-                          id="vol-guardian-phone"
-                          name="guardianPhone"
-                          autoComplete="tel"
-                          type="tel"
-                          value={guardianPhone}
-                          onChange={(e) => setGuardianPhone(e.target.value)}
-                          placeholder="01XXXXXXXXX"
-                          className="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EAE3D9] rounded-2xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* -------------------------------------------------------- */}
-                {/* SECTION 3: Address & Contact Details                     */}
-                {/* -------------------------------------------------------- */}
-                {currentStep === 3 && (
-                  <div className="space-y-6 animate-in fade-in">
                     {/* Phones & Social */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
                       <div className="space-y-1.5">
                         <label htmlFor="vol-phone" className="block text-xs font-bold text-slate-800">
                           {isBn ? 'সচল মোবাইল নম্বর (Mobile Number) *' : 'Mobile Phone Number *'}
@@ -1183,6 +1107,76 @@ export const VolunteerPage: React.FC = () => {
                           className="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EAE3D9] rounded-2xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
                         />
                       </div>
+                    </div>
+
+                    {/* Family & Guardian Information */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] space-y-3">
+                      <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <Home className="w-3.5 h-3.5 text-[#006A4E]" />
+                        <span>{isBn ? 'পারিবারিক তথ্য (Family & Guardian Information) *' : 'Family & Guardian Information *'}</span>
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <label htmlFor="vol-father-name" className="block text-xs font-bold text-slate-800 font-bengali">
+                            {isBn ? 'পিতার নাম (Father\'s Name) *' : "Father's Name *"}
+                          </label>
+                          <input
+                            id="vol-father-name"
+                            name="fatherName"
+                            type="text"
+                            value={fatherName}
+                            onChange={(e) => setFatherName(e.target.value)}
+                            placeholder={isBn ? 'পিতার সম্পূর্ণ নাম লিখুন' : "Enter father's full name"}
+                            className="w-full px-4 py-2.5 bg-white border border-[#EAE3D9] rounded-2xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006A4E]"
+                            required
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label htmlFor="vol-mother-name" className="block text-xs font-bold text-slate-800 font-bengali">
+                            {isBn ? 'মাতার নাম (Mother\'s Name) *' : "Mother's Name *"}
+                          </label>
+                          <input
+                            id="vol-mother-name"
+                            name="motherName"
+                            type="text"
+                            value={motherName}
+                            onChange={(e) => setMotherName(e.target.value)}
+                            placeholder={isBn ? 'মাতার সম্পূর্ণ নাম লিখুন' : "Enter mother's full name"}
+                            className="w-full px-4 py-2.5 bg-white border border-[#EAE3D9] rounded-2xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006A4E]"
+                            required
+                          />
+                        </div>
+
+                        <div className="space-y-1.5 sm:col-span-2">
+                          <label htmlFor="vol-guardian-phone" className="block text-xs font-bold text-slate-800">
+                            {isBn ? 'অভিভাবকের বিকল্প মোবাইল নম্বর (Guardian Phone - ঐচ্ছিক)' : 'Guardian Contact Number (Optional)'}
+                          </label>
+                          <input
+                            id="vol-guardian-phone"
+                            name="guardianPhone"
+                            autoComplete="tel"
+                            type="tel"
+                            value={guardianPhone}
+                            onChange={(e) => setGuardianPhone(e.target.value)}
+                            placeholder="01XXXXXXXXX"
+                            className="w-full px-4 py-2.5 bg-white border border-[#EAE3D9] rounded-2xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006A4E]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* -------------------------------------------------------- */}
+                {/* STEP 2: Location, Education & LifeLine                   */}
+                {/* -------------------------------------------------------- */}
+                {currentStep === 2 && (
+                  <div className="space-y-6 animate-in fade-in">
+                    <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] text-xs text-slate-600 leading-relaxed">
+                      {isBn
+                        ? 'আপনার বর্তমান ও স্থায়ী ঠিকানা, জন্ম তারিখ, রক্তের গ্রুপ এবং শিক্ষাগত যোগ্যতা নির্বাচন করুন।'
+                        : 'Please provide your address, date of birth, blood group, and educational background.'}
                     </div>
 
                     {/* Present Address */}
@@ -1308,101 +1302,65 @@ export const VolunteerPage: React.FC = () => {
                         </div>
                       )}
                     </div>
-                  </div>
-                )}
+                    {/* Personal & Health Details (DOB, Blood Group, NID) */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] space-y-3">
+                      <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-[#006A4E]" />
+                        <span>{isBn ? 'ব্যক্তিগত ও স্বাস্থ্যগত তথ্য (Personal & Health) *' : 'Personal & Health *'}</span>
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* DOB */}
+                        <div className="space-y-1.5">
+                          <label className="block text-xs font-bold text-slate-800">
+                            {isBn ? 'জন্ম তারিখ (Date of Birth) *' : 'Date of Birth *'}
+                          </label>
+                          <DateInput
+                            value={dob}
+                            onChange={(val) => setDob(val)}
+                            isBn={isBn}
+                            required
+                            max={new Date().toISOString().split('T')[0]}
+                            minYear={1940}
+                            maxYear={new Date().getFullYear()}
+                          />
+                        </div>
 
-                {/* -------------------------------------------------------- */}
-                {/* SECTION 4: Personal & Health Information                 */}
-                {/* -------------------------------------------------------- */}
-                {currentStep === 4 && (
-                  <div className="space-y-5 animate-in fade-in">
-                    <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] text-xs text-slate-600 leading-relaxed">
-                      {isBn
-                        ? 'রক্তদান ও জরুরি প্রয়োজনে টিম সমন্বয়ের জন্য আপনার ব্যক্তিগত ও স্বাস্থ্যগত তথ্য প্রদান করুন।'
-                        : 'Personal and health details are used for emergency blood donor mapping and team records.'}
-                    </div>
+                        {/* Blood Group */}
+                        <div className="space-y-1.5">
+                          <label className="block text-xs font-bold text-slate-800">
+                            {isBn ? 'রক্তের গ্রুপ (Blood Group) *' : 'Blood Group *'}
+                          </label>
+                          <select
+                            value={bloodGroup}
+                            onChange={(e) => setBloodGroup(e.target.value)}
+                            className="w-full px-4 py-2.5 bg-white border border-[#EAE3D9] rounded-2xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006A4E] font-bold"
+                          >
+                            {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-', 'Unknown'].map(bg => (
+                              <option key={bg} value={bg}>
+                                {bg === 'Unknown' ? (isBn ? 'জানি না (Unknown)' : 'Unknown') : bg}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* DOB */}
-                      <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-800">
-                          {isBn ? 'জন্ম তারিখ (Date of Birth) *' : 'Date of Birth *'}
-                        </label>
-                        <DateInput
-                          value={dob}
-                          onChange={(val) => setDob(val)}
-                          isBn={isBn}
-                          required
-                          max={new Date().toISOString().split('T')[0]}
-                          minYear={1940}
-                          maxYear={new Date().getFullYear()}
-                        />
+                        {/* NID / Birth Cert */}
+                        <div className="space-y-1.5 sm:col-span-2">
+                          <label className="block text-xs font-bold text-slate-800">
+                            {isBn ? 'NID / জন্ম নিবন্ধন নম্বর (ঐচ্ছিক)' : 'NID / Birth Certificate (Optional)'}
+                          </label>
+                          <input
+                            type="text"
+                            value={nidOrBirthCert}
+                            onChange={(e) => setNidOrBirthCert(e.target.value)}
+                            placeholder={isBn ? 'জাতীয় পরিচয়পত্র বা জন্ম সনদ নম্বর' : 'NID or Birth Registration No.'}
+                            className="w-full px-4 py-2.5 bg-white border border-[#EAE3D9] rounded-2xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006A4E]"
+                          />
+                        </div>
                       </div>
-
-                      {/* Gender */}
-                      <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-800">
-                          {isBn ? 'লিঙ্গ (Gender) *' : 'Gender *'}
-                        </label>
-                        <select
-                          value={gender}
-                          onChange={(e) => setGender(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EAE3D9] rounded-2xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
-                        >
-                          <option value="Male">{isBn ? 'পুরুষ (Male)' : 'Male'}</option>
-                          <option value="Female">{isBn ? 'নারী (Female)' : 'Female'}</option>
-                          <option value="Other">{isBn ? 'অন্যান্য (Other)' : 'Other'}</option>
-                        </select>
-                      </div>
-
-                      {/* Blood Group */}
-                      <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-800">
-                          {isBn ? 'রক্তের গ্রুপ (Blood Group) *' : 'Blood Group *'}
-                        </label>
-                        <select
-                          value={bloodGroup}
-                          onChange={(e) => setBloodGroup(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EAE3D9] rounded-2xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006A4E] focus:bg-white font-bold"
-                        >
-                          {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-', 'Unknown'].map(bg => (
-                            <option key={bg} value={bg}>
-                              {bg === 'Unknown' ? (isBn ? 'জানি না (Unknown)' : 'Unknown') : bg}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* NID / Birth Cert */}
-                      <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-800">
-                          {isBn ? 'NID / জন্ম নিবন্ধন নম্বর (ঐচ্ছিক)' : 'NID / Birth Certificate (Optional)'}
-                        </label>
-                        <input
-                          type="text"
-                          value={nidOrBirthCert}
-                          onChange={(e) => setNidOrBirthCert(e.target.value)}
-                          placeholder={isBn ? 'জাতীয় পরিচয়পত্র বা জন্ম সনদ নম্বর' : 'NID or Birth Registration No.'}
-                          className="w-full px-4 py-2.5 bg-[#FAF7F2] border border-[#EAE3D9] rounded-2xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006A4E] focus:bg-white"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* -------------------------------------------------------- */}
-                {/* SECTION 5: Educational Information (CRITICAL CONDITIONAL) */}
-                {/* -------------------------------------------------------- */}
-                {currentStep === 5 && (
-                  <div className="space-y-6 animate-in fade-in">
-                    <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] text-xs text-slate-600 leading-relaxed">
-                      {isBn
-                        ? 'আপনার বর্তমান শিক্ষাগত অবস্থা নির্বাচন করুন। আপনি যে ক্যাটাগরি নির্বাচন করবেন শুধু সেই সম্পর্কিত নির্দিষ্ট তথ্য চাওয়া হবে।'
-                        : 'Select your current educational status. Only relevant fields for your chosen pathway will be displayed.'}
                     </div>
 
                     {/* Educational Status Selector Radio/Cards */}
-                    <div className="space-y-2.5">
+                    <div className="space-y-2.5 pt-2 border-t border-slate-100">
                       <label className="block text-xs font-bold text-slate-800">
                         {isBn ? 'বর্তমান শিক্ষাগত অবস্থা নির্বাচন করুন (Educational Status) *' : 'Select Educational Status *'}
                       </label>
@@ -1899,14 +1857,14 @@ export const VolunteerPage: React.FC = () => {
                 )}
 
                 {/* -------------------------------------------------------- */}
-                {/* SECTION 6: Skills & Areas of Interest                    */}
+                {/* STEP 3: SKILLS, MOTIVATION & PLEDGE                      */}
                 {/* -------------------------------------------------------- */}
-                {currentStep === 6 && (
+                {currentStep === 3 && (
                   <div className="space-y-6 animate-in fade-in">
                     <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] text-xs text-slate-600 leading-relaxed">
                       {isBn
-                        ? 'আপনার বিশেষ দক্ষতা ও যে ক্ষেত্রগুলোতে কাজ করতে আগ্রহী সেগুলো নির্বাচন করুন (একাধিক নির্বাচনযোগ্য)।'
-                        : 'Select the skills and functional areas where you would like to contribute.'}
+                        ? 'আপনার আগ্রহের ক্ষেত্র, বিশেষ দক্ষতা, সময় প্রাপ্যতা, অনুপ্রেরণা এবং সংগঠনের শপথ সম্পন্ন করুন।'
+                        : 'Select your areas of interest, skills, weekly availability, motivation, and sign the organizational oath.'}
                     </div>
 
                     <div className="space-y-3">
@@ -1952,19 +1910,6 @@ export const VolunteerPage: React.FC = () => {
                         <option value="জরুরি প্রয়োজনে যেকোনো সময়">{isBn ? 'জরুরি প্রয়োজনে যেকোনো সময় (Emergency On-Call)' : 'Emergency On-Call'}</option>
                         <option value="সার্বক্ষণিক / নিয়মিত">{isBn ? 'সার্বক্ষণিক / নিয়মিত (Regular / Flexible)' : 'Regular / Flexible'}</option>
                       </select>
-                    </div>
-                  </div>
-                )}
-
-                {/* -------------------------------------------------------- */}
-                {/* SECTION 7: Infinity Bangladesh & Motivation              */}
-                {/* -------------------------------------------------------- */}
-                {currentStep === 7 && (
-                  <div className="space-y-6 animate-in fade-in">
-                    <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#EAE3D9] text-xs text-slate-600 leading-relaxed">
-                      {isBn
-                        ? 'সংগঠনে আপনার আগ্রহ, অনুপ্রেরণা এবং পূর্ব অভিজ্ঞতা আমাদের সাথে শেয়ার করুন।'
-                        : 'Share your background, inspiration, and expectations for joining Team Infinity.'}
                     </div>
 
                     {/* How did you know */}
@@ -2029,14 +1974,7 @@ export const VolunteerPage: React.FC = () => {
                         required
                       />
                     </div>
-                  </div>
-                )}
 
-                {/* -------------------------------------------------------- */}
-                {/* SECTION 8: Oath, Agreement & Confirmation                */}
-                {/* -------------------------------------------------------- */}
-                {currentStep === 8 && (
-                  <div className="space-y-6 animate-in fade-in">
                     {/* Oath Card */}
                     <div className="p-5 sm:p-6 rounded-3xl bg-[#E6F3EF] border border-[#C2E2D7] space-y-3 shadow-warm-xs">
                       <div className="flex items-center gap-2 text-[#00523C] font-extrabold text-sm font-display">
@@ -2110,7 +2048,7 @@ export const VolunteerPage: React.FC = () => {
                     <div />
                   )}
 
-                  {currentStep < 8 ? (
+                  {currentStep < 3 ? (
                     <button
                       type="button"
                       onClick={handleNext}

@@ -855,6 +855,39 @@ async function runTestSuite() {
   assert(privacySource.includes('Right to be Forgotten'), '9.6.1: PrivacyPage includes statutory Right to be Forgotten');
   assert(privacySource.includes('Zero-Tracking Cookies'), '9.6.2: PrivacyPage declares zero commercial tracking cookies');
 
+  // ==========================================================================
+  // SUITE 10: XML Sitemap XSL Styling & Infi Robot Intelligence Verification
+  // ==========================================================================
+  console.log('\n--- SUITE 10: XML Sitemap XSL Styling & Infi Robot Intelligence ---');
+
+  // 10.1: Styled XML Sitemap Verification
+  const sitemapXmlContent = fs.readFileSync(path.resolve(rootDir, 'public/sitemap.xml'), 'utf-8');
+  assert(
+    sitemapXmlContent.includes('<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>'),
+    '10.1.1: public/sitemap.xml links to /sitemap.xsl for browser XSLT rendering'
+  );
+  assert(fs.existsSync(path.resolve(rootDir, 'public/sitemap.xsl')), '10.1.2: public/sitemap.xsl exists');
+  const sitemapXslContent = fs.readFileSync(path.resolve(rootDir, 'public/sitemap.xsl'), 'utf-8');
+  assert(sitemapXslContent.includes('<xsl:stylesheet'), '10.1.3: sitemap.xsl is a valid XSL stylesheet');
+  assert(sitemapXslContent.includes('Infinity Bangladesh — XML Sitemap'), '10.1.4: sitemap.xsl displays branded title');
+
+  // 10.2: Infi Robot Knowledge Architecture
+  const botSource = fs.readFileSync(path.resolve(rootDir, 'src/components/InfinityAgentBot.tsx'), 'utf-8');
+  assert(botSource.includes("import { useData } from '../context/DataContext';"), '10.2.1: Infi Robot imports live useData context');
+  assert(botSource.includes("id: 'charity-model-100'"), '10.2.2: Infi Robot includes 100% Charity Model intent');
+  assert(botSource.includes("id: 'blood-eligibility'"), '10.2.3: Infi Robot includes Blood Eligibility criteria');
+  assert(botSource.includes("id: 'blood-restrictions'"), '10.2.4: Infi Robot includes Blood Restrictions / Deferral rules');
+  assert(botSource.includes("id: 'blood-prep'"), '10.2.5: Infi Robot includes Pre & Post Blood Donation prep');
+  assert(botSource.includes("id: 'volunteer-process'"), '10.2.6: Infi Robot includes 8-step Volunteer Application roadmap');
+  assert(botSource.includes("id: 'volunteer-perks'"), '10.2.7: Infi Robot includes Volunteer Certificate of Recognition');
+  assert(botSource.includes("id: 'humanitarian-wings'"), '10.2.8: Infi Robot includes 5 Core Humanitarian Wings');
+  assert(botSource.includes('Sheikh Mohammad Sakib'), '10.2.9: Infi Robot recognizes Founder Sheikh Mohammad Sakib');
+  assert(botSource.includes('MD. SHAHIDUL ALAM SAKIB'), '10.2.10: Infi Robot recognizes President Md. Shahidul Alam Sakib');
+  assert(botSource.includes('SALIMUR RAHMAN OPI'), '10.2.11: Infi Robot recognizes General Secretary Salimur Rahman Opi');
+  assert(botSource.includes('Sakib Al Karim'), '10.2.12: Infi Robot recognizes Standing Committee Chairman Sakib Al Karim');
+  assert(botSource.includes('whatsappNumber'), '10.2.13: Infi Robot supports Direct WhatsApp communication');
+  assert(botSource.includes('navigator.clipboard.writeText'), '10.2.14: Infi Robot supports one-click message copy');
+
   // SUMMARY REPORT
   // --------------------------------------------------------------------------
   console.log('\n========================================================');

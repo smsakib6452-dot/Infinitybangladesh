@@ -67,7 +67,7 @@ if (fs.existsSync(indexPath) && initDataContent) {
         const slugM = entry.match(/"slug":\s*"([^"]+)"/);
         const titleM = entry.match(/"en":\s*"([^"]+)"/);
         const imgM = entry.match(/"imageUrl":\s*"([^"]+)"/);
-        const descM = entry.match(/"(?:shortDescription|description)":\s*\{[\s\S]*?"en":\s*"([^"]+)"/);
+        const descM = entry.match(/"(?:shortDescription|description|excerpt|summary|story)":\s*\{[\s\S]*?"en":\s*"([^"]+)"/);
         if (slugM && titleM) {
           items.push({
             routePath: `${basePath}/${slugM[1]}`,
@@ -82,7 +82,10 @@ if (fs.existsSync(indexPath) && initDataContent) {
 
     const prerenderRoutes = [
       ...extractItems('export const INITIAL_CAMPAIGNS', 'export const INITIAL_PROGRAMS', 'campaigns'),
-      ...extractItems('export const INITIAL_PROGRAMS', 'export const INITIAL_PROGRAM_EVENTS', 'programs')
+      ...extractItems('export const INITIAL_PROGRAMS', 'export const INITIAL_PROGRAM_EVENTS', 'programs'),
+      ...extractItems('export const INITIAL_IMPACT_STORIES', 'export const INITIAL_NEWS', 'stories'),
+      ...extractItems('export const INITIAL_NEWS', 'export const INITIAL_EVENTS', 'news'),
+      ...extractItems('export const INITIAL_EVENTS', 'export const INITIAL_GALLERY', 'events')
     ];
 
     let renderedCount = 0;
@@ -104,7 +107,7 @@ if (fs.existsSync(indexPath) && initDataContent) {
       fs.writeFileSync(path.join(targetDir, 'index.html'), customHtml, 'utf8');
       renderedCount++;
     });
-    console.log(`Pre-rendered ${renderedCount} social bot entrypoints for campaigns and programs.`);
+    console.log(`Pre-rendered ${renderedCount} social bot entrypoints for campaigns, programs, stories, news, and events.`);
   } catch (err) {
     console.warn('Could not pre-render social bot entrypoints:', err.message);
   }

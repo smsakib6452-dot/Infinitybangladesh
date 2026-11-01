@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { GalleryPhoto } from '../../types';
 import { Link } from '../../context/RouterContext';
 import { SectionHeading } from '../SectionHeading';
@@ -21,6 +21,16 @@ export const GalleryPreviewSection: React.FC<GalleryPreviewSectionProps> = ({
   isBn,
   tText
 }) => {
+  const displayedPhotos = useMemo(() => gallery.slice(0, 6), [gallery]);
+
+  // Dynamically balance grid columns so 5 or 6 photos span the width symmetrically
+  const gridClasses = useMemo(() => {
+    if (displayedPhotos.length === 5) {
+      return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4.5 max-w-7xl mx-auto';
+    }
+    return 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 max-w-7xl mx-auto';
+  }, [displayedPhotos.length]);
+
   return (
     <section key="gallery" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <SectionHeading
@@ -35,12 +45,9 @@ export const GalleryPreviewSection: React.FC<GalleryPreviewSectionProps> = ({
         }
       />
 
-      <StaggerGroup className="flex flex-wrap justify-center items-center gap-3.5 sm:gap-4 max-w-7xl mx-auto">
-        {gallery.slice(0, 6).map((photo, i) => (
-          <StaggerItem
-            key={photo.id}
-            className="w-[calc(50%-0.5rem)] sm:w-[calc(33.333%-0.7rem)] md:w-[calc(25%-0.75rem)] lg:w-[calc(16.666%-0.85rem)] max-w-[190px] flex-shrink-0"
-          >
+      <StaggerGroup className={gridClasses}>
+        {displayedPhotos.map((photo, i) => (
+          <StaggerItem key={photo.id} className="w-full">
             <div
               onClick={() => onSelectPhoto(i)}
               data-cursor="view"
@@ -67,9 +74,9 @@ export const GalleryPreviewSection: React.FC<GalleryPreviewSectionProps> = ({
       <div className="text-center pt-6 sm:pt-8">
         <Link
           to={gallerySection?.viewAllUrl || "gallery"}
-          className="inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-white hover:bg-[#FAF7F2] text-slate-800 font-extrabold text-[11px] sm:text-sm border border-[#EAE3D9] shadow-warm-xs hover:shadow-warm-sm transition-all cursor-pointer transform hover:-translate-y-0.5"
+          className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-white hover:bg-[#FAF7F2] text-slate-800 text-[11px] sm:text-sm font-bold border border-[#EAE3D9] shadow-warm-xs transition-all inline-flex items-center gap-1.5 sm:gap-2 cursor-pointer"
         >
-          <span>{tText(gallerySection?.viewAllText) || (isBn ? 'সম্পূর্ণ ফটো গ্যালারি দেখুন' : 'View Full Photo Gallery')}</span>
+          <span>{tText(gallerySection?.viewAllText) || (isBn ? 'সম্পূর্ণ আলোকচিত্র গ্যালারি দেখুন' : 'View Full Gallery & Albums')}</span>
           <ArrowRight className="w-4 h-4 text-[#006A4E]" />
         </Link>
       </div>

@@ -1202,7 +1202,7 @@ export const INITIAL_GALLERY_ALBUMS: GalleryAlbum[] = [
     "id": "alb-1",
     "slug": "eid-joy-underprivileged",
     "title": {
-      "en": "Eid Joy for Underprivileged (সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ)",
+      "en": "Eid Joy for Underprivileged",
       "bn": "সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ"
     },
     "description": {
@@ -1488,7 +1488,7 @@ export const INITIAL_CAMPAIGNS: Campaign[] = [
     "slug": "eid-anondo-underprivileged",
     "title": {
       "bn": "সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ",
-      "en": "Eid Joy for Underprivileged (সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ)"
+      "en": "Eid Joy for Underprivileged"
     },
     "date": "Eid-ul-Fitr Seasonal Drive",
     "endDate": "",
@@ -1659,7 +1659,7 @@ export const INITIAL_PROGRAMS: Program[] = [
     "slug": "eid-for-underprivileged",
     "title": {
       "bn": "সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ",
-      "en": "Eid Joy for Underprivileged (সুবিধাবঞ্চিতদের সাথে ঈদ আনন্দ)"
+      "en": "Eid Joy for Underprivileged"
     },
     "category": "Seasonal Support",
     "shortDescription": {

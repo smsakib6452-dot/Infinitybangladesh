@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from '../../context/RouterContext';
 import { ScrollReveal } from '../motion/ScrollReveal';
+import { MagneticButton } from '../motion/MagneticButton';
 import { OptimizedImage } from '../OptimizedImage';
 import { HeroConfig } from '../../types';
 import {
@@ -57,22 +58,16 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-8 lg:gap-12 items-center">
           {/* Left Column: Headline, Description & CTAs */}
           <div className="lg:col-span-7 space-y-3.5 sm:space-y-6 text-left">
-            {/* Eyebrow Pill Badge - Ultra-refined & compact on mobile, expansive on desktop */}
-            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-[#E6F3EF]/90 backdrop-blur-xs border border-[#C2E2D7] text-[#00523C] text-[10px] sm:text-sm font-extrabold shadow-2xs">
+            {/* Eyebrow Pill Badge - Refined & Natural Branding */}
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-0.5 sm:px-3.5 sm:py-1 rounded-full bg-[#E6F3EF]/90 backdrop-blur-xs border border-[#C2E2D7] text-[#00523C] text-[11px] sm:text-xs font-extrabold shadow-2xs">
               <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#006A4E] animate-pulse shrink-0" />
-              <span className="tracking-wide hidden sm:inline">
-                {tText(hero.eyebrow)}
-              </span>
-              <span className="tracking-wide sm:hidden">
-                {isBn ? 'মানবতায় নিবেদিত • ২০১৫ থেকে' : 'Serving Humanity • Since 2015'}
+              <span className="tracking-wide">
+                {isBn ? 'মানবতায় নিবেদিত তারুণ্যের অঙ্গীকার • ২০১৫ থেকে' : 'Youth Dedicated to Humanity • Since 2015'}
               </span>
             </div>
 
-            {/* Main Headline */}
-            <h1 className="text-[22px] sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.22] sm:leading-[1.18] font-display">
-              <span className="block text-xs sm:text-sm font-extrabold uppercase tracking-widest text-[#006A4E] mb-2 sm:mb-3">
-                Infinity Bangladesh • ইনফিনিটি বাংলাদেশ
-              </span>
+            {/* Main Headline - Clean, Inspiring & Natural (Zero Keyword Stuffing) */}
+            <h1 className="text-2xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.22] sm:leading-[1.18] font-display">
               {tText(hero.headlineMain)}{' '}
               <span className="text-[#006A4E] relative inline-block">
                 {tText(hero.headlineHighlight)}
@@ -90,25 +85,27 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
             {/* CTA Action Cluster - Sleek & compact on mobile, expansive on desktop */}
             <div className="pt-0.5 sm:pt-1 flex flex-wrap items-center gap-2 sm:gap-4">
               {hero.primaryCta?.active && (
-                <Link
+                <MagneticButton
                   to={hero.primaryCta.url}
                   isExternal={hero.primaryCta.openInNewTab}
-                  className="flex-1 sm:flex-initial min-h-[44px] px-3.5 sm:px-7 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#006A4E] hover:bg-[#00523C] active:bg-[#00402E] text-white text-xs sm:text-base font-bold shadow-warm-xs hover:shadow-warm-md transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2.5 cursor-pointer transform hover:-translate-y-0.5 text-center touch-manipulation"
+                  variant="primary"
+                  className="flex-1 sm:flex-initial min-h-[44px] px-4 sm:px-7 py-2.5 sm:py-3.5 text-xs sm:text-base"
                 >
                   <Heart className="w-3.5 h-3.5 sm:w-5 sm:h-5 fill-white text-white shrink-0" />
                   <span className="truncate">{tText(hero.primaryCta.text)}</span>
-                </Link>
+                </MagneticButton>
               )}
 
               {hero.secondaryCta?.active && (
-                <Link
+                <MagneticButton
                   to={hero.secondaryCta.url}
                   isExternal={hero.secondaryCta.openInNewTab}
-                  className="flex-1 sm:flex-initial min-h-[44px] px-3.5 sm:px-7 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl bg-white hover:bg-[#FAF7F2] active:bg-[#F2ECE1] text-slate-800 text-xs sm:text-base font-bold border border-[#D8CFC4] hover:border-[#006A4E] hover:text-[#006A4E] shadow-2xs transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer transform hover:-translate-y-0.5 text-center whitespace-nowrap touch-manipulation"
+                  variant="secondary"
+                  className="flex-1 sm:flex-initial min-h-[44px] px-4 sm:px-7 py-2.5 sm:py-3.5 text-xs sm:text-base"
                 >
                   <Users className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#006A4E] shrink-0" />
                   <span>{isBn ? (hero.secondaryCta.text?.bn || 'স্বেচ্ছাসেবী আবেদন') : 'Join as Volunteer'}</span>
-                </Link>
+                </MagneticButton>
               )}
 
               {hero.storyCta?.active && (

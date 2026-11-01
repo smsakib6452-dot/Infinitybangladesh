@@ -54,14 +54,12 @@ export const HomePage: React.FC = () => {
   const totalLivesImpacted = bloodDonationSettings?.statImpactOverride !== null && bloodDonationSettings?.statImpactOverride !== undefined
     ? Number(bloodDonationSettings.statImpactOverride) || 0
     : totalDonationsCount;
-  const pendingBloodRequests = emergencyBloodRequests.filter(r => r.status === 'PENDING' || r.status === 'PROCESSING').length;
 
-  // Robust Section Visibility Evaluator (Guarantees 100% sync with Admin panel toggles)
+  // Robust Section Visibility Evaluator
   const isSectionVisible = (sectionKey: string): boolean => {
     if (!visibility) return true;
     if (visibility[sectionKey] === false) return false;
 
-    // Check alias variations to guarantee 100% sync with Admin
     if (sectionKey === 'about' || sectionKey === 'about_preview') {
       return visibility.about !== false && visibility.about_preview !== false && (visibility as any).aboutPreview !== false;
     }
@@ -98,13 +96,12 @@ export const HomePage: React.FC = () => {
     if (sectionKey === 'hero') {
       return visibility.hero !== false;
     }
+
     return true;
   };
 
   // Section Rendering Function Map
-  const renderSection = (sectionKey: string) => {
-    if (!isSectionVisible(sectionKey)) return null;
-
+  const renderSectionContent = (sectionKey: string) => {
     switch (sectionKey) {
       case 'hero':
         return (
@@ -261,6 +258,50 @@ export const HomePage: React.FC = () => {
     }
   };
 
+  // Professional Section Band Styling (Eliminates the "Ocean of Beige / Floating Card Syndrome")
+  const getSectionBandClass = (sectionKey: string): string => {
+    switch (sectionKey) {
+      case 'hero':
+        return 'w-full bg-[#FAF7F2] relative';
+      case 'impact':
+      case 'impact_section':
+        return 'w-full bg-white py-10 sm:py-16 border-b border-[#EAE3D9]/70 relative';
+      case 'about':
+      case 'about_preview':
+        return 'w-full bg-[#FAF7F2] py-12 sm:py-20 border-b border-[#EAE3D9]/70 relative';
+      case 'programs':
+      case 'programs_section':
+        return 'w-full bg-white py-12 sm:py-20 border-b border-[#EAE3D9]/70 relative';
+      case 'campaigns':
+      case 'campaigns_section':
+        return 'w-full bg-[#FAF7F2] py-12 sm:py-20 border-b border-[#EAE3D9]/70 relative';
+      case 'stories':
+      case 'stories_section':
+        return 'w-full bg-white py-12 sm:py-20 border-b border-[#EAE3D9]/70 relative';
+      case 'lifeline':
+      case 'blood_donation':
+      case 'lifeline_section':
+        return 'w-full bg-[#FAF7F2] py-12 sm:py-20 border-b border-[#EAE3D9]/70 relative';
+      case 'gallery':
+      case 'gallery_section':
+        return 'w-full bg-white py-12 sm:py-20 border-b border-[#EAE3D9]/70 relative';
+      case 'press':
+      case 'press_section':
+        return 'w-full bg-[#FAF7F2] py-12 sm:py-20 border-b border-[#EAE3D9]/70 relative';
+      case 'volunteer':
+      case 'volunteer_banner':
+        return 'w-full bg-white py-10 sm:py-16 border-b border-[#EAE3D9]/70 relative';
+      case 'transparency':
+      case 'transparency_section':
+        return 'w-full bg-[#FAF7F2] py-10 sm:py-16 border-b border-[#EAE3D9]/70 relative';
+      case 'support':
+      case 'support_banner':
+        return 'w-full bg-white py-10 sm:py-16 relative';
+      default:
+        return 'w-full py-10 relative';
+    }
+  };
+
   const defaultSectionOrder = [
     'hero',
     'impact',
@@ -285,8 +326,16 @@ export const HomePage: React.FC = () => {
   const visibleSections = orderedSections.filter(sectionKey => isSectionVisible(sectionKey));
 
   return (
-    <div className="space-y-16 sm:space-y-24 lg:space-y-28 pb-20 overflow-hidden">
-      {visibleSections.map(sectionKey => renderSection(sectionKey))}
+    <div className="flex flex-col w-full overflow-hidden">
+      {visibleSections.map(sectionKey => {
+        const content = renderSectionContent(sectionKey);
+        if (!content) return null;
+        return (
+          <div key={sectionKey} className={getSectionBandClass(sectionKey)}>
+            {content}
+          </div>
+        );
+      })}
     </div>
   );
 };

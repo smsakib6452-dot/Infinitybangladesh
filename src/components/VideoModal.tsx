@@ -4,6 +4,7 @@ import { VideoItem } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL, isPortraitVideo } from '../lib/utils/mediaHelper';
 import { DateInput } from './DateInput';
+import { ModalShell } from './ModalShell';
 
 interface VideoModalProps {
   isOpen: boolean;
@@ -82,7 +83,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
     }
   }, [videoUrl, videoToEdit]);
 
-  if (!isOpen) return null;
+
 
   const detection = detectAndNormalizeMedia(videoUrl.trim());
   const effectiveThumbnail = customThumbnail.trim() || detection.thumbnailUrl || DEFAULT_VIDEO_THUMBNAIL;
@@ -132,6 +133,17 @@ export const VideoModal: React.FC<VideoModalProps> = ({
     onClose();
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+  
+
+  return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   const CATEGORIES = [
     'Relief Campaigns',
     'Volunteer Drives',
@@ -142,6 +154,8 @@ export const VideoModal: React.FC<VideoModalProps> = ({
     'Winter Warmth',
     'Emergency Flood Relief'
   ];
+
+
 
   return (
     <div

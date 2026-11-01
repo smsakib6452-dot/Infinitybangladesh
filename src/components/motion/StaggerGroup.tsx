@@ -38,7 +38,7 @@ export const StaggerGroup: React.FC<StaggerGroupProps> = ({
       variants={containerVariants}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: viewportMargin as any, amount: 0.02 }}
+      viewport={{ once: true, margin: viewportMargin as any, amount: 0.05 }}
       className={className}
     >
       {children}
