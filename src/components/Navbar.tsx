@@ -84,6 +84,33 @@ export const Navbar: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [mobileMenuOpen]);
 
+  // Listen for custom events from FloatingMobileDock or other interactive triggers
+  useEffect(() => {
+    const handleToggle = () => setMobileMenuOpen(prev => !prev);
+    const handleOpen = () => setMobileMenuOpen(true);
+    const handleClose = () => setMobileMenuOpen(false);
+
+    window.addEventListener('toggle-mobile-menu', handleToggle);
+    window.addEventListener('open-mobile-menu', handleOpen);
+    window.addEventListener('close-mobile-menu', handleClose);
+
+    return () => {
+      window.removeEventListener('toggle-mobile-menu', handleToggle);
+      window.removeEventListener('open-mobile-menu', handleOpen);
+      window.removeEventListener('close-mobile-menu', handleClose);
+    };
+  }, []);
+
+  // Broadcast mobileMenuOpen state so floating dock syncs active indicator
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('mobile-menu-state-change', { detail: { isOpen: mobileMenuOpen } }));
+  }, [mobileMenuOpen]);
+
+  // Close mobile menu on page navigation
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [currentPage]);
+
   const handleMouseEnterDropdown = (itemId: string) => {
     if (dropdownTimeoutRef.current) {
       clearTimeout(dropdownTimeoutRef.current);
