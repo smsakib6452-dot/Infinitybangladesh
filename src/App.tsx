@@ -5,6 +5,7 @@ import { RouterProvider, useRouter } from './context/RouterContext';
 import { updatePageMetadata } from './lib/seo';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
+import { FloatingMobileDock } from './components/FloatingMobileDock';
 import { GlobalSearchModal } from './components/GlobalSearchModal';
 import { AdminErrorBoundary } from './components/AdminErrorBoundary';
 
@@ -201,6 +202,9 @@ const AppContent: React.FC = () => {
 
       {/* Global Footer (shown on all pages for consistency) */}
       <Footer />
+
+      {/* Floating Dynamic Island Mobile Quick-Action Dock */}
+      <FloatingMobileDock />
 
       {/* Global Search Lightbox Modal */}
       <GlobalSearchModal />
