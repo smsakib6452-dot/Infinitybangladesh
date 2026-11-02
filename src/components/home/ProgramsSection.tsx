@@ -1,10 +1,7 @@
 import React from 'react';
 import { Program } from '../../types';
 import { Link } from '../../context/RouterContext';
-import { SectionHeading } from '../SectionHeading';
-import { StaggerGroup, StaggerItem } from '../motion/StaggerGroup';
-import { ProgramCard } from '../ProgramCard';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, BookOpen } from 'lucide-react';
 
 interface ProgramsSectionProps {
   programs: Program[];
@@ -14,40 +11,36 @@ interface ProgramsSectionProps {
 }
 
 export const ProgramsSection: React.FC<ProgramsSectionProps> = ({
-  programs,
   programsSection,
   isBn,
   tText
 }) => {
   return (
     <section key="programs" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <SectionHeading
-        badge={tText(programsSection?.badge) || (isBn ? 'স্থায়ী কার্যক্রম' : 'Flagship Programs')}
-        title={tText(programsSection?.title) || (isBn ? 'ধারাবাহিক মানবিক কর্মসূচি ও ইভেন্ট' : 'Sustainable Humanitarian Initiatives')}
-        subtitle={
-          tText(programsSection?.subtitle) || (
-            isBn
-              ? 'প্রতি বছর নিয়মিতভাবে আয়োজিত সুবিধাবঞ্চিত মানুষের ঈদ আনন্দ, শীতবস্ত্র ও জরুরি খাদ্য কর্মসূচি।'
-              : 'Recurring seasonal programs providing dignified Eid gifts, winter protection, and relief.'
-          )
-        }
-      />
+      <div className="rounded-3xl bg-[#FAF7F2] border border-[#EAE3D9] p-5 sm:p-7 shadow-warm-xs flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
+        <div className="space-y-1.5 text-center sm:text-left">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E6F3EF] text-[#006A4E] text-[10px] sm:text-xs font-bold border border-[#C2E2D7]">
+            <BookOpen className="w-3 h-3 text-[#006A4E]" />
+            <span>{tText(programsSection?.badge) || (isBn ? 'স্থায়ী কার্যক্রম ও ইভেন্ট' : 'Flagship Initiatives')}</span>
+          </div>
+          <h3 className="text-base sm:text-lg font-extrabold text-slate-900 font-display font-bengali">
+            {tText(programsSection?.title) || (isBn ? 'ধারাবাহিক মানবিক কর্মসূচি ও ইভেন্ট' : 'Sustainable Humanitarian Initiatives')}
+          </h3>
+          <p className="text-xs text-slate-600 font-bengali max-w-xl leading-relaxed">
+            {tText(programsSection?.subtitle) || (
+              isBn
+                ? 'সুবিধাবঞ্চিত শিশুদের শিক্ষা উপকরণ, নিয়মিত খাদ্য ও শীতবস্ত্র কর্মসূচির পূর্ণাঙ্গ তালিকা।'
+                : 'Seasonal relief, education aid, and community welfare programs.'
+            )}
+          </p>
+        </div>
 
-      <StaggerGroup className="flex flex-wrap justify-center gap-6 sm:gap-8">
-        {programs.slice(0, 3).map((program) => (
-          <StaggerItem key={program.id} className="w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.35rem)] max-w-sm flex">
-            <ProgramCard program={program} />
-          </StaggerItem>
-        ))}
-      </StaggerGroup>
-
-      <div className="text-center pt-6 sm:pt-8">
         <Link
           to={programsSection?.viewAllUrl || "programs"}
-          className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-white hover:bg-[#FAF7F2] text-slate-800 text-[11px] sm:text-sm font-bold border border-[#EAE3D9] shadow-warm-xs transition-all inline-flex items-center gap-1.5 sm:gap-2 cursor-pointer"
+          className="shrink-0 w-full sm:w-auto px-5 py-2.5 sm:py-3 rounded-xl bg-white hover:bg-[#006A4E] text-slate-800 hover:text-white border border-[#EAE3D9] hover:border-[#006A4E] text-xs sm:text-sm font-bold shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer group"
         >
-          <span>{tText(programsSection?.viewAllText) || (isBn ? 'সকল কর্মসূচি ও ইভেন্ট তালিকা দেখুন' : 'View All Programs & Events')}</span>
-          <ArrowRight className="w-4 h-4 text-[#006A4E]" />
+          <span>{tText(programsSection?.viewAllText) || (isBn ? 'সকল স্থায়ী কর্মসূচি দেখুন' : 'Explore All Programs')}</span>
+          <ArrowRight className="w-4 h-4 text-[#006A4E] group-hover:text-white group-hover:translate-x-1 transition-all" />
         </Link>
       </div>
     </section>

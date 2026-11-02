@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { Link, useRouter } from '../context/RouterContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Droplet, Users, Home, Menu, X } from 'lucide-react';
 
 export const FloatingMobileDock: React.FC = () => {
-  const { currentPage } = useRouter();
+  const { currentPage, isSearchOpen } = useRouter();
   const { isBn } = useLanguage();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -21,34 +21,44 @@ export const FloatingMobileDock: React.FC = () => {
     return () => window.removeEventListener('mobile-menu-state-change', handleStateChange);
   }, []);
 
-  // Do not obstruct admin dashboard or full-screen workflows
-  if (currentPage === 'admin') return null;
+  // Safe haptic feedback helper for mobile touch interaction
+  const triggerHaptic = useCallback(() => {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      try {
+        navigator.vibrate(10);
+      } catch {
+        // Ignore devices without vibration support
+      }
+    }
+  }, []);
 
   const handleToggleMenu = () => {
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate(10);
-    }
+    triggerHaptic();
     window.dispatchEvent(new CustomEvent('toggle-mobile-menu'));
   };
+
+  // Do not obstruct admin dashboard or active modal overlays
+  if (currentPage === 'admin' || isSearchOpen) return null;
 
   const isHomeActive = currentPage === 'home' || !currentPage;
   const isBloodActive = currentPage.startsWith('blood-donation');
   const isTeamActive = currentPage.startsWith('team');
 
   return (
-    <div className="md:hidden fixed bottom-3 inset-x-0 z-40 flex justify-center px-3 pointer-events-none pb-[env(safe-area-inset-bottom,0px)]">
+    <div className="md:hidden fixed bottom-3 inset-x-0 z-[110] flex justify-center px-3 pointer-events-none pb-[calc(env(safe-area-inset-bottom,0px)+0.25rem)]">
       <motion.nav
         initial={{ y: 50, opacity: 0, scale: 0.95 }}
         animate={{ y: 0, opacity: 1, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 26, delay: 0.1 }}
-        className="pointer-events-auto flex items-center justify-around gap-1 px-2.5 py-1.5 rounded-full bg-white/95 backdrop-blur-xl border border-[#EAE3D9] shadow-[0_12px_36px_rgba(0,106,78,0.14)] text-slate-700 max-w-sm w-full mx-auto"
+        transition={{ type: 'spring', stiffness: 350, damping: 28, delay: 0.08 }}
+        className="pointer-events-auto flex items-center justify-around gap-0.5 sm:gap-1 px-2 sm:px-2.5 py-1.5 rounded-full bg-white/95 backdrop-blur-xl border border-[#EAE3D9] shadow-warm-lg text-slate-700 max-w-[350px] w-[calc(100vw-1.5rem)] mx-auto select-none"
         role="navigation"
         aria-label={isBn ? 'মোবাইল দ্রুত নেভিগেশন ডক' : 'Mobile Quick Action Navigation'}
       >
         {/* 1. Home Tab */}
         <Link
           to="home"
-          className={`relative flex-1 py-1.5 px-1 rounded-full flex flex-col items-center justify-center gap-0.5 transition-all touch-manipulation cursor-pointer select-none text-center min-w-0 ${
+          onClick={triggerHaptic}
+          className={`relative flex-1 min-h-[46px] py-1 px-1 rounded-full flex flex-col items-center justify-center gap-0.5 transition-all touch-manipulation cursor-pointer text-center min-w-0 ${
             isHomeActive && !isMenuOpen ? 'text-[#006A4E]' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -59,8 +69,8 @@ export const FloatingMobileDock: React.FC = () => {
               transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             />
           )}
-          <Home className={`w-4 h-4 shrink-0 ${isHomeActive && !isMenuOpen ? 'text-[#006A4E]' : 'text-slate-500'}`} />
-          <span className={`text-[10px] tracking-tight leading-none ${isHomeActive && !isMenuOpen ? 'font-extrabold text-[#006A4E]' : 'font-medium text-slate-700'}`}>
+          <Home className={`w-4 h-4 shrink-0 transition-transform ${isHomeActive && !isMenuOpen ? 'text-[#006A4E] scale-105' : 'text-slate-500'}`} />
+          <span className={`text-[10px] tracking-tight leading-none truncate max-w-full ${isHomeActive && !isMenuOpen ? 'font-extrabold text-[#006A4E]' : 'font-medium text-slate-700'}`}>
             {isBn ? 'হোম' : 'Home'}
           </span>
         </Link>
@@ -68,7 +78,8 @@ export const FloatingMobileDock: React.FC = () => {
         {/* 2. Blood (LifeLine) Tab */}
         <Link
           to="blood-donation"
-          className={`relative flex-1 py-1.5 px-1 rounded-full flex flex-col items-center justify-center gap-0.5 transition-all touch-manipulation cursor-pointer select-none text-center min-w-0 ${
+          onClick={triggerHaptic}
+          className={`relative flex-1 min-h-[46px] py-1 px-1 rounded-full flex flex-col items-center justify-center gap-0.5 transition-all touch-manipulation cursor-pointer text-center min-w-0 ${
             isBloodActive && !isMenuOpen ? 'text-rose-700' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -84,7 +95,7 @@ export const FloatingMobileDock: React.FC = () => {
             <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
           </div>
           <div className="flex flex-col items-center leading-none">
-            <span className={`text-[10px] tracking-tight ${isBloodActive && !isMenuOpen ? 'font-extrabold text-rose-700' : 'font-semibold text-slate-800'}`}>
+            <span className={`text-[10px] tracking-tight leading-none ${isBloodActive && !isMenuOpen ? 'font-extrabold text-rose-700' : 'font-semibold text-slate-800'}`}>
               {isBn ? 'রক্তদান' : 'Blood'}
             </span>
             <span className="text-[7.5px] font-mono font-bold text-rose-600 tracking-tighter mt-0.5 leading-none">
@@ -96,7 +107,8 @@ export const FloatingMobileDock: React.FC = () => {
         {/* 3. Meet Our Team Tab */}
         <Link
           to="team/executive-committee"
-          className={`relative flex-1 py-1.5 px-1 rounded-full flex flex-col items-center justify-center gap-0.5 transition-all touch-manipulation cursor-pointer select-none text-center min-w-0 ${
+          onClick={triggerHaptic}
+          className={`relative flex-1 min-h-[46px] py-1 px-1 rounded-full flex flex-col items-center justify-center gap-0.5 transition-all touch-manipulation cursor-pointer text-center min-w-0 ${
             isTeamActive && !isMenuOpen ? 'text-[#006A4E]' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -107,8 +119,8 @@ export const FloatingMobileDock: React.FC = () => {
               transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             />
           )}
-          <Users className={`w-4 h-4 shrink-0 ${isTeamActive && !isMenuOpen ? 'text-[#006A4E]' : 'text-slate-500'}`} />
-          <span className={`text-[10px] tracking-tight leading-none ${isTeamActive && !isMenuOpen ? 'font-extrabold text-[#006A4E]' : 'font-medium text-slate-700'}`}>
+          <Users className={`w-4 h-4 shrink-0 transition-transform ${isTeamActive && !isMenuOpen ? 'text-[#006A4E] scale-105' : 'text-slate-500'}`} />
+          <span className={`text-[10px] tracking-tight leading-none truncate max-w-full ${isTeamActive && !isMenuOpen ? 'font-extrabold text-[#006A4E]' : 'font-medium text-slate-700'}`}>
             {isBn ? 'আমাদের টিম' : 'Our Team'}
           </span>
         </Link>
@@ -117,11 +129,12 @@ export const FloatingMobileDock: React.FC = () => {
         <button
           type="button"
           onClick={handleToggleMenu}
-          className={`relative flex-1 py-1.5 px-1 rounded-full flex flex-col items-center justify-center gap-0.5 transition-all touch-manipulation cursor-pointer select-none text-center min-w-0 ${
+          className={`relative flex-1 min-h-[46px] py-1 px-1 rounded-full flex flex-col items-center justify-center gap-0.5 transition-all touch-manipulation cursor-pointer text-center min-w-0 ${
             isMenuOpen ? 'text-[#006A4E]' : 'text-slate-600 hover:text-slate-900'
           }`}
-          aria-label={isMenuOpen ? (isBn ? 'মেনু বন্ধ করুন' : 'Close menu') : (isBn ? 'আরও মেনু খুলুন' : 'Open more menu options')}
+          aria-label={isMenuOpen ? (isBn ? 'মেনু বন্ধ করুন' : 'Close menu') : (isBn ? 'আরও মেনু বিকল্প' : 'More menu options')}
           aria-expanded={isMenuOpen}
+          aria-controls="mobile-nav-drawer"
         >
           {isMenuOpen && (
             <motion.div
@@ -135,7 +148,7 @@ export const FloatingMobileDock: React.FC = () => {
           ) : (
             <Menu className="w-4 h-4 shrink-0 text-slate-600" />
           )}
-          <span className={`text-[10px] tracking-tight leading-none ${isMenuOpen ? 'font-extrabold text-[#006A4E]' : 'font-medium text-slate-700'}`}>
+          <span className={`text-[10px] tracking-tight leading-none truncate max-w-full ${isMenuOpen ? 'font-extrabold text-[#006A4E]' : 'font-medium text-slate-700'}`}>
             {isMenuOpen ? (isBn ? 'বন্ধ' : 'Close') : (isBn ? 'আরও' : 'More')}
           </span>
         </button>

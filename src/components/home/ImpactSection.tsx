@@ -23,7 +23,7 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
     if (metrics.length === 1) return 'grid grid-cols-1 max-w-md mx-auto';
     if (metrics.length === 2) return 'grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-3xl mx-auto';
     if (metrics.length === 3) return 'grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto';
-    return 'grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-6 max-w-6xl mx-auto';
+    return 'grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 max-w-6xl mx-auto';
   }, [metrics.length]);
 
   return (
@@ -49,15 +49,15 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
       </StaggerGroup>
 
       {/* 100% Charity Integrity Assurance Strip */}
-      <div className="mt-6 sm:mt-8 text-center">
-        <div className="inline-flex flex-wrap items-center justify-center gap-2 sm:gap-4 px-4 py-2 rounded-2xl bg-white border border-[#EAE3D9] text-[#00523C] text-xs font-bold shadow-2xs">
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-[#006A4E]" />
-            {isBn ? '১০০% চ্যারিটি নীতি' : '100% Charity Model'}
+      <div className="mt-8 sm:mt-10 flex justify-center">
+        <div className="inline-flex flex-wrap items-center justify-center gap-2 sm:gap-3 px-3.5 sm:px-6 py-2.5 rounded-2xl bg-white border border-[#EAE3D9] text-[#00523C] text-xs font-bold shadow-warm-xs font-bengali">
+          <span className="flex items-center gap-1.5 text-[#006A4E]">
+            <ShieldCheck className="w-4 h-4 text-[#006A4E] shrink-0" />
+            <span>{isBn ? '১০০% চ্যারিটি নীতি' : '100% Charity Model'}</span>
           </span>
-          <span className="text-slate-300 hidden sm:inline">•</span>
+          <span className="text-slate-300" aria-hidden="true">•</span>
           <span className="text-slate-700">{isBn ? '০% প্রশাসনিক কর্তন' : 'Zero Administrative Cuts'}</span>
-          <span className="text-slate-300 hidden sm:inline">•</span>
+          <span className="text-slate-300" aria-hidden="true">•</span>
           <span className="text-slate-700">{isBn ? 'সম্পূর্ণ উন্মুক্ত ও নিরীক্ষিত স্বচ্ছতা' : '100% Audited Transparency'}</span>
         </div>
       </div>

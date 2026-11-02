@@ -118,24 +118,15 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, featured =
           )}
         </div>
 
-        {/* Card Footer Actions - Always aligned */}
-        <div className="pt-3 border-t border-slate-100/70 flex items-center justify-between gap-3 mt-auto">
+        {/* Card Footer Action - Confident Single Primary Action Bar */}
+        <div className="pt-3 border-t border-slate-100/70 flex items-center mt-auto">
           <Link
             to="campaigns/detail"
             slug={campaign.slug}
-            className="text-xs sm:text-sm font-bold text-[#006A4E] hover:text-[#00523C] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="w-full py-2.5 px-3.5 rounded-xl bg-[#FAF7F2] hover:bg-[#006A4E] text-slate-800 hover:text-white border border-[#EAE3D9] hover:border-[#006A4E] transition-all text-xs sm:text-sm font-bold flex items-center justify-between cursor-pointer group/btn shadow-2xs hover:shadow-xs"
           >
-            <span>{isBn ? 'বিস্তারিত দেখুন' : 'View Campaign'}</span>
-            <ArrowRight className="w-4 h-4 group-arrow-hover" />
-          </Link>
-
-          <Link
-            to="donate"
-            className="px-3.5 py-1.5 rounded-xl bg-[#E6F3EF] hover:bg-[#006A4E] text-[#006A4E] hover:text-white transition-all inline-flex items-center gap-1.5 text-xs font-bold cursor-pointer shadow-2xs"
-            title="Support this campaign"
-          >
-            <Heart className="w-3.5 h-3.5 fill-current" />
-            <span>{isBn ? 'সহায়তা' : 'Support'}</span>
+            <span>{isBn ? 'ক্যাম্পেইন বিবরণ ও সহায়তা' : 'View Drive & Support'}</span>
+            <ArrowRight className="w-4 h-4 text-[#006A4E] group-hover/btn:text-white group-hover/btn:translate-x-1 transition-all" />
           </Link>
         </div>
       </div>

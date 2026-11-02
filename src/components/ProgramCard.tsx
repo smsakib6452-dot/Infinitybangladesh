@@ -71,24 +71,15 @@ export const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
         </div>
       </div>
 
-      {/* Footer Action - Pinned uniformly to bottom */}
-      <div className="pt-5 mt-auto border-t border-slate-100/80 flex items-center justify-between gap-3">
+      {/* Footer Action - Confident Single Primary Action Bar */}
+      <div className="pt-4 mt-auto border-t border-slate-100/80 flex items-center">
         <Link
           to="programs/detail"
           slug={program.slug}
-          className="text-xs sm:text-sm font-bold text-[#006A4E] hover:text-[#00523C] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+          className="w-full py-2.5 px-3.5 rounded-xl bg-[#FAF7F2] hover:bg-[#006A4E] text-slate-800 hover:text-white border border-[#EAE3D9] hover:border-[#006A4E] transition-all text-xs sm:text-sm font-bold flex items-center justify-between cursor-pointer group/btn shadow-2xs hover:shadow-xs"
         >
-          <span>{isBn ? 'সম্পূর্ণ বিবরণ' : 'Explore Details'}</span>
-          <ArrowRight className="w-4 h-4 group-arrow-hover" />
-        </Link>
-
-        <Link
-          to="donate"
-          className="px-3 py-1.5 rounded-xl bg-[#E6F3EF] hover:bg-[#006A4E] text-[#006A4E] hover:text-white transition-all inline-flex items-center gap-1.5 text-xs font-bold cursor-pointer shadow-2xs"
-          title="Support this program"
-        >
-          <Heart className="w-3.5 h-3.5 fill-current" />
-          <span>{isBn ? 'সহায়তা' : 'Support'}</span>
+          <span>{isBn ? 'কর্মসূচির বিস্তারিত ও প্রভাব' : 'Explore Program & Impact'}</span>
+          <ArrowRight className="w-4 h-4 text-[#006A4E] group-hover/btn:text-white group-hover/btn:translate-x-1 transition-all" />
         </Link>
       </div>
     </div>

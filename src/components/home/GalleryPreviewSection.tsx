@@ -9,7 +9,6 @@ import { detectAndNormalizeMedia } from '../../lib/utils/mediaHelper';
 import {
   ArrowRight,
   Image as ImageIcon,
-  Film,
   Sparkles,
   ExternalLink,
   Calendar
@@ -154,10 +153,10 @@ export const GalleryPreviewSection: React.FC<GalleryPreviewSectionProps> = ({
                   {activeVideo.category || 'Organizational Journey'}
                 </span>
               </div>
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 font-display">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 font-display font-bengali">
                 {tText(activeVideo.title) || (isBn ? 'ইনফিনিটি বাংলাদেশ পরিক্রমা' : 'Infinity Bangladesh Journey')}
               </h3>
-              <p className="text-xs text-slate-600 line-clamp-2">
+              <p className="text-xs text-slate-600 line-clamp-2 font-bengali">
                 {tText(activeVideo.description)}
               </p>
             </div>
@@ -200,83 +199,49 @@ export const GalleryPreviewSection: React.FC<GalleryPreviewSectionProps> = ({
         </div>
 
         <StaggerGroup className={gridClasses}>
-          {displayedPhotos.map((photo, i) => (
-            <StaggerItem key={photo.id} className="w-full">
-              <div
-                onClick={() => onSelectPhoto(i)}
-                data-cursor="view"
-                className="gallery-lightbox-trigger group relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-900 cursor-pointer shadow-warm-xs hover:shadow-warm-md border border-[#EAE3D9] transition-all transform hover:-translate-y-1"
+          {displayedPhotos.map((photo, i) => {
+            const isFeaturedOdd = displayedPhotos.length === 5 && i === 0;
+            return (
+              <StaggerItem
+                key={photo.id}
+                className={isFeaturedOdd ? "col-span-2 sm:col-span-1 w-full" : "w-full"}
               >
-                <OptimizedImage
-                  src={photo.imageUrl}
-                  alt={tText(photo.title)}
-                  width={380}
-                  aspectRatio="1/1"
-                  sizes="(max-width: 640px) 150px, 200px"
-                  className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/20 to-transparent flex items-end p-2.5 transition-all">
-                  <span className="text-[11px] text-white font-bold truncate leading-tight drop-shadow-sm">
-                    {tText(photo.title)}
-                  </span>
+                <div
+                  onClick={() => onSelectPhoto(i)}
+                  data-cursor="view"
+                  className={`gallery-lightbox-trigger group relative w-full rounded-2xl overflow-hidden bg-slate-900 cursor-pointer shadow-warm-xs hover:shadow-warm-md border border-[#EAE3D9] transition-all transform hover:-translate-y-1 ${
+                    isFeaturedOdd ? 'aspect-16/10 sm:aspect-square' : 'aspect-square'
+                  }`}
+                >
+                  <OptimizedImage
+                    src={photo.imageUrl}
+                    alt={tText(photo.title)}
+                    width={isFeaturedOdd ? 700 : 380}
+                    aspectRatio={isFeaturedOdd ? "16/10" : "1/1"}
+                    sizes={isFeaturedOdd ? "(max-width: 640px) 100vw, 200px" : "(max-width: 640px) 150px, 200px"}
+                    className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent flex items-end p-2.5 sm:p-2.5 transition-all">
+                    <span className="text-[11px] sm:text-xs text-white font-bold line-clamp-2 leading-snug drop-shadow-sm font-bengali">
+                      {tText(photo.title)}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </StaggerItem>
-          ))}
+              </StaggerItem>
+            );
+          })}
         </StaggerGroup>
       </div>
 
-      {/* 4. High-Engagement Compelling CTA Card (Invites to Full Gallery) */}
-      <div className="rounded-3xl overflow-hidden bg-gradient-to-br from-[#00402E] via-[#00523C] to-[#006A4E] text-white p-6 sm:p-10 shadow-warm-lg border border-emerald-600/30 relative">
-        {/* Subtle Ambient Light Gradients */}
-        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
-        <div className="absolute -left-16 -bottom-16 w-64 h-64 rounded-full bg-amber-400/10 blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-8 text-center lg:text-left">
-          <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-emerald-200 text-xs font-bold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>{isBn ? 'ইনফিনিটি সেন্ট্রাল মিডিয়া আর্কাইভ' : 'Infinity Central Media Archive'}</span>
-            </div>
-
-            <h3 className="text-xl sm:text-2xl lg:text-3xl font-extrabold font-display leading-tight text-white">
-              {isBn ? 'এক দশকের মানবিক হাসি ও সেবার জীবন্ত স্মৃতিকথা' : 'A Decade of Smiles & Compassion in Action'}
-            </h3>
-
-            <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed font-normal">
-              {isBn
-                ? 'শীতবস্ত্র বিতরণ, বন্যা পুনর্বাসন, পথশিশুদের ঈদ আনন্দ ও তরুণদের রক্তদান কর্মযজ্ঞের শত শত দুর্লভ ছবি ও ভিডিও সংরক্ষিত রয়েছে আমাদের পূর্ণাঙ্গ গ্যালারিতে।'
-                : 'Explore hundreds of heartfelt field moments, emergency relief drives, and volunteer stories in our complete media archive.'}
-            </p>
-
-            {/* Metrics Chips */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 pt-1 text-[11px] font-semibold text-emerald-200">
-              <span className="px-2.5 py-1 rounded-lg bg-black/20 border border-white/10 flex items-center gap-1.5">
-                <ImageIcon className="w-3 h-3 text-amber-300" />
-                {isBn ? '১০০+ স্থিরচিত্র' : '100+ Photos'}
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-black/20 border border-white/10 flex items-center gap-1.5">
-                <Film className="w-3 h-3 text-rose-300" />
-                {isBn ? 'ভিডিও রিল ও প্রামাণ্যচিত্র' : 'Video Reels & Stories'}
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-black/20 border border-white/10 flex items-center gap-1.5">
-                <Calendar className="w-3 h-3 text-emerald-300" />
-                {isBn ? '২০১৫–২০২৫ আর্কাইভ' : '2015–2025 Archive'}
-              </span>
-            </div>
-          </div>
-
-          {/* Magnetic CTA Button */}
-          <div className="shrink-0 w-full sm:w-auto">
-            <Link
-              to={gallerySection?.viewAllUrl || "gallery"}
-              className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-white hover:bg-[#FAF7F2] active:bg-[#F2ECE1] text-[#006A4E] text-xs sm:text-sm font-extrabold shadow-warm-md hover:shadow-warm-xl transition-all transform hover:-translate-y-0.5 inline-flex items-center justify-center gap-2.5 cursor-pointer group select-none"
-            >
-              <span>{tText(gallerySection?.viewAllText) || (isBn ? 'সম্পূর্ণ ফটো ও ভিডিও অ্যালবাম দেখুন' : 'Explore Complete Media Album')}</span>
-              <ArrowRight className="w-4 h-4 text-[#006A4E] group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-        </div>
+      {/* 4. Streamlined View All Media Action */}
+      <div className="text-center pt-2 sm:pt-4">
+        <Link
+          to={gallerySection?.viewAllUrl || "gallery"}
+          className="inline-flex items-center gap-2.5 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-white hover:bg-[#FAF7F2] active:bg-[#F2ECE1] text-[#006A4E] text-xs sm:text-sm font-bold border border-[#EAE3D9] shadow-warm-xs hover:shadow-warm-sm transition-all transform hover:-translate-y-0.5 cursor-pointer group select-none"
+        >
+          <span>{tText(gallerySection?.viewAllText) || (isBn ? 'সম্পূর্ণ ফটো ও ভিডিও অ্যালবাম দেখুন' : 'Explore Complete Media Album')}</span>
+          <ArrowRight className="w-4 h-4 text-[#006A4E] group-hover:translate-x-1 transition-transform" />
+        </Link>
       </div>
     </section>
   );

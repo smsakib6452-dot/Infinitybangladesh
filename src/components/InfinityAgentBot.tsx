@@ -822,12 +822,32 @@ export const InfinityAgentBot: React.FC = () => {
   const { bloodDonors, campaigns, reports, volunteers, faqs } = useData();
 
   const [isOpen, setIsOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Sync with Navbar mobileMenuOpen state so chatbot button hides when drawer is open
+  useEffect(() => {
+    const handleMenuStateChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ isOpen?: boolean }>;
+      if (customEvent.detail && typeof customEvent.detail.isOpen === 'boolean') {
+        setIsMobileMenuOpen(customEvent.detail.isOpen);
+      }
+    };
+    window.addEventListener('mobile-menu-state-change', handleMenuStateChange);
+    return () => window.removeEventListener('mobile-menu-state-change', handleMenuStateChange);
+  }, []);
+
+  // Close chat window if mobile drawer opens on mobile screens
+  useEffect(() => {
+    if (isMobileMenuOpen && window.innerWidth < 768) {
+      setIsOpen(false);
+    }
+  }, [isMobileMenuOpen]);
 
   // Dynamic Live Counts
   const stats = useMemo(() => {
@@ -1560,7 +1580,9 @@ export const InfinityAgentBot: React.FC = () => {
   return (
     <>
       {/* Floating Launcher Button */}
-      <div className="fixed bottom-[72px] right-3 sm:bottom-8 sm:right-8 lg:bottom-10 lg:right-12 z-40">
+      <div className={`fixed bottom-[72px] right-3 sm:bottom-8 sm:right-8 lg:bottom-10 lg:right-12 z-40 transition-opacity duration-200 ${
+        isMobileMenuOpen ? 'opacity-0 pointer-events-none md:opacity-100 md:pointer-events-auto' : 'opacity-100 pointer-events-auto'
+      }`}>
         <motion.button
           type="button"
           onClick={() => setIsOpen(prev => !prev)}

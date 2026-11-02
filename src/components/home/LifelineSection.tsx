@@ -1,26 +1,24 @@
 import React from 'react';
 import { Link } from '../../context/RouterContext';
 import { ScrollReveal } from '../motion/ScrollReveal';
-import { AnimatedCounter } from '../motion/AnimatedCounter';
 import { LifeLineHeroLogoAnimation } from '../motion/LifeLineHeroLogoAnimation';
 import {
   Droplet,
   HeartPulse,
   Search,
   ShieldAlert,
-  Users,
-  UserCheck,
   Heart,
   Phone,
-  ArrowRight
+  ArrowRight,
+  ShieldCheck
 } from 'lucide-react';
 
 interface LifelineSectionProps {
   lifelineSection: any;
   bloodDonationSettings: any;
-  totalRegisteredDonors: number;
-  totalActiveDonors: number;
-  totalLivesImpacted: number;
+  totalRegisteredDonors?: number;
+  totalActiveDonors?: number;
+  totalLivesImpacted?: number;
   isBn: boolean;
   tText: (value: any) => string;
 }
@@ -162,78 +160,74 @@ export const LifelineSection: React.FC<LifelineSectionProps> = ({
                   </span>
                 </div>
 
-                {/* 4 Real Metric Cards */}
+                {/* 24/7 Primary Emergency Blood Helpline Card */}
+                <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br from-rose-950/60 via-[#0A231A] to-[#041610] border border-rose-500/30 shadow-inner space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                      </span>
+                      <span className="text-[10.5px] sm:text-xs font-bold text-rose-300 uppercase tracking-wider">
+                        {isBn ? 'জরুরি রক্তের হেল্পলাইন' : 'Emergency Blood Helpline'}
+                      </span>
+                    </div>
+                    <span className="text-[9px] sm:text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-900/60 text-rose-200 border border-rose-500/30">
+                      {isBn ? '২৪ ঘণ্টা খোলা' : '24/7 ACTIVE'}
+                    </span>
+                  </div>
+
+                  <a
+                    href={`tel:${(bloodDonationSettings?.emergencyHelpline || '+8801839008339').replace(/[^0-9+]/g, '')}`}
+                    className="group flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 hover:border-rose-400 transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
+                        <Phone className="w-4 h-4 animate-pulse" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-xs sm:text-sm font-extrabold text-white font-mono tracking-wider">
+                          {bloodDonationSettings?.emergencyHelpline || '+880 1839-008339'}
+                        </p>
+                        <p className="text-[9.5px] sm:text-[10.5px] text-rose-200/80">
+                          {isBn ? 'সরাসরি ভলান্টিয়ার সমন্বয়কারী' : 'Direct Volunteer Dispatcher'}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] sm:text-xs font-bold text-rose-300 group-hover:text-white group-hover:translate-x-0.5 transition-all">
+                      {isBn ? 'কল করুন →' : 'Call Now →'}
+                    </span>
+                  </a>
+                </div>
+
+                {/* 2 Core Institutional Pillars (No dummy numbers) */}
                 <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                  {/* 1. Total Registered Donors */}
-                  <div className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-[#07241A]/90 border border-emerald-600/25 text-center flex flex-col items-center justify-center gap-0.5 sm:gap-1 hover:border-emerald-400/50 hover:bg-[#0A2E22] transform hover:-translate-y-0.5 transition-all duration-200 shadow-sm">
-                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center">
-                      <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    </div>
-                    <p className="text-lg sm:text-2xl font-extrabold text-white font-display">
-                      <AnimatedCounter value={totalRegisteredDonors} />+
-                    </p>
-                    <p className="text-[10px] sm:text-[11px] font-medium text-emerald-200/80 leading-tight">
-                      {tText(bloodDonationSettings?.statTotalDonorsLabel) || (isBn ? 'নিবন্ধিত রক্তদাতা' : 'Registered Donors')}
-                    </p>
-                  </div>
-
-                  {/* 2. Active Emergency Donors */}
-                  <div className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-[#07241A]/90 border border-emerald-600/25 text-center flex flex-col items-center justify-center gap-0.5 sm:gap-1 hover:border-emerald-400/50 hover:bg-[#0A2E22] transform hover:-translate-y-0.5 transition-all duration-200 shadow-sm">
-                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center">
-                      <UserCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    </div>
-                    <p className="text-lg sm:text-2xl font-extrabold text-white font-display">
-                      <AnimatedCounter value={totalActiveDonors} />+
-                    </p>
-                    <p className="text-[10px] sm:text-[11px] font-medium text-emerald-200/80 leading-tight">
-                      {tText(bloodDonationSettings?.statActiveDonorsLabel) || (isBn ? 'জরুরিতে প্রস্তুত' : 'Ready Donors')}
-                    </p>
-                  </div>
-
-                  {/* 3. Blood Groups Covered */}
-                  <div className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-[#0A1F1B]/90 border border-rose-800/25 text-center flex flex-col items-center justify-center gap-0.5 sm:gap-1 hover:border-rose-500/40 hover:bg-[#122722] transform hover:-translate-y-0.5 transition-all duration-200 shadow-sm">
+                  {/* 1. All 8 Blood Groups Active */}
+                  <div className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-[#07241A]/90 border border-emerald-600/25 text-center flex flex-col items-center justify-center gap-0.5 sm:gap-1 hover:border-emerald-400/50 hover:bg-[#0A2E22] transition-all duration-200 shadow-sm">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-rose-500/20 text-rose-300 flex items-center justify-center">
                       <Droplet className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
                     </div>
-                    <p className="text-lg sm:text-2xl font-extrabold text-white font-display">
-                      {bloodDonationSettings?.statGroupsValue || '8/8'}
+                    <p className="text-base sm:text-xl font-extrabold text-white font-display">
+                      8 / 8
                     </p>
-                    <p className="text-[10px] sm:text-[11px] font-medium text-rose-200/80 leading-tight">
-                      {tText(bloodDonationSettings?.statGroupsLabel) || (isBn ? 'সকল ব্লাড গ্রুপ' : 'Blood Groups')}
+                    <p className="text-[10px] sm:text-[11px] font-medium text-emerald-200/80 leading-tight">
+                      {isBn ? 'সকল ব্লাড গ্রুপে সমন্বয়' : 'All 8 Blood Groups'}
                     </p>
                   </div>
 
-                  {/* 4. Lives Impacted */}
-                  <div className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-[#0A1F1B]/90 border border-amber-700/25 text-center flex flex-col items-center justify-center gap-0.5 sm:gap-1 hover:border-amber-400/40 hover:bg-[#122722] transform hover:-translate-y-0.5 transition-all duration-200 shadow-sm">
-                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-amber-500/20 text-amber-300 flex items-center justify-center">
-                      <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
+                  {/* 2. 100% Free Humanitarian Service */}
+                  <div className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-[#07241A]/90 border border-emerald-600/25 text-center flex flex-col items-center justify-center gap-0.5 sm:gap-1 hover:border-emerald-400/50 hover:bg-[#0A2E22] transition-all duration-200 shadow-sm">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center">
+                      <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
-                    <p className="text-lg sm:text-2xl font-extrabold text-amber-300 font-display">
-                      <AnimatedCounter value={`${totalLivesImpacted}+`} />
+                    <p className="text-base sm:text-xl font-extrabold text-emerald-300 font-display">
+                      100%
                     </p>
-                    <p className="text-[10px] sm:text-[11px] font-medium text-amber-200/80 leading-tight">
-                      {tText(bloodDonationSettings?.statImpactLabel) || (isBn ? 'রক্তদান সম্পন্ন' : 'Lives Impacted')}
+                    <p className="text-[10px] sm:text-[11px] font-medium text-emerald-200/80 leading-tight">
+                      {isBn ? 'বিনা মূল্যে সরাসরি সেবা' : '100% Free Service'}
                     </p>
                   </div>
                 </div>
-
-                {/* 24/7 Helpline Bar */}
-                {bloodDonationSettings?.emergencyHelpline && (
-                  <div className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-[#041610] border border-emerald-600/30 flex items-center justify-between gap-2 text-xs text-slate-300 shadow-inner">
-                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                      <Phone className="w-3.5 h-3.5 text-rose-400 animate-pulse shrink-0" />
-                      <span className="text-emerald-100/90 font-medium whitespace-nowrap text-[11px] sm:text-xs">
-                        {isBn ? '২৪/৭ জরুরি হেল্পলাইন:' : '24/7 Helpline:'}
-                      </span>
-                    </div>
-                    <a
-                      href={`tel:${bloodDonationSettings.emergencyHelpline.replace(/[^0-9+]/g, '')}`}
-                      className="font-bold text-emerald-300 hover:text-white font-mono tracking-wide transition-colors flex items-center gap-1 shrink-0 whitespace-nowrap text-xs sm:text-sm"
-                    >
-                      <span>{bloodDonationSettings.emergencyHelpline}</span>
-                    </a>
-                  </div>
-                )}
 
                 {/* Gateway Footnote link to full Blood Donation experience */}
                 <div className="pt-0.5 text-center">

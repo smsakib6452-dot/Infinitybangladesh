@@ -28,6 +28,9 @@ export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const nestedDropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hamburgerBtnRef = useRef<HTMLButtonElement | null>(null);
+  const drawerCloseBtnRef = useRef<HTMLButtonElement | null>(null);
+  const drawerRef = useRef<HTMLDivElement | null>(null);
 
   // Dynamic Past Committees sorted descending by year
   const pastCommittees = committees
@@ -63,6 +66,11 @@ export const Navbar: React.FC = () => {
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.style.overflow = 'hidden';
+      // Shift focus to close button for screen reader & keyboard navigation (WCAG 2.2 AA)
+      const timer = setTimeout(() => {
+        drawerCloseBtnRef.current?.focus();
+      }, 60);
+      return () => clearTimeout(timer);
     } else {
       document.body.style.overflow = '';
     }
@@ -78,11 +86,45 @@ export const Navbar: React.FC = () => {
       if (e.key === 'Escape') {
         e.preventDefault();
         setMobileMenuOpen(false);
+        hamburgerBtnRef.current?.focus();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [mobileMenuOpen]);
+
+  // Trap keyboard focus inside mobile drawer (WCAG 2.2 AA)
+  const handleDrawerKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Tab') {
+      const focusable = drawerRef.current?.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled])'
+      );
+      if (!focusable || focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  };
+
+  // Keyboard navigation on desktop dropdown triggers
+  const handleDropdownKeyDown = (e: React.KeyboardEvent, itemId: string) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setActiveDropdownId(null);
+      setActiveNestedDropdownId(null);
+    } else if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+      if (activeDropdownId !== itemId) {
+        e.preventDefault();
+        setActiveDropdownId(itemId);
+      }
+    }
+  };
 
   // Listen for custom events from FloatingMobileDock or other interactive triggers
   useEffect(() => {
@@ -126,7 +168,7 @@ export const Navbar: React.FC = () => {
     dropdownTimeoutRef.current = setTimeout(() => {
       setActiveDropdownId(null);
       setActiveNestedDropdownId(null);
-    }, 220);
+    }, 280);
   };
 
   const handleMouseEnterNested = (subId: string) => {
@@ -143,7 +185,7 @@ export const Navbar: React.FC = () => {
     }
     nestedDropdownTimeoutRef.current = setTimeout(() => {
       setActiveNestedDropdownId(null);
-    }, 180);
+    }, 240);
   };
 
   const isItemActive = (path: string) => {
@@ -225,14 +267,14 @@ export const Navbar: React.FC = () => {
             : 'bg-white py-2 sm:py-3.5 border-b border-[#EAE3D9]/60'
         }`}
       >
-        <div className="max-w-[1536px] 2xl:max-w-[1600px] mx-auto px-3 sm:px-4 lg:px-5 xl:px-6 2xl:px-8 flex items-center justify-between gap-1.5 lg:gap-2 xl:gap-3 2xl:gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4">
           {/* Official Brand Logo (Clean, badge-free in navbar to avoid crowding) */}
           <Link to="home" className="shrink-0 block focus:outline-none group">
             <BrandLogo size="md" showBadge={false} />
           </Link>
 
           {/* Desktop Navigation Links — Collision-Safe Responsive Architecture */}
-          <div className="hidden lg:flex items-center justify-center gap-0.5 xl:gap-1 2xl:gap-1.5 text-[11.5px] xl:text-[12.5px] 2xl:text-[13.5px] font-bold text-slate-700 whitespace-nowrap flex-1 min-w-0 px-0.5 xl:px-1 overflow-visible">
+          <div className="hidden lg:flex items-center justify-end gap-1 xl:gap-1.5 2xl:gap-2 text-[12px] xl:text-[13px] 2xl:text-[14px] font-bold text-slate-700 whitespace-nowrap flex-1 min-w-0 px-2 overflow-visible">
             {activeNavItems.map(item => {
               const rawLabel = tText(item.label);
               // Streamline very long labels on compact laptop viewports (lg) to avoid overflow
@@ -280,7 +322,8 @@ export const Navbar: React.FC = () => {
                           e.stopPropagation();
                           setActiveDropdownId(prev => (prev === item.id ? null : item.id));
                         }}
-                        className={`py-1.5 xl:py-2 pr-1 xl:pr-1.5 2xl:pr-2 pl-0.5 rounded-r-xl transition-colors cursor-pointer shrink-0 ${
+                        onKeyDown={(e) => handleDropdownKeyDown(e, item.id)}
+                        className={`py-1.5 xl:py-2 pr-1 xl:pr-1.5 2xl:pr-2 pl-0.5 rounded-r-xl transition-colors cursor-pointer shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#006A4E] ${
                           isChildActive || isItemActive(item.path)
                             ? isLifeLine
                               ? 'text-rose-700 bg-rose-50'
@@ -289,16 +332,24 @@ export const Navbar: React.FC = () => {
                             ? 'hover:text-rose-700 hover:bg-rose-50/60 text-rose-400'
                             : 'hover:text-[#006A4E] hover:bg-slate-50 text-slate-400'
                         }`}
-                        aria-label="Toggle Submenu"
+                        aria-haspopup="true"
+                        aria-expanded={isDropdownOpen}
+                        aria-controls={`desktop-menu-${item.id}`}
+                        aria-label={isDropdownOpen ? (isBn ? 'সাবমেনু বন্ধ করুন' : 'Collapse submenu') : (isBn ? 'সাবমেনু খুলুন' : 'Expand submenu')}
                       >
                         <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-[#006A4E]' : ''}`} />
                       </button>
                     </div>
 
-                    {/* Submenu Dropdown Card */}
+                    {/* Submenu Dropdown Card with Continuous Hover Bridge */}
                     {isDropdownOpen && (
-                      <div className="absolute top-full left-0 pt-1.5 w-64 z-50 animate-in fade-in zoom-in-95 duration-150">
-                        <div className="bg-white rounded-2xl shadow-warm-lg border border-[#EAE3D9] p-2 space-y-1">
+                      <div
+                        id={`desktop-menu-${item.id}`}
+                        role="menu"
+                        aria-label={tText(item.label)}
+                        className="absolute top-full left-0 pt-2 w-64 z-50 animate-in fade-in zoom-in-95 duration-150 before:content-[''] before:absolute before:-top-3 before:inset-x-0 before:h-3 before:bg-transparent"
+                      >
+                        <div className="bg-white/98 backdrop-blur-xl rounded-2xl shadow-warm-lg border border-[#EAE3D9] p-2 space-y-1">
                           {item.children.filter(c => c.active !== false).map(subItem => {
                             const isPastCommitteeSub = subItem.isNestedDropdown || subItem.id === 'sub-past' || subItem.path.includes('past-committees');
 
@@ -328,8 +379,12 @@ export const Navbar: React.FC = () => {
                                   </Link>
 
                                   {isNestedOpen && (
-                                    <div className="absolute top-0 left-full pl-1.5 w-56 z-50 animate-in fade-in zoom-in-95 duration-150">
-                                      <div className="bg-white rounded-2xl shadow-warm-lg border border-[#EAE3D9] p-2 space-y-1 max-h-72 overflow-y-auto">
+                                    <div
+                                      role="menu"
+                                      aria-label="Past Committees Archive"
+                                      className="absolute top-0 left-full pl-2 w-56 z-50 animate-in fade-in zoom-in-95 duration-150 before:content-[''] before:absolute before:inset-y-0 before:-left-3 before:w-3 before:bg-transparent"
+                                    >
+                                      <div className="bg-white/98 backdrop-blur-xl rounded-2xl shadow-warm-lg border border-[#EAE3D9] p-2 space-y-1 max-h-72 overflow-y-auto">
                                         <Link
                                           to="team/past-committees"
                                           onClick={() => {
@@ -409,7 +464,7 @@ export const Navbar: React.FC = () => {
                   key={item.id}
                   to={item.path}
                   isExternal={item.isExternal}
-                  className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 xl:py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap ${
+                  className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 xl:py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-[#006A4E] ${
                     isActive
                       ? 'text-[#006A4E] bg-[#E6F3EF] font-extrabold'
                       : 'hover:text-[#006A4E] hover:bg-slate-50'
@@ -421,13 +476,13 @@ export const Navbar: React.FC = () => {
             })}
           </div>
 
-          {/* Right Action Controls: Search & Join Us with guaranteed non-overlapping clearance */}
-          <div className="flex items-center gap-1.5 sm:gap-2 2xl:gap-2.5 shrink-0 z-10 ml-1 xl:ml-2">
+          {/* Right Action Controls: Search & Hamburger */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 z-10 ml-1 xl:ml-2">
             {headerSettings.showSearch && (
               <button
                 type="button"
                 onClick={() => setIsSearchOpen(true)}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-[#006A4E] border border-slate-200/80 flex items-center justify-center transition-colors cursor-pointer"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-[#006A4E] border border-slate-200/80 flex items-center justify-center transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#006A4E]"
                 title={isBn ? 'অনুসন্ধান করুন (Ctrl + K)' : 'Search (Ctrl + K)'}
                 aria-label="Search"
               >
@@ -435,21 +490,12 @@ export const Navbar: React.FC = () => {
               </button>
             )}
 
-            {headerSettings.showSupportButton && (
-              <Link
-                to={headerSettings.supportButtonUrl || 'volunteer'}
-                className="hidden sm:inline-flex items-center gap-1.5 xl:gap-2 px-3 xl:px-4 2xl:px-5 py-2 sm:py-2.5 rounded-xl btn-primary-green text-xs 2xl:text-sm font-bold shadow-warm-sm cursor-pointer whitespace-nowrap shrink-0"
-              >
-                <Heart className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-rose-300 fill-rose-300 shrink-0" />
-                <span>{tText(headerSettings.supportButtonText) || (isBn ? 'আমাদের সাথে যোগ দিন' : 'Join Us')}</span>
-              </Link>
-            )}
-
             {/* Mobile Menu Toggle Button */}
             <button
+              ref={hamburgerBtnRef}
               type="button"
               onClick={() => setMobileMenuOpen(prev => !prev)}
-              className="lg:hidden w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer transition-colors"
+              className="lg:hidden w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#006A4E] touch-manipulation active:scale-95"
               aria-label={mobileMenuOpen ? (isBn ? 'মেনু বন্ধ করুন' : 'Close navigation menu') : (isBn ? 'মেনু খুলুন' : 'Open navigation menu')}
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-nav-drawer"
@@ -467,28 +513,32 @@ export const Navbar: React.FC = () => {
           role="dialog"
           aria-modal="true"
           aria-label={isBn ? 'মোবাইল নেভিগেশন মেনু' : 'Mobile Navigation Menu'}
-          className="lg:hidden fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+          className="lg:hidden fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
           onClick={() => setMobileMenuOpen(false)}
+          onTouchMove={(e) => e.stopPropagation()}
         >
           <div 
-            className="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-2xl flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-250 z-[101]"
+            ref={drawerRef}
+            onKeyDown={handleDrawerKeyDown}
+            className="fixed inset-y-0 right-0 w-[88vw] max-w-[340px] sm:max-w-sm bg-white shadow-2xl flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-250 z-[101] border-l border-[#EAE3D9]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Drawer Header */}
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/90">
+            <div className="px-4 py-3.5 border-b border-[#EAE3D9] flex items-center justify-between bg-slate-50/90 sticky top-0 z-10 backdrop-blur-xs">
               <BrandLogo size="sm" />
               <button
+                ref={drawerCloseBtnRef}
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center cursor-pointer hover:bg-slate-100 active:scale-95 transition-all touch-manipulation"
-                aria-label="Close Mobile Navigation"
+                className="w-10 h-10 rounded-xl bg-white border border-[#EAE3D9] text-slate-700 flex items-center justify-center cursor-pointer hover:bg-slate-100 active:scale-95 transition-all touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-[#006A4E]"
+                aria-label={isBn ? 'মোবাইল মেনু বন্ধ করুন' : 'Close mobile menu'}
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Drawer Menu Items */}
-            <div className="p-4 space-y-1.5 flex-1 overflow-y-auto">
+            <div className="p-3 sm:p-4 space-y-2 flex-1 overflow-y-auto overscroll-contain">
               {activeNavItems.map(item => {
                 const isDropdown = item.isDropdown && item.children && item.children.length > 0;
                 const isExpanded = activeDropdownId === item.id;
@@ -500,7 +550,7 @@ export const Navbar: React.FC = () => {
                     <div key={item.id} className="space-y-1">
                       {/* Split Dual-Action Row: Left side navigates, Right chevron expands */}
                       <div
-                        className={`w-full rounded-xl flex items-center justify-between transition-all ${
+                        className={`w-full min-h-[46px] rounded-xl flex items-center justify-between transition-all ${
                           isActive
                             ? isLifeLine
                               ? 'bg-rose-50 text-rose-700 font-bold border border-rose-100'
@@ -542,7 +592,7 @@ export const Navbar: React.FC = () => {
                               setMobileMenuOpen(false);
                               if (isActive) window.scrollTo({ top: 0, behavior: 'smooth' });
                             }}
-                            className="w-full px-3 py-2 rounded-lg text-xs font-bold text-[#006A4E] bg-emerald-50/70 hover:bg-[#E6F3EF] flex items-center justify-between transition-colors cursor-pointer touch-manipulation active:scale-[0.98]"
+                            className="w-full min-h-[42px] px-3 py-2.5 rounded-lg text-xs font-bold text-[#006A4E] bg-emerald-50/70 hover:bg-[#E6F3EF] flex items-center justify-between transition-colors cursor-pointer touch-manipulation active:scale-[0.98]"
                           >
                             <span>{isBn ? `${tText(item.label)} - মূল পাতা` : `${tText(item.label)} - Overview`}</span>
                             <ArrowRight className="w-3.5 h-3.5 text-[#006A4E]" />
@@ -554,7 +604,7 @@ export const Navbar: React.FC = () => {
                             if (isPastCommitteeSub && (item.path === 'team' || item.id === 'nav-5')) {
                               return (
                                 <div key={subItem.id} className="space-y-1">
-                                  <div className="flex items-center justify-between rounded-lg hover:bg-slate-50 border border-transparent">
+                                  <div className="flex items-center justify-between rounded-lg hover:bg-slate-50 border border-transparent min-h-[42px]">
                                     <Link
                                       to={subItem.path}
                                       onClick={() => {
@@ -586,7 +636,7 @@ export const Navbar: React.FC = () => {
                                           setMobileMenuOpen(false);
                                           window.scrollTo({ top: 0, behavior: 'smooth' });
                                         }}
-                                        className="w-full px-2.5 py-1.5 rounded-md text-[11px] font-bold text-[#006A4E] bg-emerald-50 block cursor-pointer touch-manipulation"
+                                        className="w-full min-h-[40px] px-2.5 py-2 rounded-md text-[11px] font-bold text-[#006A4E] bg-emerald-50 flex items-center cursor-pointer touch-manipulation"
                                       >
                                         {isBn ? 'সকল প্রাক্তন কমিটি' : 'All Past Committees'}
                                       </Link>
@@ -599,7 +649,7 @@ export const Navbar: React.FC = () => {
                                             setMobileMenuOpen(false);
                                             window.scrollTo({ top: 0, behavior: 'smooth' });
                                           }}
-                                          className="w-full px-2.5 py-1.5 rounded-md text-[11px] text-slate-600 hover:text-[#006A4E] hover:bg-slate-50 flex items-center justify-between cursor-pointer touch-manipulation"
+                                          className="w-full min-h-[40px] px-2.5 py-2 rounded-md text-[11px] text-slate-600 hover:text-[#006A4E] hover:bg-slate-50 flex items-center justify-between cursor-pointer touch-manipulation"
                                         >
                                           <span className="truncate">{tText(pc.name)}</span>
                                           <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
@@ -622,7 +672,7 @@ export const Navbar: React.FC = () => {
                                   setMobileMenuOpen(false);
                                   if (isSubActive) window.scrollTo({ top: 0, behavior: 'smooth' });
                                 }}
-                                className={`w-full px-3 py-2 rounded-lg text-xs transition-colors block cursor-pointer touch-manipulation active:scale-[0.98] ${
+                                className={`w-full min-h-[42px] px-3 py-2.5 rounded-lg text-xs transition-colors flex items-center cursor-pointer touch-manipulation active:scale-[0.98] ${
                                   isSubActive
                                     ? 'bg-[#E6F3EF] text-[#006A4E] font-bold'
                                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'
@@ -648,7 +698,7 @@ export const Navbar: React.FC = () => {
                       setMobileMenuOpen(false);
                       if (isActive) window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className={`w-full px-3.5 py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition-all cursor-pointer touch-manipulation active:scale-[0.98] ${
+                    className={`w-full min-h-[46px] px-3.5 py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition-all cursor-pointer touch-manipulation active:scale-[0.98] ${
                       isActive
                         ? 'bg-[#E6F3EF] text-[#006A4E] border border-emerald-100'
                         : 'text-slate-700 hover:bg-slate-50 border border-transparent'
@@ -660,15 +710,15 @@ export const Navbar: React.FC = () => {
               })}
             </div>
 
-            {/* Drawer Footer Actions */}
-            <div className="p-4 border-t border-slate-100 bg-slate-50/90 space-y-2.5">
+            {/* Drawer Footer Actions with Persistent Dock Clearance */}
+            <div className="p-3.5 sm:p-4 border-t border-[#EAE3D9] bg-slate-50/95 space-y-2.5 pb-[calc(env(safe-area-inset-bottom,0px)+5.5rem)]">
               {headerSettings.showLanguageSwitcher && (
                 <button
                   type="button"
                   onClick={() => {
                     toggleLanguage();
                   }}
-                  className="w-full py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:bg-slate-50 active:scale-95 transition-all touch-manipulation"
+                  className="w-full min-h-[44px] py-2.5 rounded-xl bg-white border border-[#EAE3D9] text-slate-700 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-2xs hover:bg-slate-50 active:scale-95 transition-all touch-manipulation"
                 >
                   <Globe className="w-4 h-4 text-[#006A4E]" />
                   <span>{language === 'en' ? 'বাংলা সংস্করণ দেখুন' : 'Switch to English Version'}</span>
@@ -679,7 +729,7 @@ export const Navbar: React.FC = () => {
                 <Link
                   to={headerSettings.supportButtonUrl || 'volunteer'}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full py-3 rounded-xl btn-primary-green text-xs font-bold text-center flex items-center justify-center gap-2 shadow-warm-sm cursor-pointer active:scale-95 transition-all touch-manipulation"
+                  className="w-full min-h-[44px] py-3 rounded-xl btn-primary-green text-xs font-bold text-center flex items-center justify-center gap-2 shadow-warm-sm cursor-pointer active:scale-95 transition-all touch-manipulation"
                 >
                   <Heart className="w-4 h-4 text-rose-300 fill-rose-300" />
                   <span>{tText(headerSettings.supportButtonText) || (isBn ? 'আমাদের সাথে যোগ দিন' : 'Join Us')}</span>

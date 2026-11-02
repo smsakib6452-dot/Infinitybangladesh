@@ -63,7 +63,7 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({
                 <h4 className="text-[11px] sm:text-xs font-bold text-slate-900 font-display truncate">
                   {tText(aboutPreview?.missionHeading) || (isBn ? 'আমাদের লক্ষ্য' : 'Our Mission')}
                 </h4>
-                <p className="text-[10px] sm:text-[11px] text-slate-600 mt-0.5 sm:mt-1 leading-relaxed line-clamp-2">
+                <p className="text-[10px] sm:text-[11px] text-slate-600 mt-0.5 sm:mt-1 leading-relaxed">
                   {tText(aboutPreview?.missionText) || tText(aboutSettings?.mission) || (isBn ? 'সুবিধাবঞ্চিতদের মৌলিক অধিকার ও জরুরি রক্তদান নিশ্চিত করা।' : 'Dignified aid and voluntary blood matching.')}
                 </p>
               </div>
@@ -77,7 +77,7 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({
                 <h4 className="text-[11px] sm:text-xs font-bold text-slate-900 font-display truncate">
                   {tText(aboutPreview?.visionHeading) || (isBn ? 'আমাদের দর্শন' : 'Our Vision')}
                 </h4>
-                <p className="text-[10px] sm:text-[11px] text-slate-600 mt-0.5 sm:mt-1 leading-relaxed line-clamp-2">
+                <p className="text-[10px] sm:text-[11px] text-slate-600 mt-0.5 sm:mt-1 leading-relaxed">
                   {tText(aboutPreview?.visionText) || tText(aboutSettings?.vision) || (isBn ? '১০০% চ্যারিটি নীতি ও তারুণ্যের শক্তিতে বৈষম্যহীন সমাজ।' : 'A self-reliant, empathetic society.')}
                 </p>
               </div>
@@ -121,9 +121,9 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({
               <div className="text-white space-y-1 flex flex-col items-center max-w-md mx-auto">
                 <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-wider shadow-xs">
                   <HeartHandshake className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-400" />
-                  <span>{tText(aboutPreview?.imageBadgeTitle) || (isBn ? 'মানবতায় একতাবদ্ধ • ২০১৫ থেকে' : 'UNITED FOR HUMANITY • SINCE 2015')}</span>
+                  <span>{tText(aboutPreview?.imageBadgeTitle) || (isBn ? 'মানবতায় একতাবদ্ধ' : 'UNITED FOR HUMANITY')}</span>
                 </div>
-                <p className="text-[11px] sm:text-sm font-medium text-slate-200 leading-snug line-clamp-1 sm:line-clamp-none text-center">
+                <p className="text-[11px] sm:text-sm font-medium text-slate-200 leading-snug text-center">
                   {tText(aboutPreview?.imageBadgeSubtitle) || (isBn ? 'মাঠপর্যায়ে সরাসরি সেবায় নিবেদিত আমাদের তারুণ্য' : 'Passionate youth volunteers serving on the ground')}
                 </p>
               </div>

@@ -2504,8 +2504,8 @@ export const INITIAL_IMPACT_METRICS: ImpactMetric[] = [
   {
     "id": "metric-4",
     "label": {
-      "en": "Years of Service",
-      "bn": "নিরবচ্ছিন্ন সেবার বছর"
+      "en": "Humanitarian Journey",
+      "bn": "মানবিক পথচলা"
     },
     "value": "11+ Years",
     "description": {

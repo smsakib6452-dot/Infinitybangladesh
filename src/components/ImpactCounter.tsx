@@ -26,7 +26,7 @@ export const ImpactCounter: React.FC<ImpactCounterProps> = ({ metric }) => {
   return (
     <SpotlightBentoCard
       glowColor="rgba(0, 106, 78, 0.15)"
-      className="flex flex-col items-center text-center space-y-2.5 sm:space-y-4 w-full h-full"
+      className="flex flex-col items-center text-center space-y-2.5 sm:space-y-4 w-full h-full p-4 sm:p-6"
     >
       {/* Decorative top accent */}
       <div className="w-8 sm:w-14 h-1 bg-gradient-to-r from-[#006A4E] via-[#008562] to-[#D97706] rounded-full mx-auto" />
@@ -40,16 +40,16 @@ export const ImpactCounter: React.FC<ImpactCounterProps> = ({ metric }) => {
 
         {/* Number and Label */}
         <div className="space-y-0.5 sm:space-y-1">
-          <div className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight font-display">
+          <div className="text-2.5xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight font-display font-bengali leading-none">
             <AnimatedCounter value={metric.value} />
           </div>
-          <h4 className="text-xs sm:text-base font-bold text-[#006A4E] font-display line-clamp-1 sm:line-clamp-none">
+          <h4 className="text-xs sm:text-base font-bold text-[#006A4E] font-display font-bengali leading-snug">
             {tText(metric.label)}
           </h4>
         </div>
 
         {/* Description */}
-        <p className="text-[11px] sm:text-xs text-slate-500 leading-snug sm:leading-relaxed max-w-xs line-clamp-2 sm:line-clamp-none">
+        <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed max-w-xs font-bengali">
           {tText(metric.description)}
         </p>
       </div>

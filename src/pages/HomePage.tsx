@@ -225,6 +225,8 @@ export const HomePage: React.FC = () => {
 
       case 'volunteer':
       case 'volunteer_banner':
+        // Consolidated into Master Pre-Footer Closing CTA (SupportSection) to eliminate 3 back-to-back pre-footer banners
+        if (isSectionVisible('support')) return null;
         return (
           <VolunteerSection
             key="volunteer"
@@ -236,6 +238,8 @@ export const HomePage: React.FC = () => {
 
       case 'transparency':
       case 'transparency_section':
+        // Consolidated into Master Pre-Footer Closing CTA (SupportSection)
+        if (isSectionVisible('support')) return null;
         return (
           <ScrollReveal effect="fade-up" key="transparency" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <VerifiedOrganizationPledge config={homepageConfig.transparencySection} />
@@ -248,6 +252,8 @@ export const HomePage: React.FC = () => {
           <SupportSection
             key="support"
             supportBanner={homepageConfig.supportBanner}
+            volunteerBanner={homepageConfig.volunteerBanner}
+            transparencyConfig={homepageConfig.transparencySection}
             isBn={isBn}
             tText={tText}
           />
