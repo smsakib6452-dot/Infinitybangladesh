@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
+import { spring } from '../../lib/motion/tokens';
 
 export type RevealEffect = 'fade-up' | 'fade-in' | 'scale-up' | 'slide-right' | 'slide-left';
 
@@ -12,16 +13,18 @@ interface ScrollRevealProps {
   className?: string;
   viewportMargin?: string;
   threshold?: number;
+  useSpring?: boolean;
 }
 
 export const ScrollReveal: React.FC<ScrollRevealProps> = ({
   children,
   effect = 'fade-up',
   delay = 0,
-  duration = 0.55,
+  duration,
   distance = 24,
   className = '',
-  viewportMargin = '0px'
+  viewportMargin = '0px',
+  useSpring = true
 }) => {
   const shouldReduceMotion = useReducedMotion();
 
@@ -76,11 +79,18 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
       initial={getInitial()}
       whileInView={getAnimate()}
       viewport={{ once: true, margin: viewportMargin as any, amount: 0.02 }}
-      transition={{
-        duration,
-        delay: normalizedDelay,
-        ease: [0.16, 1, 0.3, 1]
-      }}
+      transition={
+        useSpring && duration === undefined
+          ? {
+              ...spring.smooth,
+              delay: normalizedDelay,
+            }
+          : {
+              duration: duration ?? 0.55,
+              delay: normalizedDelay,
+              ease: [0.16, 1, 0.3, 1],
+            }
+      }
       className={className}
     >
       {children}

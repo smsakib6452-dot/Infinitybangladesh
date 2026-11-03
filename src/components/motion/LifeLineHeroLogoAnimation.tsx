@@ -54,6 +54,11 @@ export const LifeLineHeroLogoAnimation: React.FC<LifeLineHeroLogoAnimationProps>
 
   // Initial trigger + Gentle periodic heartbeat life-cycle (every 7.5 seconds)
   useEffect(() => {
+    if (shouldReduceMotion) {
+      setPhase('settled');
+      return;
+    }
+
     const initialTimer = setTimeout(() => {
       triggerDropAnimation();
     }, 400);
@@ -68,7 +73,7 @@ export const LifeLineHeroLogoAnimation: React.FC<LifeLineHeroLogoAnimationProps>
       clearInterval(interval);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [triggerDropAnimation]);
+  }, [triggerDropAnimation, shouldReduceMotion]);
 
   return (
     <div

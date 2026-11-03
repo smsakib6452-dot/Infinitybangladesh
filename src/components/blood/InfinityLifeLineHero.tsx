@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { motion, useSpring, useTransform, useMotionValue } from 'motion/react';
+import { motion, useSpring, useTransform, useMotionValue, useReducedMotion } from 'motion/react';
 import {
   Users,
   UserCheck,
@@ -95,40 +95,52 @@ export const InfinityLifeLineHero: React.FC<InfinityLifeLineHeroProps> = ({
     ? Number(bloodDonationSettings.statImpactOverride)
     : Math.max(Number(stats.totalDonations) || 0, 82);
   const helplineNumber = bloodDonationSettings?.emergencyHelpline || '+880 1839-008339';
+  const shouldReduceMotion = useReducedMotion();
 
   return (
     <section className="relative overflow-hidden bg-[#04120C] pt-6 sm:pt-8 pb-8 sm:pb-10 lg:py-8 px-4 sm:px-8 select-none border-b border-emerald-950/80">
       {/* 1. AMBIENT BACKGROUND GLOW ORBS & FLOATING BIO-PARTICLES */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <motion.div
-          animate={{ scale: [1, 1.15, 1], opacity: [0.22, 0.35, 0.22] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -top-24 left-1/4 h-96 w-96 rounded-full bg-emerald-500/20 blur-[130px]"
-        />
-        <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.18, 0.32, 0.18] }}
-          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-          className="absolute top-1/3 right-1/4 h-96 w-96 rounded-full bg-[#FF1E44]/20 blur-[140px]"
-        />
+        {shouldReduceMotion ? (
+          <>
+            <div className="absolute -top-24 left-1/4 h-96 w-96 rounded-full bg-emerald-500/15 blur-[100px]" />
+            <div className="absolute top-1/3 right-1/4 h-96 w-96 rounded-full bg-[#FF1E44]/15 blur-[100px]" />
+          </>
+        ) : (
+          <>
+            <motion.div
+              animate={{ scale: [1, 1.15, 1], opacity: [0.22, 0.35, 0.22] }}
+              transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute -top-24 left-1/4 h-96 w-96 rounded-full bg-emerald-500/20 blur-[130px]"
+            />
+            <motion.div
+              animate={{ scale: [1, 1.2, 1], opacity: [0.18, 0.32, 0.18] }}
+              transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+              className="absolute top-1/3 right-1/4 h-96 w-96 rounded-full bg-[#FF1E44]/20 blur-[140px]"
+            />
 
-        {/* Subtle Floating Bio-Luminescent Particles */}
-        {[...Array(8)].map((_, i) => (
-          <motion.span
-            key={i}
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: '-20%', opacity: [0, 0.45, 0] }}
-            transition={{
-              duration: 7 + i * 1.5,
-              repeat: Infinity,
-              delay: i * 0.8,
-              ease: 'linear',
-            }}
-            style={{ left: `${12 + i * 11}%` }}
-            className={`absolute bottom-0 h-1.5 w-1.5 rounded-full ${
-              i % 2 === 0 ? 'bg-[#FF1E44] shadow-[0_0_10px_#FF1E44]' : 'bg-emerald-400 shadow-[0_0_10px_#10B981]'
-            }`}
-          />
-        ))}
+            {/* Subtle Floating Bio-Luminescent Particles (Hidden on mobile to save GPU fill rate) */}
+            <div className="hidden md:block">
+              {[...Array(8)].map((_, i) => (
+                <motion.span
+                  key={i}
+                  initial={{ y: '100%', opacity: 0 }}
+                  animate={{ y: '-20%', opacity: [0, 0.45, 0] }}
+                  transition={{
+                    duration: 7 + i * 1.5,
+                    repeat: Infinity,
+                    delay: i * 0.8,
+                    ease: 'linear',
+                  }}
+                  style={{ left: `${12 + i * 11}%` }}
+                  className={`absolute bottom-0 h-1.5 w-1.5 rounded-full ${
+                    i % 2 === 0 ? 'bg-[#FF1E44] shadow-[0_0_10px_#FF1E44]' : 'bg-emerald-400 shadow-[0_0_10px_#10B981]'
+                  }`}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="relative z-10 mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
@@ -225,7 +237,7 @@ export const InfinityLifeLineHero: React.FC<InfinityLifeLineHeroProps> = ({
                 {/* Pulsing Mini Blood Drop Avatar */}
                 <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#FF1E44]/30 bg-[#FF1E44]/15 text-[#FF1E44]">
                   <motion.div
-                    animate={{ scale: [1, 1.15, 1] }}
+                    animate={shouldReduceMotion ? undefined : { scale: [1, 1.15, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
                     <Droplet className="h-6 w-6 fill-current" />
@@ -264,11 +276,13 @@ export const InfinityLifeLineHero: React.FC<InfinityLifeLineHeroProps> = ({
                 className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-[#E61032] via-[#FF1E44] to-[#D10D2B] py-3.5 px-6 text-sm font-bold text-white shadow-[0_0_30px_rgba(255,30,68,0.4)] transition-all cursor-pointer"
               >
                 {/* Animated Light Sweep Across Button */}
-                <motion.span
-                  animate={{ x: ['-100%', '200%'] }}
-                  transition={{ duration: 2.8, repeat: Infinity, repeatDelay: 1.5, ease: 'easeInOut' }}
-                  className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/25 to-transparent skew-x-12"
-                />
+                {!shouldReduceMotion && (
+                  <motion.span
+                    animate={{ x: ['-100%', '200%'] }}
+                    transition={{ duration: 2.8, repeat: Infinity, repeatDelay: 1.5, ease: 'easeInOut' }}
+                    className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/25 to-transparent skew-x-12"
+                  />
+                )}
                 <AlertTriangle className="h-4 w-4" />
                 <span>{isBn ? 'জরুরি রক্তের আবেদন করুন' : 'Emergency Blood Request'}</span>
               </motion.button>

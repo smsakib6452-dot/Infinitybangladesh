@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from '../../context/RouterContext';
-import { ScrollReveal } from '../motion/ScrollReveal';
+import { motion, useReducedMotion } from 'motion/react';
+import { spring, stagger } from '../../lib/motion/tokens';
 import { MagneticButton } from '../motion/MagneticButton';
 import { OptimizedImage } from '../OptimizedImage';
 import { HeroConfig } from '../../types';
@@ -24,6 +25,36 @@ interface HeroSectionProps {
 export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) => {
   const rawDescription = tText(hero.description) || '';
   const cleanDescription = rawDescription.replace(/^["“'”]+|["“'”]+$/g, '').trim();
+  const shouldReduceMotion = useReducedMotion();
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: shouldReduceMotion ? 0 : stagger.base,
+        delayChildren: shouldReduceMotion ? 0 : 0.05,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: shouldReduceMotion ? { duration: 0.01 } : spring.smooth,
+    },
+  };
+
+  const photoVariants = {
+    hidden: { opacity: 0, scale: shouldReduceMotion ? 1 : 0.95 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: shouldReduceMotion ? { duration: 0.01 } : spring.gentle,
+    },
+  };
 
   const renderTrustIcon = (iconName: string) => {
     switch (iconName) {
@@ -57,8 +88,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-8 lg:gap-12 items-center">
           {/* Left Column: Headline, Description & CTAs */}
-          <div className="lg:col-span-7 space-y-3.5 sm:space-y-6 text-left">
+          <motion.div variants={containerVariants} initial="hidden" animate="visible" className="lg:col-span-7 space-y-3.5 sm:space-y-6 text-left">
             {/* Eyebrow Pill Badge - Refined & Natural Branding */}
+            <motion.div variants={itemVariants}>
             <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-0.5 sm:px-3.5 sm:py-1 rounded-full bg-[#E6F3EF]/90 backdrop-blur-xs border border-[#C2E2D7] text-[#00523C] text-[11px] sm:text-xs font-extrabold shadow-2xs">
               <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#006A4E] animate-pulse shrink-0" />
               <span className="tracking-wide">
@@ -66,8 +98,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
               </span>
             </div>
 
+            </motion.div>
+
             {/* Main Headline - Clean, Inspiring & Natural (Zero Keyword Stuffing) */}
-            <h1 className="text-2xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.22] sm:leading-[1.18] font-display">
+            <motion.h1 variants={itemVariants} className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.2] sm:leading-[1.18] font-display">
               {tText(hero.headlineMain)}{' '}
               <span className="text-[#006A4E] relative inline-block">
                 {tText(hero.headlineHighlight)}
@@ -75,15 +109,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
                   <path d="M0,15 Q50,0 100,15 L100,20 L0,20 Z" />
                 </svg>
               </span>
-            </h1>
+            </motion.h1>
 
             {/* Supporting Description - Full text visible with proper typography */}
-            <p className="text-xs sm:text-lg text-slate-600 leading-relaxed sm:leading-8 max-w-2xl font-normal mt-1 sm:mt-0">
+            <motion.p variants={itemVariants} className="text-sm sm:text-lg text-slate-700 leading-relaxed sm:leading-8 max-w-2xl font-normal mt-1 sm:mt-0">
               {cleanDescription}
-            </p>
+            </motion.p>
 
             {/* CTA Action Cluster - Sleek & compact on mobile, expansive on desktop */}
-            <div className="pt-0.5 sm:pt-1 flex flex-wrap items-center gap-2 sm:gap-4">
+            <motion.div variants={itemVariants} className="pt-0.5 sm:pt-1 flex flex-wrap items-center gap-2 sm:gap-4">
               {hero.primaryCta?.active && (
                 <MagneticButton
                   to={hero.primaryCta.url}
@@ -121,10 +155,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
                   </Link>
                 </div>
               )}
-            </div>
+            </motion.div>
 
             {/* Desktop-only Trust Indicators (Left Column) */}
-            <div className="hidden sm:grid sm:grid-cols-3 pt-7 border-t border-[#EAE3D9] gap-4 text-xs text-slate-700">
+            <motion.div variants={itemVariants} className="hidden sm:grid sm:grid-cols-3 pt-7 border-t border-[#EAE3D9] gap-4 text-xs text-slate-700">
               {hero.trustIndicators?.filter((t: any) => t.active).map((indicator: any, idx: number) => (
                 <div
                   key={idx}
@@ -138,11 +172,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
                   </span>
                 </div>
               ))}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
-          {/* Right Column: Hero Real Photography Container */}
-          <div className="lg:col-span-5 relative mt-0">
+          {/* Right Column: Hero Real Photography Container (Spring Reveal) */}
+          <motion.div variants={photoVariants} initial="hidden" animate="visible" className="lg:col-span-5 relative mt-0">
             <div className="absolute -inset-3 bg-gradient-to-tr from-[#D97706]/20 via-[#006A4E]/15 to-transparent rounded-[2.5rem] blur-xl" />
             <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-[#D97706]/15 rounded-full blur-2xl" />
 
@@ -212,18 +246,18 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
               {hero.trustIndicators?.filter((t: any) => t.active).map((indicator: any, idx: number) => (
                 <div
                   key={idx}
-                  className="flex-1 flex items-center justify-center gap-1 px-0.5 first:pl-0 last:pr-0 min-w-0"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-1 first:pl-0 last:pr-0 min-w-0"
                 >
                   <div className="w-3.5 h-3.5 rounded-md bg-[#E6F3EF] flex items-center justify-center shrink-0 text-[#006A4E]">
                     {renderTrustIcon(indicator.icon)}
                   </div>
-                  <span className="font-bold text-slate-800 text-[9.5px] leading-tight text-center truncate">
+                  <span className="font-bold text-slate-800 text-[11px] sm:text-xs leading-tight text-center truncate">
                     {tText(indicator.text)}
                   </span>
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

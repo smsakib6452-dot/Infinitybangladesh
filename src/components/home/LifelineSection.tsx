@@ -47,7 +47,7 @@ export const LifelineSection: React.FC<LifelineSectionProps> = ({
             <div className="lg:col-span-7 space-y-2.5 sm:space-y-4 text-center lg:text-left flex flex-col justify-center">
               {/* Eyebrow Badge: Emergency Blood Initiative */}
               <div className="flex items-center justify-center lg:justify-start">
-                <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-0.5 sm:px-3.5 sm:py-1.5 rounded-full bg-emerald-950/70 text-emerald-300/90 border border-emerald-500/25 text-[9.5px] sm:text-[11px] font-bold uppercase tracking-widest backdrop-blur-md shadow-inner">
+                <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-emerald-950/70 text-emerald-300/90 border border-emerald-500/25 text-xs font-bold uppercase tracking-widest backdrop-blur-md shadow-inner">
                   <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-emerald-500" />
@@ -151,11 +151,11 @@ export const LifelineSection: React.FC<LifelineSectionProps> = ({
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
                     </span>
-                    <span className="text-[11px] sm:text-xs font-bold text-emerald-200 uppercase tracking-wider">
+                    <span className="text-xs sm:text-xs font-bold text-emerald-200 uppercase tracking-wider">
                       {tText(lifelineSection?.coordinationTitle) || (isBn ? 'লাইভ রক্তদান সমন্বয় নেটওয়ার্ক' : 'Live Coordination Network')}
                     </span>
                   </div>
-                  <span className="text-[9.5px] sm:text-[10px] font-bold px-2 sm:px-2.5 py-0.5 rounded-full bg-emerald-950/90 text-emerald-300 border border-emerald-500/40 tracking-wider">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-950/90 text-emerald-300 border border-emerald-500/40 tracking-wider">
                     {tText(lifelineSection?.coordinationBadge) || (isBn ? 'সক্রিয়' : 'LIVE')}
                   </span>
                 </div>
@@ -168,11 +168,11 @@ export const LifelineSection: React.FC<LifelineSectionProps> = ({
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
                       </span>
-                      <span className="text-[10.5px] sm:text-xs font-bold text-rose-300 uppercase tracking-wider">
+                      <span className="text-xs font-bold text-rose-300 uppercase tracking-wider">
                         {isBn ? 'জরুরি রক্তের হেল্পলাইন' : 'Emergency Blood Helpline'}
                       </span>
                     </div>
-                    <span className="text-[9px] sm:text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-900/60 text-rose-200 border border-rose-500/30">
+                    <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-rose-900/60 text-rose-200 border border-rose-500/30">
                       {isBn ? '২৪ ঘণ্টা খোলা' : '24/7 ACTIVE'}
                     </span>
                   </div>
@@ -189,12 +189,12 @@ export const LifelineSection: React.FC<LifelineSectionProps> = ({
                         <p className="text-xs sm:text-sm font-extrabold text-white font-mono tracking-wider">
                           {bloodDonationSettings?.emergencyHelpline || '+880 1839-008339'}
                         </p>
-                        <p className="text-[9.5px] sm:text-[10.5px] text-rose-200/80">
+                        <p className="text-xs text-rose-200/90">
                           {isBn ? 'সরাসরি ভলান্টিয়ার সমন্বয়কারী' : 'Direct Volunteer Dispatcher'}
                         </p>
                       </div>
                     </div>
-                    <span className="text-[10px] sm:text-xs font-bold text-rose-300 group-hover:text-white group-hover:translate-x-0.5 transition-all">
+                    <span className="text-xs sm:text-sm font-bold text-rose-300 group-hover:text-white group-hover:translate-x-0.5 transition-all">
                       {isBn ? 'কল করুন →' : 'Call Now →'}
                     </span>
                   </a>
@@ -210,7 +210,7 @@ export const LifelineSection: React.FC<LifelineSectionProps> = ({
                     <p className="text-base sm:text-xl font-extrabold text-white font-display">
                       8 / 8
                     </p>
-                    <p className="text-[10px] sm:text-[11px] font-medium text-emerald-200/80 leading-tight">
+                    <p className="text-xs font-medium text-emerald-200 leading-tight">
                       {isBn ? 'সকল ব্লাড গ্রুপে সমন্বয়' : 'All 8 Blood Groups'}
                     </p>
                   </div>
@@ -223,7 +223,7 @@ export const LifelineSection: React.FC<LifelineSectionProps> = ({
                     <p className="text-base sm:text-xl font-extrabold text-emerald-300 font-display">
                       100%
                     </p>
-                    <p className="text-[10px] sm:text-[11px] font-medium text-emerald-200/80 leading-tight">
+                    <p className="text-xs font-medium text-emerald-200 leading-tight">
                       {isBn ? 'বিনা মূল্যে সরাসরি সেবা' : '100% Free Service'}
                     </p>
                   </div>
@@ -233,7 +233,7 @@ export const LifelineSection: React.FC<LifelineSectionProps> = ({
                 <div className="pt-0.5 text-center">
                   <Link
                     to={lifelineSection?.portalUrl || "blood-donation"}
-                    className="group text-[11px] sm:text-xs text-emerald-300/90 hover:text-emerald-100 font-semibold inline-flex items-center gap-1.5 transition-all duration-200"
+                    className="group text-xs sm:text-sm text-emerald-300/90 hover:text-emerald-100 font-semibold inline-flex items-center gap-1.5 transition-all duration-200"
                   >
                     <span>{tText(lifelineSection?.portalLinkText) || (isBn ? 'সম্পূর্ণ রক্তদান কার্যক্রম ও নির্দেশিকা দেখুন' : 'Explore Full LifeLine Portal & Guidelines')}</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" />

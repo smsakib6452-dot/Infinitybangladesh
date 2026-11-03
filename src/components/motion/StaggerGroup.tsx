@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
+import { spring, stagger } from '../../lib/motion/tokens';
 
 interface StaggerGroupProps {
   children: React.ReactNode;
@@ -11,7 +12,7 @@ interface StaggerGroupProps {
 
 export const StaggerGroup: React.FC<StaggerGroupProps> = ({
   children,
-  staggerDelay = 0.08,
+  staggerDelay = stagger.base,
   delayChildren = 0,
   className = '',
   viewportMargin = '0px'
@@ -51,13 +52,15 @@ interface StaggerItemProps {
   className?: string;
   yOffset?: number;
   duration?: number;
+  useSpring?: boolean;
 }
 
 export const StaggerItem: React.FC<StaggerItemProps> = ({
   children,
   className = '',
   yOffset = 20,
-  duration = 0.5
+  duration,
+  useSpring = true
 }) => {
   const shouldReduceMotion = useReducedMotion();
 
@@ -70,11 +73,13 @@ export const StaggerItem: React.FC<StaggerItemProps> = ({
     visible: {
       opacity: 1,
       y: 0,
-      transition: {
-        duration,
-        ease: [0.16, 1, 0.3, 1] as const
-      }
-    }
+      transition: useSpring && duration === undefined
+        ? spring.smooth
+        : {
+            duration: duration ?? 0.5,
+            ease: [0.16, 1, 0.3, 1] as const,
+          },
+    },
   };
 
   return (

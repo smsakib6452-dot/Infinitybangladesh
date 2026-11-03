@@ -287,7 +287,7 @@ export const HomePage: React.FC = () => {
       case 'lifeline':
       case 'blood_donation':
       case 'lifeline_section':
-        return 'w-full bg-[#FAF7F2] py-12 sm:py-20 border-b border-[#EAE3D9]/70 relative';
+        return 'w-full bg-gradient-to-b from-[#FAF7F2] via-[#E7F2EC] to-[#FAF7F2] py-12 sm:py-20 border-b border-[#D8ECE2] relative';
       case 'gallery':
       case 'gallery_section':
         return 'w-full bg-white py-12 sm:py-20 border-b border-[#EAE3D9]/70 relative';

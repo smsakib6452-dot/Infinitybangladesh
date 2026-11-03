@@ -18,12 +18,14 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
   isBn,
   tText
 }) => {
-  // Dynamically balance grid columns based on active metrics count to eliminate empty grid holes
+  const isBento = metrics.length >= 4;
+
+  // Dynamically balance grid columns: Asymmetric Spatial Bento when 4+ metrics
   const gridClasses = useMemo(() => {
     if (metrics.length === 1) return 'grid grid-cols-1 max-w-md mx-auto';
     if (metrics.length === 2) return 'grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-3xl mx-auto';
     if (metrics.length === 3) return 'grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto';
-    return 'grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 max-w-6xl mx-auto';
+    return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto items-stretch';
   }, [metrics.length]);
 
   return (
@@ -41,11 +43,18 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
       />
 
       <StaggerGroup className={gridClasses}>
-        {metrics.map((m) => (
-          <StaggerItem key={m.id} className="flex h-full w-full">
-            <ImpactCounter metric={m} />
-          </StaggerItem>
-        ))}
+        {metrics.map((m, idx) => {
+          const isHero = isBento && (idx === 0 || (metrics.length === 4 && idx === 3));
+          const colSpanClass = isHero
+            ? 'col-span-1 md:col-span-2 lg:col-span-2 flex h-full w-full'
+            : 'col-span-1 md:col-span-1 lg:col-span-1 flex h-full w-full';
+
+          return (
+            <StaggerItem key={m.id} className={colSpanClass}>
+              <ImpactCounter metric={m} isHero={isHero} />
+            </StaggerItem>
+          );
+        })}
       </StaggerGroup>
 
       {/* 100% Charity Integrity Assurance Strip */}

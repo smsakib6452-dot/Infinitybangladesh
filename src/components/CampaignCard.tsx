@@ -1,9 +1,11 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import { Campaign } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { Link } from '../context/RouterContext';
 import { MapPin, Calendar, ArrowRight, Heart } from 'lucide-react';
 import { OptimizedImage } from './OptimizedImage';
+import { spring } from '../lib/motion/tokens';
 
 interface CampaignCardProps {
   campaign: Campaign;
@@ -120,14 +122,20 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, featured =
 
         {/* Card Footer Action - Confident Single Primary Action Bar */}
         <div className="pt-3 border-t border-slate-100/70 flex items-center mt-auto">
-          <Link
-            to="campaigns/detail"
-            slug={campaign.slug}
-            className="w-full py-2.5 px-3.5 rounded-xl bg-[#FAF7F2] hover:bg-[#006A4E] text-slate-800 hover:text-white border border-[#EAE3D9] hover:border-[#006A4E] transition-all text-xs sm:text-sm font-bold flex items-center justify-between cursor-pointer group/btn shadow-2xs hover:shadow-xs"
+          <motion.div
+            whileTap={{ scale: 0.98 }}
+            transition={spring.snappy}
+            className="w-full"
           >
-            <span>{isBn ? 'ক্যাম্পেইন বিবরণ ও সহায়তা' : 'View Drive & Support'}</span>
-            <ArrowRight className="w-4 h-4 text-[#006A4E] group-hover/btn:text-white group-hover/btn:translate-x-1 transition-all" />
-          </Link>
+            <Link
+              to="campaigns/detail"
+              slug={campaign.slug}
+              className="w-full py-2.5 px-3.5 rounded-xl bg-[#FAF7F2] hover:bg-[#006A4E] text-slate-800 hover:text-white border border-[#EAE3D9] hover:border-[#006A4E] transition-all text-xs sm:text-sm font-bold flex items-center justify-between cursor-pointer group/btn shadow-2xs hover:shadow-xs"
+            >
+              <span>{isBn ? 'ক্যাম্পেইন বিবরণ ও সহায়তা' : 'View Drive & Support'}</span>
+              <ArrowRight className="w-4 h-4 text-[#006A4E] group-hover/btn:text-white group-hover/btn:translate-x-1 transition-all" />
+            </Link>
+          </motion.div>
         </div>
       </div>
     </div>

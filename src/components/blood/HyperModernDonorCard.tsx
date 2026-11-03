@@ -121,7 +121,7 @@ export const HyperModernDonorCard: React.FC<HyperModernDonorCardProps> = ({
               {/* Gamified Rank Badge */}
               <div className="mt-1 flex flex-wrap items-center gap-1.5">
                 <span
-                  className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] ${tier.badgeClass}`}
+                  className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold ${tier.badgeClass}`}
                 >
                   <span>{tier.badgeIcon}</span>
                   <span>{isBn ? tier.titleBn : tier.titleEn}</span>
@@ -139,7 +139,7 @@ export const HyperModernDonorCard: React.FC<HyperModernDonorCardProps> = ({
             <span className="text-base sm:text-lg font-black leading-none font-display text-white">
               {donor.bloodGroup}
             </span>
-            <span className="text-[7.5px] font-mono uppercase tracking-widest text-rose-100 mt-0.5">
+            <span className="text-[9px] font-mono uppercase tracking-widest text-rose-100 mt-0.5">
               GROUP
             </span>
           </div>
@@ -148,7 +148,7 @@ export const HyperModernDonorCard: React.FC<HyperModernDonorCardProps> = ({
         {/* STATUS BAR: Single Unified Ready Badge vs Dignified Medical Recovery Rest Period */}
         <div className="relative z-10 mt-3 flex items-center justify-between gap-2">
           {!isCooldown && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-0.5 text-[10.5px] font-bold text-emerald-300 shadow-2xs">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-0.5 text-xs font-bold text-emerald-300 shadow-2xs">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>{isBn ? 'রক্তদানে প্রস্তুত' : 'Ready to Donate'}</span>
             </span>
@@ -157,7 +157,7 @@ export const HyperModernDonorCard: React.FC<HyperModernDonorCardProps> = ({
           {/* Dignified Humanitarian Post-Donation Rest Indicator (Respectful Medical Language) */}
           {isCooldown && (
             <div className="flex items-center gap-2">
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-teal-500/40 bg-teal-500/15 px-2.5 py-0.5 text-[10.5px] font-bold text-teal-300 shadow-2xs">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-teal-500/40 bg-teal-500/15 px-2.5 py-0.5 text-xs font-bold text-teal-300 shadow-2xs">
                 <Clock className="h-3 w-3 text-teal-400 shrink-0" />
                 <span>
                   {isBn
@@ -168,7 +168,7 @@ export const HyperModernDonorCard: React.FC<HyperModernDonorCardProps> = ({
             </div>
           )}
 
-          <span className="text-[10.5px] text-slate-400 font-medium shrink-0">
+          <span className="text-xs text-slate-300 font-medium shrink-0">
             {donor.gender === 'Female' ? (isBn ? 'নারী' : 'Female') : donor.gender === 'Other' ? (isBn ? 'অন্যান্য' : 'Other') : (isBn ? 'পুরুষ' : 'Male')}
           </span>
         </div>
@@ -181,7 +181,7 @@ export const HyperModernDonorCard: React.FC<HyperModernDonorCardProps> = ({
               {donor.area ? `${donor.area}, ` : ''}{donor.upazila || donor.district}
             </span>
           </span>
-          <span className="font-mono text-[11px] text-emerald-400/90 shrink-0">
+          <span className="font-mono text-xs text-emerald-400 font-bold shrink-0">
             {donor.lastDonationDate
               ? (isBn ? `সর্বশেষ: ${donor.lastDonationDate}` : `Last: ${donor.lastDonationDate}`)
               : (isBn ? 'প্রথম রক্তদান করবেন' : 'First Time Donor')}

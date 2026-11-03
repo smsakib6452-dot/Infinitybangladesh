@@ -29,11 +29,11 @@ export const ExactBloodGroupSelector: React.FC<ExactBloodGroupSelectorProps> = (
           <div>
             <h3 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-white font-display flex items-center gap-1.5">
               <span>{isBn ? 'প্রয়োজনীয় রক্তের গ্রুপ নির্বাচন করুন' : 'Select Required Blood Group'}</span>
-              <span className="text-emerald-300 text-[9.5px] font-mono px-1.5 py-0.2 rounded-full bg-emerald-500/15 border border-emerald-500/30 font-bold">
+              <span className="text-emerald-300 text-xs font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 font-bold">
                 {isBn ? 'সম-গ্রুপ' : 'Exact Match'}
               </span>
             </h3>
-            <p className="text-[10px] sm:text-[11px] text-slate-300 hidden sm:block">
+            <p className="text-xs text-slate-300 hidden sm:block">
               {isBn
                 ? 'হাসপাতাল প্রটোকল অনুযায়ী নির্দিষ্ট গ্রুপের রক্তদাতা ও লাইভ প্রাপ্যতা স্ট্যাটাস'
                 : 'Hospital protocol strictly mandates exact blood group matching for patient safety'}
@@ -42,7 +42,7 @@ export const ExactBloodGroupSelector: React.FC<ExactBloodGroupSelectorProps> = (
         </div>
 
         {/* Live Exact Group Status Pill */}
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-[#082218]/90 px-2.5 py-1 text-[11px] font-medium text-emerald-300 shadow-sm">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-[#082218]/90 px-2.5 py-1 text-xs font-medium text-emerald-300 shadow-sm">
           <span className="font-extrabold text-white font-display">
             {selected === 'ALL' ? (isBn ? 'সকল গ্রুপ' : 'All') : (isBn ? `গ্রুপ ${selected}` : selected)}
           </span>
@@ -53,7 +53,7 @@ export const ExactBloodGroupSelector: React.FC<ExactBloodGroupSelectorProps> = (
               {activeStats.ready} {isBn ? 'প্রস্তুত' : 'Ready'}
             </span>
           </span>
-          <span className="text-slate-400 text-[10px] font-mono">
+          <span className="text-slate-400 text-xs font-mono">
             ({activeStats.total})
           </span>
         </div>
@@ -94,7 +94,7 @@ export const ExactBloodGroupSelector: React.FC<ExactBloodGroupSelectorProps> = (
               </span>
 
               <span
-                className={`mt-0.5 rounded-full px-1.5 py-0.2 text-[9px] font-mono font-bold ${
+                className={`mt-0.5 rounded-full px-1.5 py-0.5 text-[10.5px] sm:text-xs font-mono font-bold ${
                   isSelected
                     ? 'bg-black/30 text-white'
                     : hasDonors

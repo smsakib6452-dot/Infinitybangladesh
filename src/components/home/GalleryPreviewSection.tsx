@@ -109,7 +109,7 @@ export const GalleryPreviewSection: React.FC<GalleryPreviewSectionProps> = ({
                   >
                     <Calendar className="w-3.5 h-3.5" />
                     <span>{tText(vid.timelineLabel) || 'পর্ব'}</span>
-                    <span className="text-[10px] opacity-80">({tText(vid.title)})</span>
+                    <span className="text-xs opacity-85">({tText(vid.title)})</span>
                   </button>
                 );
               })}
@@ -145,7 +145,7 @@ export const GalleryPreviewSection: React.FC<GalleryPreviewSectionProps> = ({
           <div className="bg-white rounded-2xl border border-[#EAE3D9] p-4 sm:p-5 shadow-warm-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
             <div className="space-y-1 text-left min-w-0">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#006A4E] text-[10px] font-bold border border-emerald-200">
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 text-[#006A4E] text-xs font-bold border border-emerald-200">
                   <Sparkles className="w-3 h-3 text-amber-500" />
                   <span>{tText(activeVideo.timelineLabel) || '২০১৫–২০২৫'}</span>
                 </span>

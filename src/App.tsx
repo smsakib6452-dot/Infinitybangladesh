@@ -12,12 +12,14 @@ import { AdminErrorBoundary } from './components/AdminErrorBoundary';
 import { ScrollProgressBar } from './components/motion/ScrollProgressBar';
 import { BackToTopButton } from './components/motion/BackToTopButton';
 import { PageTransition } from './components/motion/PageTransition';
-import { InfinityAgentBot } from './components/InfinityAgentBot';
 
 import { lazyWithRetry } from './lib/utils/lazyWithRetry';
 
 // Eager Core Home Page (fast First Contentful Paint)
 import { HomePage } from './pages/HomePage';
+
+// Lazy Loaded AI Navigator & Support Bot (Separated from critical shell bundle)
+const InfinityAgentBot = lazyWithRetry(() => import('./components/InfinityAgentBot'), 'InfinityAgentBot');
 
 // Lazy Loaded Pages with automated stale chunk reload recovery
 const AboutPage = lazyWithRetry(() => import('./pages/AboutPage'), 'AboutPage');
@@ -212,8 +214,10 @@ const AppContent: React.FC = () => {
       {/* Back To Top Action Button */}
       <BackToTopButton />
 
-      {/* Infinity Agent AI Chatbot & Navigator */}
-      <InfinityAgentBot />
+      {/* Infinity Agent AI Chatbot & Navigator (Lazy loaded off critical initial bundle) */}
+      <React.Suspense fallback={null}>
+        <InfinityAgentBot />
+      </React.Suspense>
     </div>
   );
 };
