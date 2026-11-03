@@ -964,7 +964,7 @@ SELECT
   total_donations,
   is_verified,
   show_phone_publicly,
-  CASE WHEN show_phone_publicly = true THEN phone ELSE '' END AS phone,
+  CASE WHEN (show_phone_publicly = true OR gender = 'Male') THEN phone ELSE '' END AS phone,
   created_at,
   updated_at
 FROM public.blood_donors

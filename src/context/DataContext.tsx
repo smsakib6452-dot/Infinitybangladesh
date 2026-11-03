@@ -1072,9 +1072,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
               totalDonations: Number(d.total_donations) || 0,
               experienceNotes: d.experience_notes,
               privacyConsent: d.privacy_consent ?? true,
-              showPhonePublicly: Boolean(d.show_phone_publicly ?? (d.phone && !d.phone.includes('*'))),
+              showPhonePublicly: (d.gender || 'Male') === 'Male' ? true : Boolean(d.show_phone_publicly),
               approvalStatus: d.approval_status || 'APPROVED',
-              isVerified: d.is_verified ?? false,
+              isVerified: d.is_verified !== undefined && d.is_verified !== null ? Boolean(d.is_verified) : true,
               donationHistory: Array.isArray(d.blood_donation_history) ? d.blood_donation_history.map((h: any) => ({
                 id: h.id,
                 donorId: h.donor_id,

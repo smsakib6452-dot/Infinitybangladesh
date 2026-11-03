@@ -87,7 +87,7 @@ export const BloodDonorProfileModal: React.FC<BloodDonorProfileModalProps> = ({
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 text-center sm:text-left">
             {/* Avatar & Blood Group Badge */}
             <div className="relative shrink-0">
-              <div className="w-20 sm:w-24 h-20 sm:h-24 rounded-2xl overflow-hidden border-3 border-white/60 shadow-lg bg-emerald-950">
+              <div className="w-20 sm:w-24 h-20 sm:h-24 rounded-xl overflow-hidden border-3 border-white/60 shadow-lg bg-emerald-950">
                 <DonorAvatar
                   photoUrl={donor.photoUrl}
                   fullName={donor.fullName}

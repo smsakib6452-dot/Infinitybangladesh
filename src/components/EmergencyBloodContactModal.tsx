@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { BloodDonor } from '../types';
-import { cleanBloodDonor, toSafeString, getDonorPhoneVisibility } from '../data/bloodDonationData';
+import { cleanBloodDonor, toSafeString, getDonorPhoneVisibility, isEligibleToDonate } from '../data/bloodDonationData';
 import {
   X,
   Phone,
@@ -40,7 +40,11 @@ export const EmergencyBloodContactModal: React.FC<EmergencyBloodContactModalProp
   const phoneVis = getDonorPhoneVisibility(donor);
   const cleanPhone = donor.phone ? donor.phone.replace(/[^0-9+]/g, '') : '';
   const cleanHelpline = emergencyHelpline.replace(/[^0-9+]/g, '');
-  const canDirectContact = phoneVis.isPublic && Boolean(cleanPhone);
+  const eligibility = isEligibleToDonate(donor.lastDonationDate);
+  const isCooldown = !eligibility.eligible;
+  const isMale = donor.gender === 'Male';
+  const isMaleClean = (donor.gender || 'Male') === 'Male';
+  const canDirectContact = !isCooldown && Boolean(cleanPhone) && (isMaleClean || Boolean(donor.showPhonePublicly) || phoneVis.isPublic);
 
   const contactPhone = canDirectContact ? cleanPhone : cleanHelpline;
   const whatsappUrl = `https://wa.me/${contactPhone.replace('+', '')}?text=${encodeURIComponent(

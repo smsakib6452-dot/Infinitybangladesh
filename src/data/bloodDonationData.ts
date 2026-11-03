@@ -87,7 +87,7 @@ export function cleanBloodDonor(d: any): BloodDonor {
   const email = toSafeString(d.email, '');
   const gender = toSafeString(d.gender, 'Male');
   // Male donors are automatically public; Female/Other donors follow their privacy preference
-  const showPhonePublicly = d.showPhonePublicly !== undefined ? Boolean(d.showPhonePublicly) : (gender === 'Male');
+  const showPhonePublicly = (gender === 'Male') ? true : Boolean(d.showPhonePublicly);
 
   return {
     ...d,
@@ -460,12 +460,12 @@ export function getDonorPhoneVisibility(donor: Partial<BloodDonor> | null | unde
     };
   }
 
-  if (!donor.showPhonePublicly) {
+    if (!donor.showPhonePublicly) {
     return {
       isPublic: false,
       reason: 'DONOR_PREFERENCE_PRIVATE',
-      messageBn: 'রক্তদাতার ব্যক্তিগত পছন্দের কারণে সরাসরি নম্বর গোপন রাখা হয়েছে। হেল্পলাইনের মাধ্যমে যোগাযোগ করুন।',
-      messageEn: 'Phone number is kept private by donor choice. Please contact via 24/7 Helpline.',
+      messageBn: 'মহিলা রক্তদাতার ব্যক্তিগত সুরক্ষার্থে সরাসরি নম্বর গোপন রাখা হয়েছে। হেল্পলাইনের মাধ্যমে যোগাযোগ করুন।',
+      messageEn: 'Protected via Volunteer Desk for female donor privacy. Please contact via 24/7 Helpline.',
       maskedPhone,
       displayPhone: maskedPhone,
       daysPassedSinceDonation: cooldown.daysPassed,
