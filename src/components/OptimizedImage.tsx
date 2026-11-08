@@ -86,19 +86,8 @@ function generateCloudinarySrcSet(url: string, baseWidth?: number): string | und
     return undefined;
   }
 
-  let widths: number[];
-  if (baseWidth && baseWidth > 0) {
-    // Generate fractional/multiples around the target display width
-    widths = [
-      Math.round(baseWidth * 0.5),
-      Math.round(baseWidth),
-      Math.round(baseWidth * 1.5),
-      Math.round(baseWidth * 2)
-    ].filter((w, i, arr) => w >= 150 && arr.indexOf(w) === i);
-  } else {
-    // Standard responsive widths
-    widths = [360, 640, 768, 1024, 1280, 1536];
-  }
+  // Standard responsive breakpoints: 480w (1x mobile / small cards), 800w (DPR 2 phones / tablet), 1200w (DPR 3 / desktop hero)
+  const widths = [480, 800, 1200];
 
   return widths
     .map(w => `${buildCloudinaryUrl(url, { width: w })} ${w}w`)
@@ -153,10 +142,10 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   const numericWidth = typeof width === 'number' ? width : typeof width === 'string' && !isNaN(Number(width)) ? Number(width) : undefined;
   const numericHeight = typeof height === 'number' ? height : typeof height === 'string' && !isNaN(Number(height)) ? Number(height) : undefined;
 
-  // Optimized base src
+  // Optimized base src (800w safe default for crisp DPR 2 mobile/tablet)
   const optimizedSrc = isCloudinary
     ? buildCloudinaryUrl(resolvedSrc, {
-        width: numericWidth,
+        width: numericWidth || 800,
         height: numericHeight,
         quality
       })

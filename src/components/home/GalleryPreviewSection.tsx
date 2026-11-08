@@ -182,7 +182,7 @@ export const GalleryPreviewSection: React.FC<GalleryPreviewSectionProps> = ({
                   <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#006A4E] text-white flex items-center justify-center shadow-2xl border-2 border-white/80 transition-all duration-300 group-hover:scale-110 group-hover:bg-[#00523C]">
                     <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-current translate-x-0.5" />
                   </div>
-                  <span className="text-white text-xs sm:text-sm font-bold tracking-wide px-4 py-1.5 rounded-full bg-slate-950/60 backdrop-blur-md border border-white/20">
+                  <span className="text-white text-xs sm:text-sm font-bold tracking-wide px-4 py-1.5 rounded-full bg-slate-950/85 border border-white/20">
                     {isBn ? 'ভিডিও চালু করুন' : 'Click to Play'}
                   </span>
                 </div>

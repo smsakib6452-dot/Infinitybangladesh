@@ -57,13 +57,13 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, featured =
         {/* Status Badge & Category */}
         <div className="absolute top-3 left-3 flex items-center gap-2">
           <span
-            className={`px-2.5 py-0.5 rounded-full text-xs font-bold border backdrop-blur-xs shadow-xs ${
+            className={`px-2.5 py-0.5 rounded-full text-xs font-bold border shadow-xs ${
               statusColors[campaign.status]
             }`}
           >
             {statusLabels[campaign.status]}
           </span>
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-950/70 text-white backdrop-blur-xs">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-950/85 text-white">
             {campaign.category}
           </span>
         </div>

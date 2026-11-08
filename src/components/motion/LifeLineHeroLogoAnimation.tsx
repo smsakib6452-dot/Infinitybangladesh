@@ -10,7 +10,7 @@ interface LifeLineHeroLogoAnimationProps {
 }
 
 export const LifeLineHeroLogoAnimation: React.FC<LifeLineHeroLogoAnimationProps> = ({
-  logoUrl = '/brand/Infinitylifeline-logo.svg',
+  logoUrl = '/brand/Infinitylifeline-logo.webp',
   logoSize = 440,
   logoZoom = 1,
   logoCrop = 'contain'

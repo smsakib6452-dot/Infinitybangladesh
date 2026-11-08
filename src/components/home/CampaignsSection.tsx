@@ -129,7 +129,7 @@ export const CampaignsSection: React.FC<CampaignsSectionProps> = ({
                 
                 {/* Category Badge Pill on image */}
                 <div className="absolute top-3.5 left-3.5">
-                  <span className="px-3 py-1 rounded-full bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider border border-white/20">
+                  <span className="px-3 py-1 rounded-full bg-slate-900/90 text-white text-[10px] font-bold uppercase tracking-wider border border-white/20">
                     {featuredCampaign.category || (isBn ? 'মানবিক ক্যাম্পেইন' : 'Relief Drive')}
                   </span>
                 </div>

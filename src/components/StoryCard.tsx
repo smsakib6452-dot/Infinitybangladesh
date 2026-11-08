@@ -29,12 +29,12 @@ export const StoryCard: React.FC<StoryCardProps> = ({ story }) => {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
 
-        <div className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/95 text-slate-900 backdrop-blur-xs shadow-xs border border-slate-200">
+        <div className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/95 text-slate-900 shadow-xs border border-slate-200">
           <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
           <span>{tText(story.personOrCommunity)}</span>
         </div>
 
-        <div className="absolute bottom-3 left-3 text-xs text-white/95 bg-slate-950/70 px-2.5 py-0.5 rounded-full backdrop-blur-xs flex items-center gap-1">
+        <div className="absolute bottom-3 left-3 text-xs text-white/95 bg-slate-950/85 px-2.5 py-0.5 rounded-full flex items-center gap-1">
           <MapPin className="w-3 h-3 text-amber-300" />
           <span>{tText(story.location)}</span>
         </div>

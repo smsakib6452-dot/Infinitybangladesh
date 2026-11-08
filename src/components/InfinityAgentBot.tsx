@@ -1593,7 +1593,7 @@ export const InfinityAgentBot: React.FC = () => {
         >
           {/* Desktop Hover Tooltip */}
           <div className="hidden lg:flex items-center absolute right-full mr-3.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0 z-30">
-            <span className="whitespace-nowrap px-3.5 py-1.5 rounded-full bg-slate-900/90 backdrop-blur-md text-white text-xs font-semibold shadow-2xl border border-white/15 flex items-center gap-2">
+            <span className="whitespace-nowrap px-3.5 py-1.5 rounded-full bg-slate-900/95 text-white text-xs font-semibold shadow-2xl border border-white/15 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               {isBn ? 'ইনফি রোবট (সাহায্যকারী)' : 'Infi Robot (AI Assistant)'}
             </span>
@@ -1624,7 +1624,7 @@ export const InfinityAgentBot: React.FC = () => {
                 <div className="absolute -bottom-0.5 w-8 sm:w-13 h-1.5 sm:h-2 bg-black/25 blur-[2.5px] rounded-[100%] pointer-events-none" />
 
                 {/* 2. 3D Frosted Glass Pedestal Dock */}
-                <div className="absolute bottom-0 w-[34px] sm:w-[54px] h-[8.5px] sm:h-[15px] rounded-[100%] bg-gradient-to-b from-white/95 via-white/70 to-emerald-50/40 backdrop-blur-xl border border-white/90 shadow-[0_4px_12px_-2px_rgba(0,106,78,0.25),0_1.5px_3px_rgba(0,0,0,0.04),inset_0_1px_1.5px_rgba(255,255,255,1),inset_0_-1px_2px_rgba(0,106,78,0.1)] flex items-center justify-center pointer-events-none">
+                <div className="absolute bottom-0 w-[34px] sm:w-[54px] h-[8.5px] sm:h-[15px] rounded-[100%] bg-gradient-to-b from-white/95 via-white/70 to-emerald-50/40 md:backdrop-blur-xl border border-white/90 shadow-[0_4px_12px_-2px_rgba(0,106,78,0.25),0_1.5px_3px_rgba(0,0,0,0.04),inset_0_1px_1.5px_rgba(255,255,255,1),inset_0_-1px_2px_rgba(0,106,78,0.1)] flex items-center justify-center pointer-events-none">
                   <div className="absolute inset-[1.5px] sm:inset-[2px] rounded-[100%] border border-emerald-400/40 bg-gradient-to-tr from-emerald-500/15 via-teal-400/20 to-emerald-400/5 blur-[0.5px]" />
                   <div className="absolute top-[1px] sm:top-[1.5px] inset-x-2 sm:inset-x-2.5 h-[0.75px] sm:h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-95" />
                   <span className="absolute -top-0.5 right-0.5 sm:right-1 flex h-2 w-2 sm:h-2.5 sm:w-2.5 z-30">

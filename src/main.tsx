@@ -18,7 +18,7 @@ window.addEventListener('vite:preloadError', (event) => {
 // Pause infinite CSS animations when offscreen to conserve mobile CPU/battery
 if (typeof window !== 'undefined' && 'IntersectionObserver' in window) {
   const ANIM_SELECTOR =
-    '.animate-heartbeat, .animate-ambient-shimmer, .animate-lifeline-ripple, .animate-lifeline-glow, .animate-pulse';
+    '.animate-ping, .animate-pulse, .animate-spin, .animate-bounce, .animate-heartbeat, .animate-ambient-shimmer, .animate-lifeline-ripple, .animate-lifeline-glow, .animate-blob, .animate-float';
 
   const animObserver = new IntersectionObserver(
     (entries) => {
@@ -30,7 +30,7 @@ if (typeof window !== 'undefined' && 'IntersectionObserver' in window) {
         }
       });
     },
-    { rootMargin: '80px' }
+    { rootMargin: '50px' }
   );
 
   const observeAnimElements = () => {

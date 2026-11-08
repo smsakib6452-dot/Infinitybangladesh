@@ -6,7 +6,7 @@
 // Exact whitelist of 66 verified physical image assets in public/
 export const VERIFIED_LOCAL_ASSET_PATHS = new Set<string>([
   '/brand/infinity-favicon.png',
-  '/brand/Infinitylifeline-logo.svg',
+  '/brand/Infinitylifeline-logo.webp',
   '/brand/infinity-logo.png',
   '/brand/infi-robot.png',
   '/brand/infi-robot.webp',

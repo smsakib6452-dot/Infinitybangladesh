@@ -2306,11 +2306,11 @@ export const AdminHomepageManager: React.FC<AdminHomepageManagerProps> = ({
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-xl bg-[#08221A] border border-emerald-700/50 p-2 flex items-center justify-center shrink-0">
                 <img
-                  src={getAssetUrl(bloodDonationSettings.wingLogoUrl || '/brand/Infinitylifeline-logo.svg')}
+                  src={getAssetUrl(bloodDonationSettings.wingLogoUrl || '/brand/Infinitylifeline-logo.webp')}
                   alt="Infinity LifeLine Logo Preview"
                   className="max-h-full max-w-full object-contain"
                   onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = '/brand/Infinitylifeline-logo.svg';
+                    (e.currentTarget as HTMLImageElement).src = '/brand/Infinitylifeline-logo.webp';
                   }}
                 />
               </div>
@@ -2320,7 +2320,7 @@ export const AdminHomepageManager: React.FC<AdminHomepageManagerProps> = ({
                   <span>{isBn ? 'ইনফিনিটি লাইফলাইন এনিমেটেড উইং লোগো' : 'Infinity LifeLine Official Animated Logo'}</span>
                 </p>
                 <p className="text-[11px] text-slate-300 font-mono">
-                  {bloodDonationSettings.wingLogoUrl || '/brand/Infinitylifeline-logo.svg'}
+                  {bloodDonationSettings.wingLogoUrl || '/brand/Infinitylifeline-logo.webp'}
                 </p>
               </div>
             </div>

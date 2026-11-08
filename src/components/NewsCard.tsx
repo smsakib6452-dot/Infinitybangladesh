@@ -23,7 +23,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
           width={480}
           className="w-full h-full object-cover motion-img-zoom"
         />
-        <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold bg-[#006A4E] text-white backdrop-blur-xs shadow-xs">
+        <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold bg-[#006A4E] text-white shadow-xs">
           {article.category}
         </span>
       </Link>

@@ -50,7 +50,7 @@ export const FloatingMobileDock: React.FC = () => {
         initial={{ y: 50, opacity: 0, scale: 0.95 }}
         animate={{ y: 0, opacity: 1, scale: 1 }}
         transition={{ type: 'spring', stiffness: 350, damping: 28, delay: 0.08 }}
-        className="pointer-events-auto flex items-center justify-around gap-0.5 sm:gap-1 px-2 sm:px-2.5 py-1.5 rounded-full bg-white/95 backdrop-blur-xl border border-[#EAE3D9] shadow-warm-lg text-slate-700 max-w-[350px] w-[calc(100vw-1.5rem)] mx-auto select-none"
+        className="pointer-events-auto flex items-center justify-around gap-0.5 sm:gap-1 px-2 sm:px-2.5 py-1.5 rounded-full bg-white/95 md:backdrop-blur-xl border border-[#EAE3D9] shadow-warm-lg text-slate-700 max-w-[350px] w-[calc(100vw-1.5rem)] mx-auto select-none"
         role="navigation"
         aria-label={isBn ? 'মোবাইল দ্রুত নেভিগেশন ডক' : 'Mobile Quick Action Navigation'}
       >

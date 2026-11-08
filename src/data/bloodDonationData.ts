@@ -651,7 +651,7 @@ export const DEFAULT_DONOR_CATEGORIES: DonorCategoryOption[] = [
  * Initial Default Blood Donation Settings
  */
 export const INITIAL_BLOOD_SETTINGS: BloodDonationSettings = {
-  wingLogoUrl: '/brand/Infinitylifeline-logo.svg',
+  wingLogoUrl: '/brand/Infinitylifeline-logo.webp',
   wingLogoSize: 480,
   wingLogoZoom: 1,
   wingLogoCrop: 'contain',

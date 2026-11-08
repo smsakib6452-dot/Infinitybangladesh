@@ -83,7 +83,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
           <motion.div variants={containerVariants} initial="hidden" animate="visible" className="lg:col-span-7 space-y-3.5 sm:space-y-6 text-left">
             {/* Eyebrow Pill Badge - Refined & Natural Branding */}
             <motion.div variants={itemVariants}>
-            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-0.5 sm:px-3.5 sm:py-1 rounded-full bg-[#E6F3EF]/90 backdrop-blur-xs border border-[#C2E2D7] text-[#00523C] text-[11px] sm:text-xs font-extrabold shadow-2xs">
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-0.5 sm:px-3.5 sm:py-1 rounded-full bg-[#E6F3EF] border border-[#C2E2D7] text-[#00523C] text-[11px] sm:text-xs font-extrabold shadow-2xs">
               <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#006A4E] animate-pulse shrink-0" />
               <span className="tracking-wide">
                 {isBn ? 'মানবতায় নিবেদিত তারুণ্যের অঙ্গীকার • ২০১৫ থেকে' : 'Youth Dedicated to Humanity • Since 2015'}
@@ -154,7 +154,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
               {hero.trustIndicators?.filter((t: any) => t.active).map((indicator: any, idx: number) => (
                 <div
                   key={idx}
-                  className="flex items-center gap-2.5 bg-white/95 backdrop-blur-xs p-3 rounded-2xl border border-[#EAE3D9] shadow-2xs hover:shadow-warm-sm transition-all duration-200"
+                  className="flex items-center gap-2.5 bg-white/95 p-3 rounded-2xl border border-[#EAE3D9] shadow-2xs hover:shadow-warm-sm transition-all duration-200"
                 >
                   <div className="w-7 h-7 rounded-xl bg-[#E6F3EF] flex items-center justify-center shrink-0 border border-[#C2E2D7]/60 shadow-xs">
                     {renderTrustIcon(indicator.icon)}
@@ -247,7 +247,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
             </div>
 
             {/* Mobile 3 Hero Trust Indicators - Refined non-clipping typography strip */}
-            <div className="sm:hidden mt-2.5 px-2 py-1.5 rounded-xl bg-white/95 backdrop-blur-xs border border-[#EAE3D9] flex items-center justify-between text-slate-700 shadow-2xs divide-x divide-slate-200/80">
+            <div className="sm:hidden mt-2.5 px-2 py-1.5 rounded-xl bg-white border border-[#EAE3D9] flex items-center justify-between text-slate-700 shadow-2xs divide-x divide-slate-200/80">
               {hero.trustIndicators?.filter((t: any) => t.active).map((indicator: any, idx: number) => (
                 <div
                   key={idx}

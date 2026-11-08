@@ -5032,7 +5032,7 @@ export const AdminPage: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => updateBloodDonationSettings({
-                              wingLogoUrl: '/brand/Infinitylifeline-logo.svg',
+                              wingLogoUrl: '/brand/Infinitylifeline-logo.webp',
                               wingLogoSize: 480,
                               wingLogoZoom: 1,
                               wingLogoCrop: 'contain'
@@ -5065,7 +5065,7 @@ export const AdminPage: React.FC = () => {
                                 }}
                               >
                                 <img
-                                  src={getAssetUrl(bloodDonationSettings.wingLogoUrl || '/brand/Infinitylifeline-logo.svg')}
+                                  src={getAssetUrl(bloodDonationSettings.wingLogoUrl || '/brand/Infinitylifeline-logo.webp')}
                                   alt="Infinity LifeLine Logo Preview"
                                   style={{
                                     transform: `scale(${bloodDonationSettings.wingLogoZoom || 1})`,
@@ -5076,7 +5076,7 @@ export const AdminPage: React.FC = () => {
                               </div>
                             </div>
                             <p className="text-[10px] text-slate-400 text-center font-mono truncate">
-                              {bloodDonationSettings.wingLogoUrl || '/brand/Infinitylifeline-logo.svg'}
+                              {bloodDonationSettings.wingLogoUrl || '/brand/Infinitylifeline-logo.webp'}
                             </p>
                           </div>
 
@@ -5090,7 +5090,7 @@ export const AdminPage: React.FC = () => {
                                 type="text"
                                 value={bloodDonationSettings.wingLogoUrl || ''}
                                 onChange={(e) => updateBloodDonationSettings({ wingLogoUrl: e.target.value })}
-                                placeholder="https://res.cloudinary.com/... or /brand/Infinitylifeline-logo.svg"
+                                placeholder="https://res.cloudinary.com/... or /brand/Infinitylifeline-logo.webp"
                                 className="w-full px-3.5 py-2.5 rounded-xl border border-[#EAE3D9] bg-white text-xs font-mono focus:ring-2 focus:ring-[#006A4E] focus:outline-none shadow-2xs"
                               />
                             </div>
@@ -5122,7 +5122,7 @@ export const AdminPage: React.FC = () => {
 
                               <button
                                 type="button"
-                                onClick={() => updateBloodDonationSettings({ wingLogoUrl: '/brand/Infinitylifeline-logo.svg' })}
+                                onClick={() => updateBloodDonationSettings({ wingLogoUrl: '/brand/Infinitylifeline-logo.webp' })}
                                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold hover:bg-emerald-100 shadow-2xs transition-colors cursor-pointer"
                               >
                                 <span>{isBn ? 'অফিসিয়াল SVG ব্যবহার করুন' : 'Use Official SVG'}</span>

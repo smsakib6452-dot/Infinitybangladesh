@@ -91,7 +91,7 @@ export const SpotlightBentoCard: React.FC<SpotlightBentoCardProps> = ({
         rotateY: shouldReduceMotion ? 0 : rotateY,
         transformStyle: 'preserve-3d',
       }}
-      className={`relative rounded-3xl backdrop-blur-md transition-shadow duration-300 group overflow-hidden ${
+      className={`relative rounded-3xl transition-shadow duration-300 group overflow-hidden ${
         isDark
           ? 'bg-[#06241B]/95 border border-emerald-700/40 text-white shadow-lg shadow-black/30'
           : 'bg-white/95 border border-[#EAE3D9] text-slate-800 shadow-warm-xs'

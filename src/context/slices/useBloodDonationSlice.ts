@@ -61,7 +61,7 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
   // 3. Blood Donation Settings State
   const [bloodDonationSettings, setBloodDonationSettings] = useState<BloodDonationSettings>(() => {
     const stored = getStoredOrDefault<any>('bloodDonationSettings', INITIAL_BLOOD_SETTINGS);
-    const resolvedWingLogo = stored?.wingLogoUrl || INITIAL_BLOOD_SETTINGS.wingLogoUrl || '/brand/Infinitylifeline-logo.svg';
+    const resolvedWingLogo = stored?.wingLogoUrl || INITIAL_BLOOD_SETTINGS.wingLogoUrl || '/brand/Infinitylifeline-logo.webp';
     return {
       ...INITIAL_BLOOD_SETTINGS,
       ...(stored || {}),
