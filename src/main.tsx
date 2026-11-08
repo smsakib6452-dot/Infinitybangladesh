@@ -33,29 +33,57 @@ if (typeof window !== 'undefined' && 'IntersectionObserver' in window) {
     { rootMargin: '80px' }
   );
 
-  const handleNode = (node: Node, isAdd: boolean) => {
-    if (node.nodeType !== Node.ELEMENT_NODE) return;
-    const el = node as Element;
-    if (el.matches?.(ANIM_SELECTOR)) {
-      if (isAdd) animObserver.observe(el);
-      else animObserver.unobserve(el);
-    }
-    el.querySelectorAll?.(ANIM_SELECTOR).forEach((child) => {
-      if (isAdd) animObserver.observe(child);
-      else animObserver.unobserve(child);
-    });
-  };
-
   const observeAnimElements = () => {
     document.querySelectorAll(ANIM_SELECTOR).forEach((el) => animObserver.observe(el));
 
-    // Keep observer in sync with React dynamic DOM mutations
+    // Keep observer in sync with React dynamic DOM mutations (batched via rAF to avoid main-thread churn)
     if ('MutationObserver' in window) {
+      let rafId: number | null = null;
+      const pendingAddedNodes: Element[] = [];
+      const pendingRemovedNodes: Element[] = [];
+
+      const processPendingNodes = () => {
+        const t0 = performance.now();
+        rafId = null;
+        for (let i = 0; i < pendingAddedNodes.length; i++) {
+          const el = pendingAddedNodes[i];
+          if (el.matches?.(ANIM_SELECTOR)) animObserver.observe(el);
+          el.querySelectorAll?.(ANIM_SELECTOR).forEach((child) => animObserver.observe(child));
+        }
+        for (let i = 0; i < pendingRemovedNodes.length; i++) {
+          const el = pendingRemovedNodes[i];
+          if (el.matches?.(ANIM_SELECTOR)) animObserver.unobserve(el);
+          el.querySelectorAll?.(ANIM_SELECTOR).forEach((child) => animObserver.unobserve(child));
+        }
+        const duration = performance.now() - t0;
+        if (typeof window !== 'undefined') {
+          (window as any).__animObserverCalls = (window as any).__animObserverCalls || [];
+          (window as any).__animObserverCalls.push({
+            added: pendingAddedNodes.length,
+            removed: pendingRemovedNodes.length,
+            durationMs: duration
+          });
+        }
+        pendingAddedNodes.length = 0;
+        pendingRemovedNodes.length = 0;
+      };
+
       const mutationObserver = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          mutation.addedNodes.forEach((node) => handleNode(node, true));
-          mutation.removedNodes.forEach((node) => handleNode(node, false));
-        });
+        for (let i = 0; i < mutations.length; i++) {
+          const m = mutations[i];
+          for (let j = 0; j < m.addedNodes.length; j++) {
+            const n = m.addedNodes[j];
+            if (n.nodeType === Node.ELEMENT_NODE) pendingAddedNodes.push(n as Element);
+          }
+          for (let j = 0; j < m.removedNodes.length; j++) {
+            const n = m.removedNodes[j];
+            if (n.nodeType === Node.ELEMENT_NODE) pendingRemovedNodes.push(n as Element);
+          }
+        }
+
+        if (rafId === null) {
+          rafId = requestAnimationFrame(processPendingNodes);
+        }
       });
 
       const rootTarget = document.getElementById('root') || document.body || document.documentElement;
@@ -63,6 +91,16 @@ if (typeof window !== 'undefined' && 'IntersectionObserver' in window) {
         childList: true,
         subtree: true,
       });
+
+      window.addEventListener(
+        'pagehide',
+        () => {
+          if (rafId !== null) cancelAnimationFrame(rafId);
+          mutationObserver.disconnect();
+          animObserver.disconnect();
+        },
+        { once: true }
+      );
     }
   };
 

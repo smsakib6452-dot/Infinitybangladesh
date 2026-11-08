@@ -88,7 +88,7 @@ import {
   DEFAULT_DONOR_CATEGORIES
 } from '../data/initialData';
 import { cleanBloodDonor, cleanEmergencyRequest } from '../data/bloodDonationData';
-import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
+import { getSupabase, isSupabaseConfigured, fetchSupabaseRest } from '../lib/supabase';
 import { getFreshImageUrl } from '../lib/cloudinary';
 import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL, isBlacklistedMedia } from '../lib/utils/mediaHelper';
 import { STORAGE_PREFIX, DATA_VERSION_KEY, CURRENT_DATA_VERSION, getStoredOrDefault, saveToStorage } from './dataStorage';
@@ -559,6 +559,252 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.warn('Admin dataset sync notice:', err);
     }
   }, [hum, setSlice, gov, media]);
+
+  // Lightweight Homepage REST Sync (Zero SDK loading, pure fetch)
+  const syncHomepageViaRest = useCallback(async () => {
+    if (!isSupabaseConfigured) return;
+    try {
+      const [
+        siteRows,
+        homeRows,
+        aboutRows,
+        headerRows,
+        footerRows,
+        progData,
+        campData,
+        metricData,
+        storyData,
+        bloodSettingsRows
+      ] = await Promise.all([
+        fetchSupabaseRest<any[]>('site_settings', 'select=*'),
+        fetchSupabaseRest<any[]>('homepage_config', 'select=*'),
+        fetchSupabaseRest<any[]>('about_settings', 'select=*'),
+        fetchSupabaseRest<any[]>('header_settings', 'select=*'),
+        fetchSupabaseRest<any[]>('footer_settings', 'select=*'),
+        fetchSupabaseRest<any[]>('programs', 'select=*&order=display_order.asc'),
+        fetchSupabaseRest<any[]>('campaigns', 'select=*&order=created_at.desc'),
+        fetchSupabaseRest<any[]>('impact_metrics', 'select=*&order=order.asc'),
+        fetchSupabaseRest<any[]>('stories', 'select=*&order=created_at.desc'),
+        fetchSupabaseRest<any[]>('blood_donation_settings', 'select=*'),
+      ]);
+
+      const siteData = siteRows?.[0];
+      if (siteData) {
+        setSlice.setSettings(prev => ({
+          ...prev,
+          organizationName: prev.organizationName || siteData.organization_name,
+          teamIdentity: prev.teamIdentity || siteData.team_identity,
+          tagline: prev.tagline || siteData.tagline,
+          officialAddress: siteData.official_address || prev.officialAddress,
+          officialPhone: siteData.official_phone || prev.officialPhone,
+          officialEmail: (siteData.official_email && !siteData.official_email.includes('infinitybangladesh.org'))
+            ? siteData.official_email
+            : (prev.officialEmail && !prev.officialEmail.includes('infinitybangladesh.org') ? prev.officialEmail : 'smsakib6452@gmail.com'),
+          establishedYear: siteData.established_year || prev.establishedYear,
+          logoUrl: getFreshImageUrl(prev.logoUrl || siteData.logo_url),
+          faviconUrl: getFreshImageUrl(prev.faviconUrl || siteData.favicon_url),
+          country: prev.country || siteData.country
+        }));
+      }
+
+      const homeData = homeRows?.[0];
+      if (homeData) {
+        setSlice.setHomepageConfig(prev => {
+          let syncedHero = {
+            ...prev.hero,
+            headlineMain: prev.hero?.headlineMain?.bn ? prev.hero.headlineMain : (homeData.hero?.headlineMain || prev.hero.headlineMain),
+            headlineHighlight: prev.hero?.headlineHighlight?.bn ? prev.hero.headlineHighlight : (homeData.hero?.headlineHighlight || prev.hero.headlineHighlight),
+            description: prev.hero?.description?.bn ? prev.hero.description : (homeData.hero?.description || prev.hero.description),
+            heroImageUrl: getFreshImageUrl(prev.hero?.heroImageUrl || homeData.hero?.heroImageUrl)
+          };
+          const secHeaders = (homeData.volunteer_banner as any)?.section_headers || (homeData.hero as any)?.section_headers || {};
+          return {
+            ...prev,
+            hero: syncedHero,
+            aboutPreview: {
+              ...prev.aboutPreview,
+              titleMain: prev.aboutPreview?.titleMain?.bn ? prev.aboutPreview.titleMain : (homeData.about_preview?.titleMain || prev.aboutPreview.titleMain),
+              description: prev.aboutPreview?.description?.bn ? prev.aboutPreview.description : (homeData.about_preview?.description || prev.aboutPreview.description),
+              imageUrl: getFreshImageUrl(prev.aboutPreview?.imageUrl || homeData.about_preview?.imageUrl)
+            },
+            volunteerBanner: { ...(homeData.volunteer_banner || {}), ...prev.volunteerBanner },
+            supportBanner: { ...(homeData.support_banner || {}), ...prev.supportBanner },
+            impactSection: secHeaders.impact || (homeData as any).impact_section || prev.impactSection,
+            programsSection: secHeaders.programs || (homeData as any).programs_section || prev.programsSection,
+            campaignsSection: secHeaders.campaigns || (homeData as any).campaigns_section || prev.campaignsSection,
+            storiesSection: secHeaders.stories || (homeData as any).stories_section || prev.storiesSection,
+            lifelineSection: secHeaders.lifeline || (homeData as any).lifeline_section || prev.lifelineSection,
+            gallerySection: secHeaders.gallery || (homeData as any).gallery_section || prev.gallerySection,
+            pressSection: secHeaders.press || (homeData as any).press_section || prev.pressSection,
+            transparencySection: secHeaders.transparency || (homeData as any).transparency_section || prev.transparencySection,
+            sectionOrder: prev.sectionOrder && prev.sectionOrder.length > 0 ? prev.sectionOrder : (homeData.section_order || prev.sectionOrder),
+            sectionVisibility: { ...(homeData.section_visibility || {}), ...prev.sectionVisibility }
+          };
+        });
+      }
+
+      const aboutData = aboutRows?.[0];
+      if (aboutData) {
+        setSlice.setAboutSettings(prev => ({
+          ...prev,
+          title: prev.title?.bn ? prev.title : (aboutData.title || prev.title),
+          subtitle: prev.subtitle?.bn ? prev.subtitle : (aboutData.subtitle || prev.subtitle),
+          mission: prev.mission?.bn ? prev.mission : (aboutData.mission || prev.mission),
+          vision: prev.vision?.bn ? prev.vision : (aboutData.vision || prev.vision),
+          history: prev.history?.bn ? prev.history : (aboutData.history || prev.history),
+          establishedYear: prev.establishedYear || aboutData.established_year,
+          location: prev.location || aboutData.location,
+          heroImageUrl: getFreshImageUrl(prev.heroImageUrl || aboutData.hero_image_url),
+          secondaryImageUrl: getFreshImageUrl(prev.secondaryImageUrl || aboutData.secondary_image_url)
+        }));
+      }
+
+      const headerData = headerRows?.[0];
+      if (headerData) {
+        setSlice.setHeaderSettings(prev => ({
+          ...prev,
+          logoUrl: getFreshImageUrl(prev.logoUrl || headerData.logo_url),
+          showNoticeBar: prev.showNoticeBar ?? headerData.show_notice_bar,
+          noticeBarText: prev.noticeBarText?.bn ? prev.noticeBarText : (headerData.notice_bar_text || prev.noticeBarText),
+          noticeBarLink: prev.noticeBarLink || headerData.notice_bar_link,
+          noticeBarButtonText: prev.noticeBarButtonText?.bn ? prev.noticeBarButtonText : (headerData.notice_bar_button_text || prev.noticeBarButtonText),
+          showNoticeBarButton: prev.showNoticeBarButton ?? headerData.show_notice_bar_button ?? true,
+          supportButtonText: prev.supportButtonText?.bn ? prev.supportButtonText : (headerData.support_button_text || prev.supportButtonText),
+          supportButtonUrl: prev.supportButtonUrl || headerData.support_button_url,
+          showSupportButton: prev.showSupportButton ?? headerData.show_support_button
+        }));
+      }
+
+      const footerData = footerRows?.[0];
+      if (footerData) {
+        setSlice.setFooterSettings(prev => ({
+          ...prev,
+          footerLogoUrl: getFreshImageUrl(prev.footerLogoUrl || footerData.footer_logo_url),
+          description: prev.description?.bn ? prev.description : (footerData.description || prev.description),
+          address: footerData.address || prev.address || '',
+          phone: footerData.phone || prev.phone || '',
+          email: (footerData.email && !footerData.email.includes('infinitybangladesh.org'))
+            ? footerData.email
+            : (prev.email && !prev.email.includes('infinitybangladesh.org') ? prev.email : 'smsakib6452@gmail.com'),
+          copyrightText: prev.copyrightText?.bn ? prev.copyrightText : (footerData.copyright_text || prev.copyrightText),
+          calloutEyebrow: prev.calloutEyebrow || footerData.callout_eyebrow,
+          calloutTitle: prev.calloutTitle || footerData.callout_title,
+          calloutSubtitle: prev.calloutSubtitle || footerData.callout_subtitle,
+          volunteerCtaText: prev.volunteerCtaText || footerData.volunteer_cta_text,
+          volunteerCtaUrl: prev.volunteerCtaUrl || footerData.volunteer_cta_url,
+          supportCtaText: prev.supportCtaText || footerData.support_cta_text,
+          supportCtaUrl: prev.supportCtaUrl || footerData.support_cta_url
+        }));
+      }
+
+      if (progData && progData.length > 0) {
+        const remotePrograms: Program[] = progData.map(p => ({
+          id: p.id,
+          slug: p.slug,
+          title: p.title,
+          category: p.category,
+          shortDescription: p.short_description,
+          fullDetails: p.full_details,
+          impactHighlights: p.impact_highlights || { en: [], bn: [] },
+          imageUrl: getFreshImageUrl(p.image_url),
+          iconName: p.icon_name || 'HeartHandshake',
+          status: p.status as Program['status'],
+          displayOrder: p.display_order
+        }));
+        hum.setPrograms(prevLocal => {
+          const remoteIds = new Set(remotePrograms.map(r => r.id));
+          const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+          return localOnly.length > 0 ? [...localOnly, ...remotePrograms] : remotePrograms;
+        });
+      }
+
+      if (campData && campData.length > 0) {
+        const remoteCampaigns: Campaign[] = campData.map(c => ({
+          id: c.id,
+          slug: c.slug,
+          title: c.title,
+          date: c.date,
+          endDate: c.end_date,
+          location: c.location,
+          category: c.category,
+          description: c.description,
+          details: c.details,
+          objectives: c.objectives || { en: [], bn: [] },
+          activities: c.activities || { en: [], bn: [] },
+          beneficiaries: c.beneficiaries,
+          beneficiariesCount: c.beneficiaries_count,
+          volunteersCount: c.volunteers_count,
+          impact: c.impact,
+          status: c.status as Campaign['status'],
+          isFeatured: c.is_featured,
+          targetAmountBDT: c.target_amount_bdt,
+          raisedAmountBDT: c.raised_amount_bdt,
+          imageUrl: getFreshImageUrl(c.image_url),
+          galleryImages: (c.gallery_images || []).map((img: string) => getFreshImageUrl(img)),
+          videoUrl: c.video_url,
+          reportUrl: c.report_url
+        }));
+        hum.setCampaigns(prevLocal => {
+          const remoteIds = new Set(remoteCampaigns.map(r => r.id));
+          const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+          return localOnly.length > 0 ? [...localOnly, ...remoteCampaigns] : remoteCampaigns;
+        });
+      }
+
+      if (metricData && metricData.length > 0) {
+        const remoteMetrics: ImpactMetric[] = metricData.map(m => ({
+          id: m.id,
+          label: m.label,
+          value: m.value,
+          description: m.description,
+          iconName: m.icon_name || m.iconName || 'HeartHandshake',
+          order: m.order
+        }));
+        hum.setMetrics(prevLocal => {
+          const remoteIds = new Set(remoteMetrics.map(r => r.id));
+          const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+          return localOnly.length > 0 ? [...localOnly, ...remoteMetrics] : remoteMetrics;
+        });
+      }
+
+      if (storyData && storyData.length > 0) {
+        const remoteStories: ImpactStory[] = storyData.map(s => ({
+          id: s.id,
+          slug: s.slug,
+          title: s.title,
+          personOrCommunity: s.person_or_community,
+          location: s.location,
+          date: s.date,
+          story: s.story,
+          impact: s.impact,
+          imageUrl: getFreshImageUrl(s.image_url),
+          campaignSlug: s.campaign_slug,
+          consentConfirmed: s.consent_confirmed,
+          isFeatured: s.is_featured,
+          status: s.status
+        }));
+        hum.setStories(prevLocal => {
+          const remoteIds = new Set(remoteStories.map(r => r.id));
+          const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+          return localOnly.length > 0 ? [...localOnly, ...remoteStories] : remoteStories;
+        });
+      }
+
+      const bloodData = bloodSettingsRows?.[0];
+      if (bloodData) {
+        blood.setBloodDonationSettings(prev => ({
+          ...prev,
+          statTotalDonorsOverride: bloodData.stat_total_donors_override,
+          statActiveDonorsOverride: bloodData.stat_active_donors_override,
+          statImpactOverride: bloodData.stat_impact_override,
+        }));
+      }
+    } catch (err) {
+      if (import.meta.env?.DEV) {
+        console.warn('[DataContext] Homepage REST sync error:', err);
+      }
+    }
+  }, [setSlice, hum, blood]);
 
   // Supabase Fetch & Sync implementation
   const syncWithSupabase = useCallback(async () => {
@@ -1207,22 +1453,49 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [blood, media, gov, hum, setSlice, loadAdminData]);
 
-  // Initial mount & visibility revalidation
+  // Initial mount: lightweight REST sync on interaction/idle (Zero SDK download on landing)
   const lastRevalidateRef = useRef<number>(Date.now());
   useEffect(() => {
-    if (isSupabaseConfigured) {
-      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-        (window as any).requestIdleCallback(() => syncWithSupabase(), { timeout: 4000 });
+    if (!isSupabaseConfigured) return;
+
+    let hasSynced = false;
+    let idleTimer: any = null;
+
+    const triggerHomepageSync = () => {
+      if (hasSynced) return;
+      hasSynced = true;
+      cleanup();
+      syncHomepageViaRest();
+    };
+
+    const cleanup = () => {
+      if (idleTimer) clearTimeout(idleTimer);
+      window.removeEventListener('scroll', triggerHomepageSync);
+      window.removeEventListener('pointerdown', triggerHomepageSync);
+      window.removeEventListener('keydown', triggerHomepageSync);
+      window.removeEventListener('touchstart', triggerHomepageSync);
+    };
+
+    // Trigger on first user interaction after page is interactive
+    window.addEventListener('scroll', triggerHomepageSync, { passive: true, once: true });
+    window.addEventListener('pointerdown', triggerHomepageSync, { passive: true, once: true });
+    window.addEventListener('keydown', triggerHomepageSync, { passive: true, once: true });
+    window.addEventListener('touchstart', triggerHomepageSync, { passive: true, once: true });
+
+    // Or fallback after 5000ms idle timeout
+    idleTimer = setTimeout(() => {
+      if ('requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(triggerHomepageSync, { timeout: 3000 });
       } else {
-        setTimeout(() => syncWithSupabase(), 3500);
+        triggerHomepageSync();
       }
-    }
+    }, 5000);
 
     const handleRevalidate = () => {
       const now = Date.now();
       if (isSupabaseConfigured && document.visibilityState === 'visible' && (now - lastRevalidateRef.current > 300000)) {
         lastRevalidateRef.current = now;
-        syncWithSupabase();
+        syncHomepageViaRest();
       }
     };
 
@@ -1231,11 +1504,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     document.addEventListener('visibilitychange', handleRevalidate);
 
     return () => {
+      cleanup();
       window.removeEventListener('focus', handleRevalidate);
       window.removeEventListener('online', handleRevalidate);
       document.removeEventListener('visibilitychange', handleRevalidate);
     };
-  }, [syncWithSupabase]);
+  }, [syncHomepageViaRest]);
 
   // Push ALL local state to Supabase
   const pushAllToSupabase = useCallback(async (): Promise<{ success: boolean; message: string }> => {

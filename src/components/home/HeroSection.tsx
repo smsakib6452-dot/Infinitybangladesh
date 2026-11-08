@@ -47,14 +47,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
     },
   };
 
-  const photoVariants = {
-    hidden: { opacity: 0, scale: shouldReduceMotion ? 1 : 0.95 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: shouldReduceMotion ? { duration: 0.01 } : spring.gentle,
-    },
-  };
 
   const renderTrustIcon = (iconName: string) => {
     switch (iconName) {
@@ -175,8 +167,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
             </motion.div>
           </motion.div>
 
-          {/* Right Column: Hero Real Photography Container (Spring Reveal) */}
-          <motion.div variants={photoVariants} initial="hidden" animate="visible" className="lg:col-span-5 relative mt-0">
+          {/* Right Column: Hero Real Photography Container (Native CSS Transform Entrance - No Opacity 0 Delay) */}
+          <div className="lg:col-span-5 relative mt-0 hero-scale-entrance">
             <div className="absolute -inset-3 bg-gradient-to-tr from-[#D97706]/20 via-[#006A4E]/15 to-transparent rounded-[2.5rem] blur-xl" />
             <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-[#D97706]/15 rounded-full blur-2xl" />
 
@@ -270,7 +262,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
                 </div>
               ))}
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

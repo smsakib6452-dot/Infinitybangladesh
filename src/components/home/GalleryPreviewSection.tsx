@@ -11,7 +11,8 @@ import {
   Image as ImageIcon,
   Sparkles,
   ExternalLink,
-  Calendar
+  Calendar,
+  Play
 } from 'lucide-react';
 
 interface GalleryPreviewSectionProps {
@@ -46,6 +47,7 @@ export const GalleryPreviewSection: React.FC<GalleryPreviewSectionProps> = ({
   }, [publishedVideos]);
 
   const [selectedVideoId, setSelectedVideoId] = useState<string>(defaultVideoId);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
 
   // Sync if publishedVideos loads asynchronously
   React.useEffect(() => {
@@ -53,6 +55,11 @@ export const GalleryPreviewSection: React.FC<GalleryPreviewSectionProps> = ({
       setSelectedVideoId(defaultVideoId);
     }
   }, [defaultVideoId, selectedVideoId]);
+
+  // Reset facade when user switches video tabs
+  React.useEffect(() => {
+    setIsPlaying(false);
+  }, [selectedVideoId]);
 
   const activeVideo = useMemo(() => {
     return publishedVideos.find(v => v.id === selectedVideoId) || publishedVideos[0] || null;
@@ -116,28 +123,70 @@ export const GalleryPreviewSection: React.FC<GalleryPreviewSectionProps> = ({
             </div>
           )}
 
-          {/* 1-Click Embedded Video Screen */}
-          <div className="rounded-3xl overflow-hidden shadow-warm-xl border-4 border-white bg-slate-950 aspect-16/9 relative">
-            {mediaInfo?.type === 'direct_video' ? (
-              <video
-                src={mediaInfo.originalUrl}
-                controls
-                className="w-full h-full object-contain"
-              />
-            ) : (mediaInfo?.embedUrl || activeVideo.embedUrl) ? (
-              <iframe
-                src={mediaInfo?.embedUrl || activeVideo.embedUrl}
-                title={tText(activeVideo.title) || 'Infinity Bangladesh Documentary'}
-                className="w-full h-full border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              />
+          {/* Click-to-Load Documentary Video Screen (Zero 3rd-party requests on landing) */}
+          <div className="rounded-3xl overflow-hidden shadow-warm-xl border-4 border-white bg-slate-950 aspect-16/9 relative group">
+            {isPlaying ? (
+              mediaInfo?.type === 'direct_video' ? (
+                <video
+                  src={mediaInfo.originalUrl}
+                  controls
+                  autoPlay
+                  className="w-full h-full object-contain"
+                />
+              ) : (mediaInfo?.embedUrl || activeVideo.embedUrl) ? (
+                <iframe
+                  src={(() => {
+                    const base = mediaInfo?.embedUrl || activeVideo.embedUrl || '';
+                    if (!base) return '';
+                    const sep = base.includes('?') ? '&' : '?';
+                    return `${base}${sep}autoplay=1`;
+                  })()}
+                  title={tText(activeVideo.title) || 'Infinity Bangladesh Documentary'}
+                  className="w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-white text-center">
+                  <p className="text-sm font-medium text-slate-300">
+                    {isBn ? 'ভিডিও লিঙ্ক লোড করা সম্ভব হয়নি।' : 'Video stream unavailable.'}
+                  </p>
+                </div>
+              )
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center p-6 text-white text-center">
-                <p className="text-sm font-medium text-slate-300">
-                  {isBn ? 'ভিডিও লিঙ্ক লোড করা সম্ভব হয়নি।' : 'Video stream unavailable.'}
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsPlaying(true)}
+                className="w-full h-full relative block text-left cursor-pointer group focus:outline-none focus-visible:ring-4 focus-visible:ring-[#006A4E]"
+                aria-label={
+                  isBn
+                    ? `ভিডিও চালু করুন: ${tText(activeVideo.title) || 'ইনফিনিটি বাংলাদেশ তথ্যচিত্র'}`
+                    : `Play video: ${tText(activeVideo.title) || 'Infinity Bangladesh Documentary'}`
+                }
+                title={tText(activeVideo.title) || 'Infinity Bangladesh Documentary'}
+              >
+                <img
+                  src="/images/gallery/video-poster-placeholder.webp"
+                  alt={tText(activeVideo.title) || 'Infinity Bangladesh Documentary'}
+                  width={1280}
+                  height={720}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
+                
+                {/* Centered Play Button */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#006A4E] text-white flex items-center justify-center shadow-2xl border-2 border-white/80 transition-all duration-300 group-hover:scale-110 group-hover:bg-[#00523C]">
+                    <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-current translate-x-0.5" />
+                  </div>
+                  <span className="text-white text-xs sm:text-sm font-bold tracking-wide px-4 py-1.5 rounded-full bg-slate-950/60 backdrop-blur-md border border-white/20">
+                    {isBn ? 'ভিডিও চালু করুন' : 'Click to Play'}
+                  </span>
+                </div>
+              </button>
             )}
           </div>
 

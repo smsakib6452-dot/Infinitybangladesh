@@ -18,3 +18,14 @@ Per organizational guidelines, all real-world impact sections must represent aut
 - `images/events/winter-warmth.jpg` (221 KB) -> WebP asset generated (162 KB)
 - `brand/Infinitylifeline-logo.svg` (211 KB embedded rasters) -> WebP alternative generated (141 KB)
 
+---
+
+## 3. Video Facade Poster Replacements (Audit & Action Required)
+
+The featured documentary on the homepage now uses a zero-external-request click-to-load facade with a branded WebP placeholder (`public/images/gallery/video-poster-placeholder.webp`). Replace this placeholder with an authentic 1280x720 video still / frame captured directly from Team Infinity's official documentary footage.
+
+| Video / Section | File Path | Current Placeholder | Target Replacement | Verification Status |
+|---|---|---|---|---|
+| Featured Documentary Player | `public/images/gallery/video-poster-placeholder.webp` | Branded SVG-derived WebP (18 KB) | High-res 1280x720 authentic documentary frame | **Awaiting authentic field video frame from Team Infinity** |
+
+

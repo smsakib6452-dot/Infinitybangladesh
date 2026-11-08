@@ -31,6 +31,40 @@ export const isSupabaseConfigured = Boolean(
 
 export const SUPABASE_STORAGE_UPLOADS_LOCKED = true;
 
+/**
+ * Lightweight REST fetcher for homepage and public reads.
+ * Executes native fetch() against Supabase PostgREST without loading the 220KB @supabase/supabase-js SDK.
+ */
+export async function fetchSupabaseRest<T = any>(
+  table: string,
+  query: string = '',
+  options?: RequestInit
+): Promise<T | null> {
+  if (!isSupabaseConfigured) return null;
+  const endpoint = `${supabaseUrl}/rest/v1/${table}${query ? `?${query}` : ''}`;
+  try {
+    const res = await fetch(endpoint, {
+      ...options,
+      headers: {
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${supabaseAnonKey}`,
+        Accept: 'application/json',
+        ...options?.headers,
+      },
+    });
+    if (!res.ok) {
+      if (res.status === 404 || res.status === 406) return null;
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    }
+    return (await res.json()) as T;
+  } catch (err) {
+    if (import.meta.env?.DEV) {
+      console.warn(`[Supabase REST] Failed fetching ${table}:`, err);
+    }
+    return null;
+  }
+}
+
 // Singleton client cache and in-flight promise to prevent race conditions
 let _cachedClient: SupabaseClient | null = null;
 let _loaderPromise: Promise<SupabaseClient | null> | null = null;

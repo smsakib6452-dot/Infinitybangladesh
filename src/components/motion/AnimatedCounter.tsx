@@ -123,18 +123,14 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
 
   return (
     /*
-     * aria-label always holds the real final value so screen readers
-     * announce the actual number, not the animated "0 → N" sequence.
-     * data-target is the SSR-safe hook for crawlers.
+     * Accessible Counter Pattern for CSR (Client-Side Rendered):
+     * - sr-only span guarantees screen readers announce the final static number once
+     * - aria-hidden animated span isolates visual number ticking from assistive technology
+     * - data-target provides a persistent numerical hook for automated inspection
      */
-    <span
-      ref={ref}
-      className={className}
-      data-target={finalValue}
-      aria-label={finalValue}
-      aria-live="off"
-    >
-      {shouldReduceMotion ? finalValue : displayValue}
+    <span ref={ref} className={className} data-target={finalValue}>
+      <span className="sr-only">{finalValue}</span>
+      <span aria-hidden="true">{shouldReduceMotion ? finalValue : displayValue}</span>
     </span>
   );
 };
