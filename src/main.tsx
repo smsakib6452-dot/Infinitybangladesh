@@ -17,6 +17,9 @@ window.addEventListener('vite:preloadError', (event) => {
 
 // Pause infinite CSS animations when offscreen to conserve mobile CPU/battery
 if (typeof window !== 'undefined' && 'IntersectionObserver' in window) {
+  const ANIM_SELECTOR =
+    '.animate-heartbeat, .animate-ambient-shimmer, .animate-lifeline-ripple, .animate-lifeline-glow, .animate-pulse';
+
   const animObserver = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -30,16 +33,43 @@ if (typeof window !== 'undefined' && 'IntersectionObserver' in window) {
     { rootMargin: '80px' }
   );
 
+  const handleNode = (node: Node, isAdd: boolean) => {
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+    const el = node as Element;
+    if (el.matches?.(ANIM_SELECTOR)) {
+      if (isAdd) animObserver.observe(el);
+      else animObserver.unobserve(el);
+    }
+    el.querySelectorAll?.(ANIM_SELECTOR).forEach((child) => {
+      if (isAdd) animObserver.observe(child);
+      else animObserver.unobserve(child);
+    });
+  };
+
   const observeAnimElements = () => {
-    document
-      .querySelectorAll('.animate-heartbeat, .animate-ambient-shimmer, .animate-lifeline-ripple, .animate-lifeline-glow, .animate-pulse')
-      .forEach((el) => animObserver.observe(el));
+    document.querySelectorAll(ANIM_SELECTOR).forEach((el) => animObserver.observe(el));
+
+    // Keep observer in sync with React dynamic DOM mutations
+    if ('MutationObserver' in window) {
+      const mutationObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          mutation.addedNodes.forEach((node) => handleNode(node, true));
+          mutation.removedNodes.forEach((node) => handleNode(node, false));
+        });
+      });
+
+      const rootTarget = document.getElementById('root') || document.body || document.documentElement;
+      mutationObserver.observe(rootTarget, {
+        childList: true,
+        subtree: true,
+      });
+    }
   };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', observeAnimElements, { once: true });
   } else {
-    setTimeout(observeAnimElements, 500);
+    setTimeout(observeAnimElements, 200);
   }
 }
 

@@ -10,3 +10,9 @@ scratch/
 .vercel
 supabase/.temp/
 .temp/
+
+# Lighthouse audit reports
+lh-baseline.json
+lh-after-phase2.json
+lh-*.json
+
