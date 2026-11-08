@@ -560,22 +560,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [hum, setSlice, gov, media]);
 
-  // Lightweight Homepage REST Sync (Zero SDK loading, pure fetch)
+  // Lightweight Homepage REST Sync (Zero SDK loading, pure fetch via Promise.allSettled + Deep Compare)
   const syncHomepageViaRest = useCallback(async () => {
     if (!isSupabaseConfigured) return;
+
+    const isDeepEqual = (a: any, b: any): boolean => {
+      try {
+        return JSON.stringify(a) === JSON.stringify(b);
+      } catch {
+        return false;
+      }
+    };
+
     try {
-      const [
-        siteRows,
-        homeRows,
-        aboutRows,
-        headerRows,
-        footerRows,
-        progData,
-        campData,
-        metricData,
-        storyData,
-        bloodSettingsRows
-      ] = await Promise.all([
+      const results = await Promise.allSettled([
         fetchSupabaseRest<any[]>('site_settings', 'select=*'),
         fetchSupabaseRest<any[]>('homepage_config', 'select=*'),
         fetchSupabaseRest<any[]>('about_settings', 'select=*'),
@@ -588,23 +586,40 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fetchSupabaseRest<any[]>('blood_donation_settings', 'select=*'),
       ]);
 
+      const getFulfilledValue = <T,>(res: PromiseSettledResult<T | null>): T | null =>
+        res.status === 'fulfilled' ? res.value : null;
+
+      const siteRows = getFulfilledValue(results[0]);
+      const homeRows = getFulfilledValue(results[1]);
+      const aboutRows = getFulfilledValue(results[2]);
+      const headerRows = getFulfilledValue(results[3]);
+      const footerRows = getFulfilledValue(results[4]);
+      const progData = getFulfilledValue(results[5]);
+      const campData = getFulfilledValue(results[6]);
+      const metricData = getFulfilledValue(results[7]);
+      const storyData = getFulfilledValue(results[8]);
+      const bloodSettingsRows = getFulfilledValue(results[9]);
+
       const siteData = siteRows?.[0];
       if (siteData) {
-        setSlice.setSettings(prev => ({
-          ...prev,
-          organizationName: prev.organizationName || siteData.organization_name,
-          teamIdentity: prev.teamIdentity || siteData.team_identity,
-          tagline: prev.tagline || siteData.tagline,
-          officialAddress: siteData.official_address || prev.officialAddress,
-          officialPhone: siteData.official_phone || prev.officialPhone,
-          officialEmail: (siteData.official_email && !siteData.official_email.includes('infinitybangladesh.org'))
-            ? siteData.official_email
-            : (prev.officialEmail && !prev.officialEmail.includes('infinitybangladesh.org') ? prev.officialEmail : 'smsakib6452@gmail.com'),
-          establishedYear: siteData.established_year || prev.establishedYear,
-          logoUrl: getFreshImageUrl(prev.logoUrl || siteData.logo_url),
-          faviconUrl: getFreshImageUrl(prev.faviconUrl || siteData.favicon_url),
-          country: prev.country || siteData.country
-        }));
+        setSlice.setSettings(prev => {
+          const next = {
+            ...prev,
+            organizationName: prev.organizationName || siteData.organization_name,
+            teamIdentity: prev.teamIdentity || siteData.team_identity,
+            tagline: prev.tagline || siteData.tagline,
+            officialAddress: siteData.official_address || prev.officialAddress,
+            officialPhone: siteData.official_phone || prev.officialPhone,
+            officialEmail: (siteData.official_email && !siteData.official_email.includes('infinitybangladesh.org'))
+              ? siteData.official_email
+              : (prev.officialEmail && !prev.officialEmail.includes('infinitybangladesh.org') ? prev.officialEmail : 'smsakib6452@gmail.com'),
+            establishedYear: siteData.established_year || prev.establishedYear,
+            logoUrl: getFreshImageUrl(prev.logoUrl || siteData.logo_url),
+            faviconUrl: getFreshImageUrl(prev.faviconUrl || siteData.favicon_url),
+            country: prev.country || siteData.country
+          };
+          return isDeepEqual(prev, next) ? prev : next;
+        });
       }
 
       const homeData = homeRows?.[0];
@@ -618,7 +633,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             heroImageUrl: getFreshImageUrl(prev.hero?.heroImageUrl || homeData.hero?.heroImageUrl)
           };
           const secHeaders = (homeData.volunteer_banner as any)?.section_headers || (homeData.hero as any)?.section_headers || {};
-          return {
+          const next = {
             ...prev,
             hero: syncedHero,
             aboutPreview: {
@@ -640,61 +655,71 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             sectionOrder: prev.sectionOrder && prev.sectionOrder.length > 0 ? prev.sectionOrder : (homeData.section_order || prev.sectionOrder),
             sectionVisibility: { ...(homeData.section_visibility || {}), ...prev.sectionVisibility }
           };
+          return isDeepEqual(prev, next) ? prev : next;
         });
       }
 
       const aboutData = aboutRows?.[0];
       if (aboutData) {
-        setSlice.setAboutSettings(prev => ({
-          ...prev,
-          title: prev.title?.bn ? prev.title : (aboutData.title || prev.title),
-          subtitle: prev.subtitle?.bn ? prev.subtitle : (aboutData.subtitle || prev.subtitle),
-          mission: prev.mission?.bn ? prev.mission : (aboutData.mission || prev.mission),
-          vision: prev.vision?.bn ? prev.vision : (aboutData.vision || prev.vision),
-          history: prev.history?.bn ? prev.history : (aboutData.history || prev.history),
-          establishedYear: prev.establishedYear || aboutData.established_year,
-          location: prev.location || aboutData.location,
-          heroImageUrl: getFreshImageUrl(prev.heroImageUrl || aboutData.hero_image_url),
-          secondaryImageUrl: getFreshImageUrl(prev.secondaryImageUrl || aboutData.secondary_image_url)
-        }));
+        setSlice.setAboutSettings(prev => {
+          const next = {
+            ...prev,
+            title: prev.title?.bn ? prev.title : (aboutData.title || prev.title),
+            subtitle: prev.subtitle?.bn ? prev.subtitle : (aboutData.subtitle || prev.subtitle),
+            mission: prev.mission?.bn ? prev.mission : (aboutData.mission || prev.mission),
+            vision: prev.vision?.bn ? prev.vision : (aboutData.vision || prev.vision),
+            history: prev.history?.bn ? prev.history : (aboutData.history || prev.history),
+            establishedYear: prev.establishedYear || aboutData.established_year,
+            location: prev.location || aboutData.location,
+            heroImageUrl: getFreshImageUrl(prev.heroImageUrl || aboutData.hero_image_url),
+            secondaryImageUrl: getFreshImageUrl(prev.secondaryImageUrl || aboutData.secondary_image_url)
+          };
+          return isDeepEqual(prev, next) ? prev : next;
+        });
       }
 
       const headerData = headerRows?.[0];
       if (headerData) {
-        setSlice.setHeaderSettings(prev => ({
-          ...prev,
-          logoUrl: getFreshImageUrl(prev.logoUrl || headerData.logo_url),
-          showNoticeBar: prev.showNoticeBar ?? headerData.show_notice_bar,
-          noticeBarText: prev.noticeBarText?.bn ? prev.noticeBarText : (headerData.notice_bar_text || prev.noticeBarText),
-          noticeBarLink: prev.noticeBarLink || headerData.notice_bar_link,
-          noticeBarButtonText: prev.noticeBarButtonText?.bn ? prev.noticeBarButtonText : (headerData.notice_bar_button_text || prev.noticeBarButtonText),
-          showNoticeBarButton: prev.showNoticeBarButton ?? headerData.show_notice_bar_button ?? true,
-          supportButtonText: prev.supportButtonText?.bn ? prev.supportButtonText : (headerData.support_button_text || prev.supportButtonText),
-          supportButtonUrl: prev.supportButtonUrl || headerData.support_button_url,
-          showSupportButton: prev.showSupportButton ?? headerData.show_support_button
-        }));
+        setSlice.setHeaderSettings(prev => {
+          const next = {
+            ...prev,
+            logoUrl: getFreshImageUrl(prev.logoUrl || headerData.logo_url),
+            showNoticeBar: prev.showNoticeBar ?? headerData.show_notice_bar,
+            noticeBarText: prev.noticeBarText?.bn ? prev.noticeBarText : (headerData.notice_bar_text || prev.noticeBarText),
+            noticeBarLink: prev.noticeBarLink || headerData.notice_bar_link,
+            noticeBarButtonText: prev.noticeBarButtonText?.bn ? prev.noticeBarButtonText : (headerData.notice_bar_button_text || prev.noticeBarButtonText),
+            showNoticeBarButton: prev.showNoticeBarButton ?? headerData.show_notice_bar_button ?? true,
+            supportButtonText: prev.supportButtonText?.bn ? prev.supportButtonText : (headerData.support_button_text || prev.supportButtonText),
+            supportButtonUrl: prev.supportButtonUrl || headerData.support_button_url,
+            showSupportButton: prev.showSupportButton ?? headerData.show_support_button
+          };
+          return isDeepEqual(prev, next) ? prev : next;
+        });
       }
 
       const footerData = footerRows?.[0];
       if (footerData) {
-        setSlice.setFooterSettings(prev => ({
-          ...prev,
-          footerLogoUrl: getFreshImageUrl(prev.footerLogoUrl || footerData.footer_logo_url),
-          description: prev.description?.bn ? prev.description : (footerData.description || prev.description),
-          address: footerData.address || prev.address || '',
-          phone: footerData.phone || prev.phone || '',
-          email: (footerData.email && !footerData.email.includes('infinitybangladesh.org'))
-            ? footerData.email
-            : (prev.email && !prev.email.includes('infinitybangladesh.org') ? prev.email : 'smsakib6452@gmail.com'),
-          copyrightText: prev.copyrightText?.bn ? prev.copyrightText : (footerData.copyright_text || prev.copyrightText),
-          calloutEyebrow: prev.calloutEyebrow || footerData.callout_eyebrow,
-          calloutTitle: prev.calloutTitle || footerData.callout_title,
-          calloutSubtitle: prev.calloutSubtitle || footerData.callout_subtitle,
-          volunteerCtaText: prev.volunteerCtaText || footerData.volunteer_cta_text,
-          volunteerCtaUrl: prev.volunteerCtaUrl || footerData.volunteer_cta_url,
-          supportCtaText: prev.supportCtaText || footerData.support_cta_text,
-          supportCtaUrl: prev.supportCtaUrl || footerData.support_cta_url
-        }));
+        setSlice.setFooterSettings(prev => {
+          const next = {
+            ...prev,
+            footerLogoUrl: getFreshImageUrl(prev.footerLogoUrl || footerData.footer_logo_url),
+            description: prev.description?.bn ? prev.description : (footerData.description || prev.description),
+            address: footerData.address || prev.address || '',
+            phone: footerData.phone || prev.phone || '',
+            email: (footerData.email && !footerData.email.includes('infinitybangladesh.org'))
+              ? footerData.email
+              : (prev.email && !prev.email.includes('infinitybangladesh.org') ? prev.email : 'smsakib6452@gmail.com'),
+            copyrightText: prev.copyrightText?.bn ? prev.copyrightText : (footerData.copyright_text || prev.copyrightText),
+            calloutEyebrow: prev.calloutEyebrow || footerData.callout_eyebrow,
+            calloutTitle: prev.calloutTitle || footerData.callout_title,
+            calloutSubtitle: prev.calloutSubtitle || footerData.callout_subtitle,
+            volunteerCtaText: prev.volunteerCtaText || footerData.volunteer_cta_text,
+            volunteerCtaUrl: prev.volunteerCtaUrl || footerData.volunteer_cta_url,
+            supportCtaText: prev.supportCtaText || footerData.support_cta_text,
+            supportCtaUrl: prev.supportCtaUrl || footerData.support_cta_url
+          };
+          return isDeepEqual(prev, next) ? prev : next;
+        });
       }
 
       if (progData && progData.length > 0) {
@@ -714,7 +739,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         hum.setPrograms(prevLocal => {
           const remoteIds = new Set(remotePrograms.map(r => r.id));
           const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
-          return localOnly.length > 0 ? [...localOnly, ...remotePrograms] : remotePrograms;
+          const next = localOnly.length > 0 ? [...localOnly, ...remotePrograms] : remotePrograms;
+          return isDeepEqual(prevLocal, next) ? prevLocal : next;
         });
       }
 
@@ -747,7 +773,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         hum.setCampaigns(prevLocal => {
           const remoteIds = new Set(remoteCampaigns.map(r => r.id));
           const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
-          return localOnly.length > 0 ? [...localOnly, ...remoteCampaigns] : remoteCampaigns;
+          const next = localOnly.length > 0 ? [...localOnly, ...remoteCampaigns] : remoteCampaigns;
+          return isDeepEqual(prevLocal, next) ? prevLocal : next;
         });
       }
 
@@ -763,7 +790,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         hum.setMetrics(prevLocal => {
           const remoteIds = new Set(remoteMetrics.map(r => r.id));
           const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
-          return localOnly.length > 0 ? [...localOnly, ...remoteMetrics] : remoteMetrics;
+          const next = localOnly.length > 0 ? [...localOnly, ...remoteMetrics] : remoteMetrics;
+          return isDeepEqual(prevLocal, next) ? prevLocal : next;
         });
       }
 
@@ -786,18 +814,22 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         hum.setStories(prevLocal => {
           const remoteIds = new Set(remoteStories.map(r => r.id));
           const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
-          return localOnly.length > 0 ? [...localOnly, ...remoteStories] : remoteStories;
+          const next = localOnly.length > 0 ? [...localOnly, ...remoteStories] : remoteStories;
+          return isDeepEqual(prevLocal, next) ? prevLocal : next;
         });
       }
 
       const bloodData = bloodSettingsRows?.[0];
       if (bloodData) {
-        blood.setBloodDonationSettings(prev => ({
-          ...prev,
-          statTotalDonorsOverride: bloodData.stat_total_donors_override,
-          statActiveDonorsOverride: bloodData.stat_active_donors_override,
-          statImpactOverride: bloodData.stat_impact_override,
-        }));
+        blood.setBloodDonationSettings(prev => {
+          const next = {
+            ...prev,
+            statTotalDonorsOverride: bloodData.stat_total_donors_override,
+            statActiveDonorsOverride: bloodData.stat_active_donors_override,
+            statImpactOverride: bloodData.stat_impact_override,
+          };
+          return isDeepEqual(prev, next) ? prev : next;
+        });
       }
     } catch (err) {
       if (import.meta.env?.DEV) {
