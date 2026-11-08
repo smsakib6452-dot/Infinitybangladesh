@@ -74,6 +74,36 @@
     --radius-lg: 1rem;      /* 16px */
     --radius-xl: 1.5rem;    /* 24px */
     --radius-2xl: 2rem;     /* 32px */
+
+    /* ============================================================ */
+    /* 3. UNIFIED PHYSICS SPRING TOKENS (CSS linear() standard)     */
+    /* Matched to Motion tokens: snappy (520/34), smooth (260/28), gentle (130/22) */
+    /* ============================================================ */
+    --ease-spring-snappy: linear(
+      0, 0.009, 0.035 2.1%, 0.141, 0.281 6.7%, 0.723 12.9%, 0.938 16.7%, 1.017,
+      1.077, 1.121, 1.149 24.3%, 1.159, 1.163, 1.161, 1.154 29.9%, 1.129 32.8%,
+      1.051 39.6%, 1.017 43.1%, 0.999 46.5%, 0.991, 0.988 53.4%, 0.991 57.5%,
+      1.001 64.7%, 1.003 71.9%, 1
+    );
+
+    --ease-spring-smooth: linear(
+      0, 0.006, 0.025 2.8%, 0.101, 0.201 8.3%, 0.499 15.3%, 0.768 22.2%, 0.916 27.8%,
+      0.995 33.3%, 1.028 38.9%, 1.037 44.4%, 1.03 50%, 1.014 55.6%, 1.003 61.1%,
+      0.998 66.7%, 0.998 75%, 1
+    );
+
+    --ease-spring-gentle: linear(
+      0, 0.004, 0.016 3.5%, 0.064, 0.144 10.5%, 0.384 19.3%, 0.655 28.1%, 0.835 36.8%,
+      0.937 45.6%, 0.985 54.4%, 1.003 63.2%, 1.007 71.9%, 1.004 80.7%, 1.001 89.5%, 1
+    );
+  }
+
+  @supports not (animation-timing-function: linear(0, 1)) {
+    :root {
+      --ease-spring-snappy: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring-smooth: cubic-bezier(0.25, 1, 0.35, 1);
+      --ease-spring-gentle: cubic-bezier(0.16, 1, 0.3, 1);
+    }
   }
 
   body {
@@ -288,7 +318,7 @@
   align-items: center;
   justify-content: center;
   touch-action: manipulation;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.22s var(--ease-spring-snappy);
 }
 
 .btn-primary-green:hover {
@@ -312,7 +342,7 @@
   align-items: center;
   justify-content: center;
   touch-action: manipulation;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.22s var(--ease-spring-snappy);
 }
 
 .btn-secondary-warm:hover {
@@ -334,7 +364,7 @@
   justify-content: center;
   touch-action: manipulation;
   box-shadow: 0 4px 14px 0 rgba(225, 29, 72, 0.38);
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.22s var(--ease-spring-snappy);
 }
 
 .btn-lifeline-crimson:hover {
@@ -359,7 +389,7 @@
   justify-content: center;
   touch-action: manipulation;
   backdrop-filter: blur(8px);
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.22s var(--ease-spring-snappy);
 }
 
 .btn-lifeline-ghost:hover {
@@ -497,17 +527,26 @@ body {
 
 /* Premium Card Elevation & Image Zoom */
 .motion-card-hover {
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.28s ease;
-  will-change: transform, box-shadow;
+  transition: transform 0.32s var(--ease-spring-smooth), box-shadow 0.32s var(--ease-spring-smooth), border-color 0.2s ease;
+  touch-action: manipulation;
 }
 
-.motion-card-hover:hover {
-  transform: translateY(-4px);
+@media (hover: hover) and (pointer: fine) {
+  .motion-card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.08), 0 6px 16px -4px rgba(0, 106, 78, 0.05);
+  }
+}
+
+.motion-card-hover:active {
+  transform: scale(0.97);
+  transition-duration: 0.12s;
+  transition-timing-function: var(--ease-spring-snappy);
 }
 
 /* Micro-interaction for Button Arrows */
 .group-arrow-hover {
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.2s var(--ease-spring-snappy);
 }
 
 .group:hover .group-arrow-hover {
@@ -516,12 +555,18 @@ body {
 
 /* Image Zoom in Card */
 .motion-img-zoom {
-  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
+  transition: transform 0.45s var(--ease-spring-gentle);
 }
 
-.group:hover .motion-img-zoom {
-  transform: scale(1.035);
+@media (hover: hover) and (pointer: fine) {
+  .group:hover .motion-img-zoom {
+    transform: scale(1.035);
+  }
+}
+
+/* Pause animations offscreen */
+.anim-paused {
+  animation-play-state: paused !important;
 }
 
 /* Heartbeat Pulse for Blood Drops & Lifeline Badges */

@@ -15,6 +15,34 @@ window.addEventListener('vite:preloadError', (event) => {
   }
 });
 
+// Pause infinite CSS animations when offscreen to conserve mobile CPU/battery
+if (typeof window !== 'undefined' && 'IntersectionObserver' in window) {
+  const animObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.remove('anim-paused');
+        } else {
+          entry.target.classList.add('anim-paused');
+        }
+      });
+    },
+    { rootMargin: '80px' }
+  );
+
+  const observeAnimElements = () => {
+    document
+      .querySelectorAll('.animate-heartbeat, .animate-ambient-shimmer, .animate-lifeline-ripple, .animate-lifeline-glow, .animate-pulse')
+      .forEach((el) => animObserver.observe(el));
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', observeAnimElements, { once: true });
+  } else {
+    setTimeout(observeAnimElements, 500);
+  }
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
