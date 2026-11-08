@@ -53,7 +53,8 @@ export class ApiService {
    */
   static async getVideos(): Promise<VideoItem[]> {
     try {
-      const { supabase, isSupabaseConfigured } = await import('../supabase');
+      const { getSupabase, isSupabaseConfigured } = await import('../supabase');
+      const supabase = await getSupabase();
       if (supabase && isSupabaseConfigured) {
         const { data, error } = await supabase
           .from('video_items')
@@ -109,7 +110,8 @@ export class ApiService {
     };
 
     try {
-      const { supabase, isSupabaseConfigured } = await import('../supabase');
+      const { getSupabase, isSupabaseConfigured } = await import('../supabase');
+      const supabase = await getSupabase();
       if (supabase && isSupabaseConfigured) {
         await supabase.from('video_items').upsert({
           id: newVid.id,
@@ -141,7 +143,8 @@ export class ApiService {
    */
   static async updateVideo(id: string, video: Partial<VideoItem>): Promise<void> {
     try {
-      const { supabase, isSupabaseConfigured } = await import('../supabase');
+      const { getSupabase, isSupabaseConfigured } = await import('../supabase');
+      const supabase = await getSupabase();
       if (supabase && isSupabaseConfigured) {
         const payload: Record<string, any> = {
           updated_at: new Date().toISOString()
@@ -171,7 +174,8 @@ export class ApiService {
    */
   static async deleteVideo(id: string): Promise<void> {
     try {
-      const { supabase, isSupabaseConfigured } = await import('../supabase');
+      const { getSupabase, isSupabaseConfigured } = await import('../supabase');
+      const supabase = await getSupabase();
       if (supabase && isSupabaseConfigured) {
         await supabase.from('video_items').delete().eq('id', id);
       }
@@ -185,7 +189,8 @@ export class ApiService {
    */
   static async getJourneyVideos(): Promise<JourneyVideo[]> {
     try {
-      const { supabase, isSupabaseConfigured } = await import('../supabase');
+      const { getSupabase, isSupabaseConfigured } = await import('../supabase');
+      const supabase = await getSupabase();
       if (supabase && isSupabaseConfigured) {
         const { data, error } = await supabase
           .from('journey_videos')
@@ -239,7 +244,8 @@ export class ApiService {
     };
 
     try {
-      const { supabase, isSupabaseConfigured } = await import('../supabase');
+      const { getSupabase, isSupabaseConfigured } = await import('../supabase');
+      const supabase = await getSupabase();
       if (supabase && isSupabaseConfigured) {
         if (newVid.isFeatured) {
           await supabase.from('journey_videos').update({ is_featured: false }).neq('id', id);
@@ -273,7 +279,8 @@ export class ApiService {
    */
   static async updateJourneyVideo(id: string, video: Partial<JourneyVideo>): Promise<void> {
     try {
-      const { supabase, isSupabaseConfigured } = await import('../supabase');
+      const { getSupabase, isSupabaseConfigured } = await import('../supabase');
+      const supabase = await getSupabase();
       if (supabase && isSupabaseConfigured) {
         if (video.isFeatured) {
           await supabase.from('journey_videos').update({ is_featured: false }).neq('id', id);
@@ -306,7 +313,8 @@ export class ApiService {
    */
   static async deleteJourneyVideo(id: string): Promise<void> {
     try {
-      const { supabase, isSupabaseConfigured } = await import('../supabase');
+      const { getSupabase, isSupabaseConfigured } = await import('../supabase');
+      const supabase = await getSupabase();
       if (supabase && isSupabaseConfigured) {
         await supabase.from('journey_videos').delete().eq('id', id);
       }
@@ -336,7 +344,8 @@ export class ApiService {
 
     // 1. Attempt Supabase direct persistence if available
     try {
-      const { supabase, isSupabaseConfigured } = await import('../supabase');
+      const { getSupabase, isSupabaseConfigured } = await import('../supabase');
+      const supabase = await getSupabase();
       if (supabase && isSupabaseConfigured) {
         const { error } = await supabase.from('volunteer_applications').insert([{
           id: newRecord.id,
@@ -406,7 +415,8 @@ export class ApiService {
 
     // 1. Attempt Supabase direct persistence if available
     try {
-      const { supabase, isSupabaseConfigured } = await import('../supabase');
+      const { getSupabase, isSupabaseConfigured } = await import('../supabase');
+      const supabase = await getSupabase();
       if (supabase && isSupabaseConfigured) {
         const { error } = await supabase.from('contact_inquiries').insert([{
           id: newRecord.id,
@@ -458,7 +468,8 @@ export class ApiService {
    */
   static async getBloodDonors(includePending: boolean = false): Promise<BloodDonor[]> {
     try {
-      const { supabase, isSupabaseConfigured } = await import('../supabase');
+      const { getSupabase, isSupabaseConfigured } = await import('../supabase');
+      const supabase = await getSupabase();
       if (supabase && isSupabaseConfigured) {
         let query = supabase.from('blood_donors').select('*, blood_donation_history(*)').order('created_at', { ascending: false });
         if (!includePending) {
@@ -552,7 +563,8 @@ export class ApiService {
 
     const id = `donor_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
     try {
-      const { supabase, isSupabaseConfigured } = await import('../supabase');
+      const { getSupabase, isSupabaseConfigured } = await import('../supabase');
+      const supabase = await getSupabase();
       if (supabase && isSupabaseConfigured) {
         await supabase.from('blood_donors').insert([{
           id,
@@ -613,7 +625,8 @@ export class ApiService {
     };
 
     try {
-      const { supabase, isSupabaseConfigured } = await import('../supabase');
+      const { getSupabase, isSupabaseConfigured } = await import('../supabase');
+      const supabase = await getSupabase();
       if (supabase && isSupabaseConfigured) {
         await supabase.from('emergency_blood_requests').insert([{
           id,

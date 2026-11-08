@@ -29,7 +29,7 @@ import {
   INITIAL_DONATIONS
 } from '../../data/initialData';
 import { getFreshImageUrl } from '../../lib/cloudinary';
-import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { getSupabase, isSupabaseConfigured } from '../../lib/supabase';
 import { STORAGE_PREFIX, getStoredOrDefault, saveToStorage } from '../dataStorage';
 import { resolveMediaFieldUpdate, sanitizeMediaUrlArray, isValidPermanentUrl } from '../../lib/utils/mediaSanitizer';
 import { safeDbUpsert, safeDbInsert, safeDbDelete, generateSecureId } from '../dbAdapter';
@@ -429,8 +429,10 @@ export function useHumanitarianSlice(
   const removeMediaFromEvent = useCallback((eventId: string, mediaId: string) => {
     setEventMediaList(prev => prev.filter(em => !(em.eventId === eventId && em.mediaId === mediaId)));
     logAudit('DETACH', 'EventMedia', `${eventId}_${mediaId}`, `Removed media from event`);
-    if (isSupabaseConfigured && supabase) {
-      supabase.from('event_media').delete().match({ event_id: eventId, media_id: mediaId }).then();
+    if (isSupabaseConfigured) {
+      getSupabase().then(client => {
+        if (client) client.from('event_media').delete().match({ event_id: eventId, media_id: mediaId }).then();
+      });
     }
   }, [logAudit]);
 

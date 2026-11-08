@@ -3,7 +3,7 @@
  * Enforces strict public ingestion boundaries, CSPRNG ID generation, and domain security.
  */
 
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
 import { AuditLog } from '../types';
 
 export type PublicSubmissionTable =
@@ -283,7 +283,16 @@ export async function safeDbInsert<T = { id: string }>(
     };
   }
 
-  if (!supabase || !isSupabaseConfigured) {
+  if (!isSupabaseConfigured) {
+    return {
+      success: false,
+      status: 'DATABASE_ERROR',
+      error: 'Database connection is not configured in this environment.'
+    };
+  }
+
+  const client = await getSupabase();
+  if (!client) {
     return {
       success: false,
       status: 'DATABASE_ERROR',
@@ -293,7 +302,7 @@ export async function safeDbInsert<T = { id: string }>(
 
   try {
     // PostgREST minimal return (omitting .select() sends Prefer: return=minimal)
-    const { error } = await supabase.from(tableName).insert(payload);
+    const { error } = await client.from(tableName).insert(payload);
     if (error) {
       if (import.meta.env.DEV) {
         console.warn(`Supabase safeDbInsert error on ${tableName}:`, error.message);
@@ -333,9 +342,11 @@ export async function safeDbUpsert(tableName: string, data: any): Promise<void> 
     }
     return;
   }
-  if (!supabase || !isSupabaseConfigured) return;
+  if (!isSupabaseConfigured) return;
+  const client = await getSupabase();
+  if (!client) return;
   try {
-    const { error } = await supabase.from(tableName).upsert(data);
+    const { error } = await client.from(tableName).upsert(data);
     if (error) {
       const colMatch =
         error.message.match(/Could not find the '([^']+)' column/i) ||
@@ -343,7 +354,7 @@ export async function safeDbUpsert(tableName: string, data: any): Promise<void> 
       if (colMatch && colMatch[1]) {
         const fallbackData = { ...data };
         delete fallbackData[colMatch[1]];
-        const { error: retryError } = await supabase.from(tableName).upsert(fallbackData);
+        const { error: retryError } = await client.from(tableName).upsert(fallbackData);
         if (retryError && import.meta.env.DEV) {
           console.warn(`Supabase upsert fallback failed on ${tableName}:`, retryError.message);
         }
@@ -365,9 +376,11 @@ export async function safeDbDelete(tableName: string, matchColumn: string, match
     }
     return;
   }
-  if (!supabase || !isSupabaseConfigured) return;
+  if (!isSupabaseConfigured) return;
+  const client = await getSupabase();
+  if (!client) return;
   try {
-    const { error } = await supabase.from(tableName).delete().eq(matchColumn, matchValue);
+    const { error } = await client.from(tableName).delete().eq(matchColumn, matchValue);
     if (error && import.meta.env.DEV) {
       console.warn(`Supabase delete error on ${tableName}:`, error.message);
     }

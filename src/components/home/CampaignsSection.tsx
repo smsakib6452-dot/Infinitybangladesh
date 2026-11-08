@@ -6,6 +6,7 @@ import { ScrollReveal } from '../motion/ScrollReveal';
 import { StaggerGroup, StaggerItem } from '../motion/StaggerGroup';
 import { CampaignCard } from '../CampaignCard';
 import { OptimizedImage } from '../OptimizedImage';
+import { PlaceholderImage } from '../PlaceholderImage';
 import { Sparkles, ArrowRight, Heart, Users, MapPin } from 'lucide-react';
 
 interface CampaignsSectionProps {
@@ -23,10 +24,18 @@ export const CampaignsSection: React.FC<CampaignsSectionProps> = ({
   isBn,
   tText
 }) => {
-  // Prevent duplicate photo repetition with Hero section
+  /**
+   * Determine whether to show a real campaign image or the branded placeholder.
+   * - If the campaign has a real (non-hero) image URL, use it.
+   * - Otherwise show the PlaceholderImage component (see TODO.md).
+   */
   const campaignImage = useMemo(() => {
-    if (!featuredCampaign?.imageUrl || featuredCampaign.imageUrl === '/images/infinity-cover-hero.jpg') {
-      return 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=1000&q=80';
+    if (
+      !featuredCampaign?.imageUrl ||
+      featuredCampaign.imageUrl === '/images/infinity-cover-hero.jpg' ||
+      featuredCampaign.imageUrl.includes('unsplash.com')
+    ) {
+      return null; // triggers PlaceholderImage below
     }
     return featuredCampaign.imageUrl;
   }, [featuredCampaign?.imageUrl]);
@@ -100,14 +109,22 @@ export const CampaignsSection: React.FC<CampaignsSectionProps> = ({
               </div>
 
               <div className="lg:col-span-6 rounded-3xl overflow-hidden shadow-warm-xl border-4 border-white aspect-16/10 bg-slate-900 relative">
-                <OptimizedImage
-                  src={campaignImage}
-                  alt={tText(featuredCampaign.title)}
-                  width={700}
-                  aspectRatio="16/10"
-                  sizes="(max-width: 1024px) 100vw, 600px"
-                  className="w-full h-full object-cover"
-                />
+                {campaignImage ? (
+                  <OptimizedImage
+                    src={campaignImage}
+                    alt={tText(featuredCampaign.title)}
+                    width={700}
+                    aspectRatio="16/10"
+                    sizes="(max-width: 1024px) 100vw, 600px"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <PlaceholderImage
+                    className="w-full h-full"
+                    label={isBn ? 'অনুমোদিত ছবি শীঘ্রই আসছে' : 'Campaign photo coming soon'}
+                    aspectRatio="16/10"
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent pointer-events-none" />
                 
                 {/* Category Badge Pill on image */}

@@ -152,7 +152,7 @@ import { BloodDonorModal } from '../components/BloodDonorModal';
 import { EmergencyRequestAdminModal } from '../components/EmergencyRequestAdminModal';
 import { AdminHomepageManager } from '../components/AdminHomepageManager';
 import { AdminErrorBoundary } from '../components/AdminErrorBoundary';
-import { supabase, isSupabaseConfigured, signInWithEmail, signOutAdmin } from '../lib/supabase';
+import { getSupabase, isSupabaseConfigured, signInWithEmail, signOutAdmin } from '../lib/supabase';
 import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL, isPortraitVideo } from '../lib/utils/mediaHelper';
 import { uploadToCloudinary } from '../lib/cloudinary';
 import { isValidPermanentUrl } from '../lib/utils/mediaSanitizer';
@@ -242,7 +242,7 @@ export const AdminPage: React.FC = () => {
   // Auth State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    if (isSupabaseConfigured && supabase) return false;
+    if (isSupabaseConfigured) return false;
     return sessionStorage.getItem('infinity_admin_user') !== null;
   });
   const [authEmail, setAuthEmail] = useState('');
@@ -253,23 +253,30 @@ export const AdminPage: React.FC = () => {
   // Validate active session on mount if Supabase Auth is enabled
   React.useEffect(() => {
     localStorage.removeItem('infinity_bd_admin_auth'); // Purge legacy insecure storage key
-    if (isSupabaseConfigured && supabase) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setIsAuthenticated(Boolean(session));
-        if (!session) {
-          sessionStorage.removeItem('infinity_admin_user');
-        }
-      }).catch(() => {
-        setIsAuthenticated(false);
-      });
+    if (isSupabaseConfigured) {
+      let unsubscribe: (() => void) | undefined;
+      getSupabase().then(client => {
+        if (!client) return;
+        client.auth.getSession().then(({ data: { session } }) => {
+          setIsAuthenticated(Boolean(session));
+          if (!session) {
+            sessionStorage.removeItem('infinity_admin_user');
+          }
+        }).catch(() => {
+          setIsAuthenticated(false);
+        });
 
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        setIsAuthenticated(Boolean(session));
-        if (!session) {
-          sessionStorage.removeItem('infinity_admin_user');
-        }
+        const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
+          setIsAuthenticated(Boolean(session));
+          if (!session) {
+            sessionStorage.removeItem('infinity_admin_user');
+          }
+        });
+        unsubscribe = () => subscription.unsubscribe();
       });
-      return () => subscription.unsubscribe();
+      return () => {
+        if (unsubscribe) unsubscribe();
+      };
     }
   }, []);
 

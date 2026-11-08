@@ -7,6 +7,14 @@ interface AnimatedCounterProps {
   className?: string;
 }
 
+/**
+ * AnimatedCounter
+ *
+ * The final value is always present in the DOM via `data-target` and `aria-label`
+ * so crawlers, screen readers, and noscript users always read the real number.
+ * The count-up animation is purely visual (aria-hidden on the animated span).
+ */
+
 export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
   value,
   duration = 1.8,
@@ -15,6 +23,7 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, margin: '-20px' });
   const shouldReduceMotion = useReducedMotion();
+  const finalValue = String(value);
   const [displayValue, setDisplayValue] = useState<string>(() => {
     if (typeof value === 'number') return '0';
     return String(value).replace(/\d+/g, '0');
@@ -23,12 +32,12 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
   useEffect(() => {
     if (!isInView || shouldReduceMotion) {
       if (shouldReduceMotion) {
-        setDisplayValue(String(value));
+        setDisplayValue(finalValue);
       }
       return;
     }
 
-    const valStr = String(value);
+    const valStr = finalValue;
 
     // Special ratio case e.g. "8/8"
     if (valStr.includes('/')) {
@@ -113,8 +122,19 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
   }, [isInView, value, duration, shouldReduceMotion]);
 
   return (
-    <span ref={ref} className={className}>
-      {shouldReduceMotion ? String(value) : displayValue}
+    /*
+     * aria-label always holds the real final value so screen readers
+     * announce the actual number, not the animated "0 → N" sequence.
+     * data-target is the SSR-safe hook for crawlers.
+     */
+    <span
+      ref={ref}
+      className={className}
+      data-target={finalValue}
+      aria-label={finalValue}
+      aria-live="off"
+    >
+      {shouldReduceMotion ? finalValue : displayValue}
     </span>
   );
 };

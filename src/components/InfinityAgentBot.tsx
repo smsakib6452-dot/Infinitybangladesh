@@ -1648,8 +1648,12 @@ export const InfinityAgentBot: React.FC = () => {
                 >
                   <div className="absolute inset-1 sm:inset-2 bg-emerald-400/25 blur-md sm:blur-lg rounded-full animate-pulse pointer-events-none" />
                   <img
-                    src="/brand/infi-robot.png?v=4"
+                    src="/brand/infi-robot.webp"
                     alt="Infi Robot"
+                    width={76}
+                    height={76}
+                    loading="lazy"
+                    decoding="async"
                     className="relative z-10 w-full h-full object-contain scale-100 sm:scale-[1.18] drop-shadow-[0_4px_10px_rgba(0,106,78,0.3)] sm:drop-shadow-[0_8px_16px_rgba(0,106,78,0.35)]"
                   />
                 </motion.div>
@@ -1675,8 +1679,11 @@ export const InfinityAgentBot: React.FC = () => {
                 <div className="relative w-12 h-12 shrink-0 flex items-center justify-center -ml-1">
                   <div className="absolute inset-2 bg-white/20 blur-md rounded-full animate-pulse" />
                   <img
-                    src="/brand/infi-robot.png?v=4"
+                    src="/brand/infi-robot.webp"
                     alt="Infi Robot"
+                    width={48}
+                    height={48}
+                    decoding="async"
                     className="relative z-10 w-full h-full object-contain scale-[1.1] drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)]"
                   />
                 </div>
@@ -1728,8 +1735,11 @@ export const InfinityAgentBot: React.FC = () => {
                     {isBot && (
                       <div className="relative w-9 h-9 sm:w-9 sm:h-9 shrink-0 mt-0.5 flex items-center justify-center">
                         <img
-                          src="/brand/infi-robot.png?v=4"
+                          src="/brand/infi-robot.webp"
                           alt="Infi Robot"
+                          width={36}
+                          height={36}
+                          decoding="async"
                           className="relative z-10 w-full h-full object-contain scale-[1.1] drop-shadow-[0_3px_6px_rgba(0,106,78,0.25)]"
                         />
                       </div>
@@ -1868,8 +1878,11 @@ export const InfinityAgentBot: React.FC = () => {
                 <div className="flex items-center gap-2.5">
                   <div className="relative w-9 h-9 sm:w-9 sm:h-9 shrink-0 flex items-center justify-center">
                     <img
-                      src="/brand/infi-robot.png?v=4"
+                      src="/brand/infi-robot.webp"
                       alt="Infi Robot"
+                      width={36}
+                      height={36}
+                      decoding="async"
                       className="relative z-10 w-full h-full object-contain scale-[1.1] drop-shadow-[0_3px_6px_rgba(0,106,78,0.25)]"
                     />
                   </div>

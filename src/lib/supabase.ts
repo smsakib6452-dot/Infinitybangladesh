@@ -4,14 +4,16 @@
  * 
  * Supports both Live Supabase Backend (PostgreSQL + Auth + Storage + RLS)
  * and Seamless Local/Offline Fallback mode for local development and instant resilience.
+ *
+ * NOTE: The supabase-js client is lazily loaded on-demand via `getSupabase()`
+ * to keep the initial page bundle lightweight and fast.
  */
 
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { uploadToCloudinary } from './cloudinary';
 import { isValidPermanentUrl } from './utils/mediaSanitizer';
 
 // Environment variables — NEVER hardcode credentials in source code.
-// Configure via .env file or Vercel environment variables.
 const supabaseUrl =
   (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_SUPABASE_URL || import.meta.env?.NEXT_PUBLIC_SUPABASE_URL)) || '';
 const supabaseAnonKey =
@@ -27,18 +29,50 @@ export const isSupabaseConfigured = Boolean(
   supabaseAnonKey.length > 10
 );
 
-// Singleton Supabase Client instance (or null if unconfigured)
-export const supabase: SupabaseClient | null = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-      }
-    })
-  : null;
-
 export const SUPABASE_STORAGE_UPLOADS_LOCKED = true;
+
+// Singleton client cache and in-flight promise to prevent race conditions
+let _cachedClient: SupabaseClient | null = null;
+let _loaderPromise: Promise<SupabaseClient | null> | null = null;
+
+/**
+ * Synchronous client reference (populated once getSupabase() resolves)
+ */
+export let supabase: SupabaseClient | null = null;
+
+/**
+ * Returns the singleton SupabaseClient on demand.
+ * Consumers await this loader. Concurrent calls share the same in-flight promise.
+ */
+export async function getSupabase(): Promise<SupabaseClient | null> {
+  if (!isSupabaseConfigured) return null;
+  if (_cachedClient) {
+    supabase = _cachedClient;
+    return _cachedClient;
+  }
+
+  if (!_loaderPromise) {
+    _loaderPromise = import('@supabase/supabase-js')
+      .then(({ createClient }) => {
+        _cachedClient = createClient(supabaseUrl, supabaseAnonKey, {
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+          }
+        });
+        supabase = _cachedClient;
+        return _cachedClient;
+      })
+      .catch(err => {
+        console.error('Failed to load Supabase client module:', err);
+        _loaderPromise = null;
+        return null;
+      });
+  }
+
+  return _loaderPromise;
+}
 
 /**
  * Storage Helpers
@@ -58,7 +92,8 @@ export async function uploadFileToSupabase(
     };
   }
   try {
-    if (!supabase || !isSupabaseConfigured) {
+    const client = await getSupabase();
+    if (!client || !isSupabaseConfigured) {
       // Cloudinary cloud fallback for GitHub Pages and standalone deployment
       try {
         const cloudRes = await uploadToCloudinary(file);
@@ -85,7 +120,7 @@ export async function uploadFileToSupabase(
     const cleanFileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
     const filePath = customPath || cleanFileName;
 
-    const { data, error } = await supabase.storage
+    const { data, error } = await client.storage
       .from(bucketName)
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -97,7 +132,7 @@ export async function uploadFileToSupabase(
       return { success: false, error: error.message };
     }
 
-    const { data: publicUrlData } = supabase.storage
+    const { data: publicUrlData } = client.storage
       .from(bucketName)
       .getPublicUrl(data.path);
 
@@ -116,25 +151,28 @@ export async function uploadFileToSupabase(
  * Auth Helpers
  */
 export async function signInWithEmail(email: string, password: string) {
-  if (!supabase) {
+  const client = await getSupabase();
+  if (!client) {
     throw new Error('Supabase is not configured yet. Using local admin fallback.');
   }
-  return await supabase.auth.signInWithPassword({ email, password });
+  return await client.auth.signInWithPassword({ email, password });
 }
 
 export async function signOutAdmin() {
-  if (supabase) {
-    await supabase.auth.signOut();
+  const client = await getSupabase();
+  if (client) {
+    await client.auth.signOut();
   }
   sessionStorage.removeItem('infinity_admin_auth');
   sessionStorage.removeItem('infinity_admin_user');
 }
 
 export async function resetAdminPassword(email: string) {
-  if (!supabase) {
+  const client = await getSupabase();
+  if (!client) {
     throw new Error('Supabase credentials required for automated password reset emails.');
   }
-  return await supabase.auth.resetPasswordForEmail(email, {
+  return await client.auth.resetPasswordForEmail(email, {
     redirectTo: `${window.location.origin}/admin`
   });
 }

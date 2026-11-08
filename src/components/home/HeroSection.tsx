@@ -183,15 +183,28 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
             {/* Hero Card Container */}
             <div className="relative rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden shadow-warm-xl border-4 border-white bg-[#0F221D]">
               <div className="relative w-full aspect-16/10 sm:aspect-5/4 lg:aspect-4/5 overflow-hidden">
-                <OptimizedImage
-                  src={hero.heroImageUrl}
-                  alt={hero.heroImageAlt || 'Infinity Bangladesh Official Photo'}
-                  cropPosition={hero.heroImageCropPosition || 'center center'}
-                  className="w-full h-full object-cover"
-                  priority
-                  aspectRatio="16/10"
-                  sizes="(max-width: 1024px) 100vw, 600px"
-                />
+                <picture className="w-full h-full block">
+                  <source
+                    type="image/webp"
+                    media="(max-width: 640px)"
+                    srcSet="/images/infinity-cover-hero-640.webp"
+                  />
+                  <source
+                    type="image/webp"
+                    srcSet="/images/infinity-cover-hero.webp"
+                  />
+                  <OptimizedImage
+                    src={hero.heroImageUrl || "/images/infinity-cover-hero.jpg"}
+                    alt={hero.heroImageAlt || 'Infinity Bangladesh Official Photo'}
+                    cropPosition={hero.heroImageCropPosition || 'center center'}
+                    className="w-full h-full object-cover"
+                    priority
+                    width={1200}
+                    height={750}
+                    aspectRatio="16/10"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 600px"
+                  />
+                </picture>
                 <div className="hidden sm:block absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/15 to-transparent pointer-events-none" />
 
                 {/* Floating Established 2015 Badge on Desktop */}

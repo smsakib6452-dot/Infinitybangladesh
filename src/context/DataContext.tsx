@@ -88,7 +88,7 @@ import {
   DEFAULT_DONOR_CATEGORIES
 } from '../data/initialData';
 import { cleanBloodDonor, cleanEmergencyRequest } from '../data/bloodDonationData';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
 import { getFreshImageUrl } from '../lib/cloudinary';
 import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL, isBlacklistedMedia } from '../lib/utils/mediaHelper';
 import { STORAGE_PREFIX, DATA_VERSION_KEY, CURRENT_DATA_VERSION, getStoredOrDefault, saveToStorage } from './dataStorage';
@@ -446,7 +446,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Load Admin Data
   const loadAdminData = useCallback(async () => {
-    if (!supabase || !isSupabaseConfigured) return;
+    if (!isSupabaseConfigured) return;
+    const supabase = await getSupabase();
+    if (!supabase) return;
     try {
       const { data: volData } = await supabase.from('volunteer_applications').select('*').order('submitted_at', { ascending: false });
       if (volData && Array.isArray(volData)) {
@@ -560,7 +562,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Supabase Fetch & Sync implementation
   const syncWithSupabase = useCallback(async () => {
-    if (!supabase || !isSupabaseConfigured) return;
+    if (!isSupabaseConfigured) return;
+    const supabase = await getSupabase();
+    if (!supabase) return;
 
     try {
       setIsSyncing(true);
@@ -1207,7 +1211,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const lastRevalidateRef = useRef<number>(Date.now());
   useEffect(() => {
     if (isSupabaseConfigured) {
-      syncWithSupabase();
+      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(() => syncWithSupabase(), { timeout: 4000 });
+      } else {
+        setTimeout(() => syncWithSupabase(), 3500);
+      }
     }
 
     const handleRevalidate = () => {
@@ -1241,8 +1249,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
     }
 
-    if (!supabase || !isSupabaseConfigured) {
+    if (!isSupabaseConfigured) {
       return { success: false, message: 'Supabase credentials are not configured in .env' };
+    }
+
+    const supabase = await getSupabase();
+    if (!supabase) {
+      return { success: false, message: 'Supabase client failed to initialize' };
     }
 
     if (isSyncInProgressRef.current) {
