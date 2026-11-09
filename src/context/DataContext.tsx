@@ -581,7 +581,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fetchSupabaseRest<any[]>('footer_settings', 'select=*'),
         fetchSupabaseRest<any[]>('programs', 'select=*&order=display_order.asc'),
         fetchSupabaseRest<any[]>('campaigns', 'select=*&order=created_at.desc'),
-        fetchSupabaseRest<any[]>('impact_metrics', 'select=*&order=order.asc'),
+        fetchSupabaseRest<any[]>('impact_metrics', 'select=*&order=display_order.asc'),
         fetchSupabaseRest<any[]>('stories', 'select=*&order=created_at.desc'),
         fetchSupabaseRest<any[]>('blood_donation_settings', 'select=*'),
       ]);
@@ -1487,17 +1487,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Initial mount: lightweight REST sync on interaction/idle (Zero SDK download on landing)
   const lastRevalidateRef = useRef<number>(Date.now());
+  const hasSyncedRef = useRef<boolean>(false);
+  const syncHomepageViaRestRef = useRef(syncHomepageViaRest);
+  syncHomepageViaRestRef.current = syncHomepageViaRest;
+
   useEffect(() => {
     if (!isSupabaseConfigured) return;
+    if (hasSyncedRef.current) return;
 
-    let hasSynced = false;
     let idleTimer: any = null;
 
     const triggerHomepageSync = () => {
-      if (hasSynced) return;
-      hasSynced = true;
+      if (hasSyncedRef.current) return;
+      hasSyncedRef.current = true;
       cleanup();
-      syncHomepageViaRest();
+      syncHomepageViaRestRef.current();
     };
 
     const cleanup = () => {
@@ -1527,7 +1531,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const now = Date.now();
       if (isSupabaseConfigured && document.visibilityState === 'visible' && (now - lastRevalidateRef.current > 300000)) {
         lastRevalidateRef.current = now;
-        syncHomepageViaRest();
+        syncHomepageViaRestRef.current();
       }
     };
 
@@ -1541,7 +1545,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       window.removeEventListener('online', handleRevalidate);
       document.removeEventListener('visibilitychange', handleRevalidate);
     };
-  }, [syncHomepageViaRest]);
+  }, []);
 
   // Push ALL local state to Supabase
   const pushAllToSupabase = useCallback(async (): Promise<{ success: boolean; message: string }> => {
