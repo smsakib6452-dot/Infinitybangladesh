@@ -1593,7 +1593,7 @@ export const InfinityAgentBot: React.FC = () => {
         >
           {/* Desktop Hover Tooltip */}
           <div className="hidden lg:flex items-center absolute right-full mr-3.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0 z-30">
-            <span className="whitespace-nowrap px-3.5 py-1.5 rounded-full bg-slate-900/90 backdrop-blur-md text-white text-xs font-semibold shadow-2xl border border-white/15 flex items-center gap-2">
+            <span className="whitespace-nowrap px-3.5 py-1.5 rounded-full bg-slate-900/95 text-white text-xs font-semibold shadow-2xl border border-white/15 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               {isBn ? 'ইনফি রোবট (সাহায্যকারী)' : 'Infi Robot (AI Assistant)'}
             </span>
@@ -1624,32 +1624,42 @@ export const InfinityAgentBot: React.FC = () => {
                 <div className="absolute -bottom-0.5 w-8 sm:w-13 h-1.5 sm:h-2 bg-black/25 blur-[2.5px] rounded-[100%] pointer-events-none" />
 
                 {/* 2. 3D Frosted Glass Pedestal Dock */}
-                <div className="absolute bottom-0 w-[34px] sm:w-[54px] h-[8.5px] sm:h-[15px] rounded-[100%] bg-gradient-to-b from-white/95 via-white/70 to-emerald-50/40 backdrop-blur-xl border border-white/90 shadow-[0_4px_12px_-2px_rgba(0,106,78,0.25),0_1.5px_3px_rgba(0,0,0,0.04),inset_0_1px_1.5px_rgba(255,255,255,1),inset_0_-1px_2px_rgba(0,106,78,0.1)] flex items-center justify-center pointer-events-none">
+                <div className="absolute bottom-0 w-[34px] sm:w-[54px] h-[8.5px] sm:h-[15px] rounded-[100%] bg-gradient-to-b from-white/95 via-white/70 to-emerald-50/40 md:backdrop-blur-xl border border-white/90 shadow-[0_4px_12px_-2px_rgba(0,106,78,0.25),0_1.5px_3px_rgba(0,0,0,0.04),inset_0_1px_1.5px_rgba(255,255,255,1),inset_0_-1px_2px_rgba(0,106,78,0.1)] flex items-center justify-center pointer-events-none">
                   <div className="absolute inset-[1.5px] sm:inset-[2px] rounded-[100%] border border-emerald-400/40 bg-gradient-to-tr from-emerald-500/15 via-teal-400/20 to-emerald-400/5 blur-[0.5px]" />
                   <div className="absolute top-[1px] sm:top-[1.5px] inset-x-2 sm:inset-x-2.5 h-[0.75px] sm:h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-95" />
                   <span className="absolute -top-0.5 right-0.5 sm:right-1 flex h-2 w-2 sm:h-2.5 sm:w-2.5 z-30">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span
+                      className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"
+                      style={{ animationIterationCount: 3 }}
+                    />
                     <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-emerald-500 border border-white shadow-[0_0_5px_rgba(16,185,129,0.8)]" />
                   </span>
                 </div>
 
-                {/* 3. Dynamic Contact Shadow on top of Glass Disc */}
+                {/* 3. Dynamic Contact Shadow on top of Glass Disc (3 cycles, resting state on reduced motion) */}
                 <motion.div
-                  animate={{ scale: [1, 0.75, 1], opacity: [0.5, 0.2, 0.5] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  animate={shouldReduceMotion ? { scale: 1, opacity: 0.35 } : { scale: [1, 0.75, 1], opacity: [0.5, 0.2, 0.5] }}
+                  transition={shouldReduceMotion ? { duration: 0 } : { duration: 3, repeat: 2, ease: "easeInOut" }}
                   className="absolute bottom-1 sm:bottom-1.5 w-5 sm:w-8 h-1 sm:h-1.5 bg-emerald-950/40 blur-[1.5px] sm:blur-[2px] rounded-[100%] z-10 pointer-events-none"
                 />
 
-                {/* 4. Robot Container with levitation */}
+                {/* 4. Robot Container with levitation (3 cycles, resting state on reduced motion) */}
                 <motion.div
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  animate={shouldReduceMotion ? { y: 0 } : { y: [0, -6, 0] }}
+                  transition={shouldReduceMotion ? { duration: 0 } : { duration: 3, repeat: 2, ease: "easeInOut" }}
                   className="relative z-20 w-10 h-10 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center mb-1 sm:mb-1.5"
                 >
-                  <div className="absolute inset-1 sm:inset-2 bg-emerald-400/25 blur-md sm:blur-lg rounded-full animate-pulse pointer-events-none" />
+                  <div
+                    className="absolute inset-1 sm:inset-2 bg-emerald-400/25 blur-md sm:blur-lg rounded-full motion-safe:animate-pulse pointer-events-none"
+                    style={{ animationIterationCount: 3 }}
+                  />
                   <img
-                    src="/brand/infi-robot.png?v=4"
+                    src="/brand/infi-robot.webp"
                     alt="Infi Robot"
+                    width={76}
+                    height={76}
+                    loading="lazy"
+                    decoding="async"
                     className="relative z-10 w-full h-full object-contain scale-100 sm:scale-[1.18] drop-shadow-[0_4px_10px_rgba(0,106,78,0.3)] sm:drop-shadow-[0_8px_16px_rgba(0,106,78,0.35)]"
                   />
                 </motion.div>
@@ -1675,8 +1685,11 @@ export const InfinityAgentBot: React.FC = () => {
                 <div className="relative w-12 h-12 shrink-0 flex items-center justify-center -ml-1">
                   <div className="absolute inset-2 bg-white/20 blur-md rounded-full animate-pulse" />
                   <img
-                    src="/brand/infi-robot.png?v=4"
+                    src="/brand/infi-robot.webp"
                     alt="Infi Robot"
+                    width={48}
+                    height={48}
+                    decoding="async"
                     className="relative z-10 w-full h-full object-contain scale-[1.1] drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)]"
                   />
                 </div>
@@ -1728,8 +1741,11 @@ export const InfinityAgentBot: React.FC = () => {
                     {isBot && (
                       <div className="relative w-9 h-9 sm:w-9 sm:h-9 shrink-0 mt-0.5 flex items-center justify-center">
                         <img
-                          src="/brand/infi-robot.png?v=4"
+                          src="/brand/infi-robot.webp"
                           alt="Infi Robot"
+                          width={36}
+                          height={36}
+                          decoding="async"
                           className="relative z-10 w-full h-full object-contain scale-[1.1] drop-shadow-[0_3px_6px_rgba(0,106,78,0.25)]"
                         />
                       </div>
@@ -1868,8 +1884,11 @@ export const InfinityAgentBot: React.FC = () => {
                 <div className="flex items-center gap-2.5">
                   <div className="relative w-9 h-9 sm:w-9 sm:h-9 shrink-0 flex items-center justify-center">
                     <img
-                      src="/brand/infi-robot.png?v=4"
+                      src="/brand/infi-robot.webp"
                       alt="Infi Robot"
+                      width={36}
+                      height={36}
+                      decoding="async"
                       className="relative z-10 w-full h-full object-contain scale-[1.1] drop-shadow-[0_3px_6px_rgba(0,106,78,0.25)]"
                     />
                   </div>

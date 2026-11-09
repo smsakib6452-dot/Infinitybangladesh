@@ -16,12 +16,14 @@ export interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageEl
   fallbackSrc?: string;
   /** Specific crop or focal position (e.g. "center 20%", "top center") */
   cropPosition?: string;
-  /** Cloudinary quality parameter (default: "auto") */
+  /** Cloudinary quality parameter (default: "auto:eco") */
   quality?: string | number;
+  /** Maximum candidate width in srcset (default: 800 to prevent oversized downloads on high-DPI mobile) */
+  maxCandidateWidth?: number;
 }
 
 /**
- * Builds an optimized Cloudinary delivery URL with f_auto, q_auto, and dimensional constraints.
+ * Builds an optimized Cloudinary delivery URL with f_auto, q_auto:eco, and dimensional constraints.
  */
 export function buildCloudinaryUrl(
   url: string,
@@ -45,7 +47,7 @@ export function buildCloudinaryUrl(
   let remainder = parts.slice(1).join('/upload/');
 
   // Assemble transformation directives
-  const transforms: string[] = ['f_auto', `q_${options.quality || 'auto'}`];
+  const transforms: string[] = ['f_auto', `q_${options.quality || 'auto:eco'}`];
 
   if (options.format) {
     transforms[0] = `f_${options.format}`;
@@ -79,29 +81,25 @@ export function buildCloudinaryUrl(
 }
 
 /**
- * Generates responsive srcset for Cloudinary images.
+ * Generates responsive srcset for Cloudinary images capped at mobile budget.
  */
-function generateCloudinarySrcSet(url: string, baseWidth?: number): string | undefined {
+function generateCloudinarySrcSet(
+  url: string,
+  maxCandidateWidth: number = 800,
+  quality: string | number = 'auto:eco'
+): string | undefined {
   if (!url || !url.includes('cloudinary.com') || !url.includes('/upload/')) {
     return undefined;
   }
 
-  let widths: number[];
-  if (baseWidth && baseWidth > 0) {
-    // Generate fractional/multiples around the target display width
-    widths = [
-      Math.round(baseWidth * 0.5),
-      Math.round(baseWidth),
-      Math.round(baseWidth * 1.5),
-      Math.round(baseWidth * 2)
-    ].filter((w, i, arr) => w >= 150 && arr.indexOf(w) === i);
-  } else {
-    // Standard responsive widths
-    widths = [360, 640, 768, 1024, 1280, 1536];
+  // Standard candidate widths: 480w for 1x mobile/cards, 800w cap for DPR 2-3 phones. 1200w only for full-width desktop
+  const widths = [480, 800];
+  if (maxCandidateWidth >= 1200) {
+    widths.push(1200);
   }
 
   return widths
-    .map(w => `${buildCloudinaryUrl(url, { width: w })} ${w}w`)
+    .map(w => `${buildCloudinaryUrl(url, { width: w, quality })} ${w}w`)
     .join(', ');
 }
 
@@ -120,7 +118,8 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   style = {},
   fallbackSrc = FALLBACK_LOGO_URL,
   cropPosition,
-  quality = 'auto',
+  quality = 'auto:eco',
+  maxCandidateWidth = 800,
   onError,
   ...restProps
 }) => {
@@ -153,18 +152,19 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   const numericWidth = typeof width === 'number' ? width : typeof width === 'string' && !isNaN(Number(width)) ? Number(width) : undefined;
   const numericHeight = typeof height === 'number' ? height : typeof height === 'string' && !isNaN(Number(height)) ? Number(height) : undefined;
 
-  // Optimized base src
+  // Optimized base src (800w safe default for crisp DPR 2 mobile/tablet with eco compression)
+  const baseTargetWidth = numericWidth ? Math.min(numericWidth, maxCandidateWidth) : Math.min(800, maxCandidateWidth);
   const optimizedSrc = isCloudinary
     ? buildCloudinaryUrl(resolvedSrc, {
-        width: numericWidth,
+        width: baseTargetWidth,
         height: numericHeight,
         quality
       })
     : resolvedSrc;
 
-  // Responsive srcset
+  // Responsive srcset capped according to container requirement
   const srcSet = isCloudinary
-    ? generateCloudinarySrcSet(resolvedSrc, numericWidth)
+    ? generateCloudinarySrcSet(resolvedSrc, maxCandidateWidth, quality)
     : undefined;
 
   // Default responsive sizes if none provided

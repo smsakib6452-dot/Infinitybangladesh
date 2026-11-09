@@ -87,7 +87,7 @@ import {
 import { ScrollReveal } from '../components/motion/ScrollReveal';
 import { AnimatedCounter } from '../components/motion/AnimatedCounter';
 import { LifeLineHeroLogoAnimation } from '../components/motion/LifeLineHeroLogoAnimation';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
 
 interface BloodDonationPageProps {
   initialTab?: 'find-donor' | 'become-donor' | 'update-donor' | 'emergency-request' | 'donors' | 'statistics' | 'guidelines';
@@ -104,9 +104,15 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
     donorCategories,
     addBloodDonor,
     updateBloodDonor,
-    addEmergencyBloodRequest
+    addEmergencyBloodRequest,
+    syncRouteData
   } = useData();
   const { currentPage, navigate } = useRouter();
+
+  // Live REST sync on blood donation page mount (fetches public_blood_donors and public_emergency_requests, zero SDK)
+  useEffect(() => {
+    syncRouteData?.('blood-donation');
+  }, [syncRouteData]);
 
   // Active tab state
   const [activeTab, setActiveTab] = useState<
@@ -576,7 +582,12 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
         throw { code: 'PGRST202', message: 'Database service not configured' };
       }
 
-      const { data, error } = await supabase.rpc('verify_and_update_donor', {
+      const client = await getSupabase();
+      if (!client) {
+        throw { code: 'PGRST202', message: 'Database service not configured' };
+      }
+
+      const { data, error } = await client.rpc('verify_and_update_donor', {
         p_donor_id: matchedDonor.id,
         p_pin: localPin,
         p_payload: {

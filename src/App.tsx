@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
-import { DataProvider } from './context/DataContext';
+import { DataProvider, useData } from './context/DataContext';
 import { RouterProvider, useRouter } from './context/RouterContext';
 import { updatePageMetadata } from './lib/seo';
 import { Navbar } from './components/Navbar';
@@ -70,6 +70,47 @@ const PageSkeleton: React.FC = () => (
 const AppContent: React.FC = () => {
   const { currentPage, currentSlug } = useRouter();
   const { isBn } = useLanguage();
+  const { syncRouteData } = useData();
+  const [loadBot, setLoadBot] = React.useState(false);
+
+  // On-demand route data syncer (fetches route-specific datasets on navigation, zero SDK)
+  useEffect(() => {
+    syncRouteData?.(currentPage);
+  }, [currentPage, syncRouteData]);
+
+  // Lazy-load chatbot chunk on requestIdleCallback or first user interaction
+  useEffect(() => {
+    let timeoutId: any;
+    let idleId: any;
+    const trigger = () => setLoadBot(true);
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      idleId = (window as any).requestIdleCallback(trigger, { timeout: 3500 });
+    } else {
+      timeoutId = setTimeout(trigger, 2500);
+    }
+
+    const onFirstInteraction = () => {
+      trigger();
+      window.removeEventListener('scroll', onFirstInteraction);
+      window.removeEventListener('pointerdown', onFirstInteraction);
+      window.removeEventListener('keydown', onFirstInteraction);
+    };
+
+    window.addEventListener('scroll', onFirstInteraction, { passive: true, once: true });
+    window.addEventListener('pointerdown', onFirstInteraction, { passive: true, once: true });
+    window.addEventListener('keydown', onFirstInteraction, { passive: true, once: true });
+
+    return () => {
+      if (idleId && typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+        (window as any).cancelIdleCallback(idleId);
+      }
+      if (timeoutId) clearTimeout(timeoutId);
+      window.removeEventListener('scroll', onFirstInteraction);
+      window.removeEventListener('pointerdown', onFirstInteraction);
+      window.removeEventListener('keydown', onFirstInteraction);
+    };
+  }, []);
 
   // Instant scroll to top on page change
   useEffect(() => {
@@ -214,10 +255,12 @@ const AppContent: React.FC = () => {
       {/* Back To Top Action Button */}
       <BackToTopButton />
 
-      {/* Infinity Agent AI Chatbot & Navigator (Lazy loaded off critical initial bundle) */}
-      <React.Suspense fallback={null}>
-        <InfinityAgentBot />
-      </React.Suspense>
+      {/* Infinity Agent AI Chatbot & Navigator (Deferred to idle / interaction) */}
+      {loadBot && (
+        <React.Suspense fallback={null}>
+          <InfinityAgentBot />
+        </React.Suspense>
+      )}
     </div>
   );
 };

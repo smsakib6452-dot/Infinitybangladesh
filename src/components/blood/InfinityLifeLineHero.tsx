@@ -173,7 +173,7 @@ export const InfinityLifeLineHero: React.FC<InfinityLifeLineHeroProps> = ({
             className="pt-1 flex flex-col items-center lg:items-start"
           >
             <LifeLineHeroLogoAnimation
-              logoUrl="/brand/Infinitylifeline-logo.svg"
+              logoUrl="/brand/Infinitylifeline-logo.webp"
               logoSize={440}
             />
             {/* Single Non-Repetitive Initiative Line (No repetition of LifeLine or One Drop) */}

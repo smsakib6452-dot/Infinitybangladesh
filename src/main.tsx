@@ -15,6 +15,102 @@ window.addEventListener('vite:preloadError', (event) => {
   }
 });
 
+// Pause infinite CSS animations when offscreen to conserve mobile CPU/battery
+if (typeof window !== 'undefined' && 'IntersectionObserver' in window) {
+  const ANIM_SELECTOR =
+    '.animate-ping, .animate-pulse, .animate-spin, .animate-bounce, .animate-heartbeat, .animate-ambient-shimmer, .animate-lifeline-ripple, .animate-lifeline-glow, .animate-blob, .animate-float';
+
+  const animObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.remove('anim-paused');
+        } else {
+          entry.target.classList.add('anim-paused');
+        }
+      });
+    },
+    { rootMargin: '50px' }
+  );
+
+  const observeAnimElements = () => {
+    document.querySelectorAll(ANIM_SELECTOR).forEach((el) => animObserver.observe(el));
+
+    // Keep observer in sync with React dynamic DOM mutations (batched via rAF to avoid main-thread churn)
+    if ('MutationObserver' in window) {
+      let rafId: number | null = null;
+      const pendingAddedNodes: Element[] = [];
+      const pendingRemovedNodes: Element[] = [];
+
+      const processPendingNodes = () => {
+        const t0 = performance.now();
+        rafId = null;
+        for (let i = 0; i < pendingAddedNodes.length; i++) {
+          const el = pendingAddedNodes[i];
+          if (el.matches?.(ANIM_SELECTOR)) animObserver.observe(el);
+          el.querySelectorAll?.(ANIM_SELECTOR).forEach((child) => animObserver.observe(child));
+        }
+        for (let i = 0; i < pendingRemovedNodes.length; i++) {
+          const el = pendingRemovedNodes[i];
+          if (el.matches?.(ANIM_SELECTOR)) animObserver.unobserve(el);
+          el.querySelectorAll?.(ANIM_SELECTOR).forEach((child) => animObserver.unobserve(child));
+        }
+        const duration = performance.now() - t0;
+        if (typeof window !== 'undefined') {
+          (window as any).__animObserverCalls = (window as any).__animObserverCalls || [];
+          (window as any).__animObserverCalls.push({
+            added: pendingAddedNodes.length,
+            removed: pendingRemovedNodes.length,
+            durationMs: duration
+          });
+        }
+        pendingAddedNodes.length = 0;
+        pendingRemovedNodes.length = 0;
+      };
+
+      const mutationObserver = new MutationObserver((mutations) => {
+        for (let i = 0; i < mutations.length; i++) {
+          const m = mutations[i];
+          for (let j = 0; j < m.addedNodes.length; j++) {
+            const n = m.addedNodes[j];
+            if (n.nodeType === Node.ELEMENT_NODE) pendingAddedNodes.push(n as Element);
+          }
+          for (let j = 0; j < m.removedNodes.length; j++) {
+            const n = m.removedNodes[j];
+            if (n.nodeType === Node.ELEMENT_NODE) pendingRemovedNodes.push(n as Element);
+          }
+        }
+
+        if (rafId === null) {
+          rafId = requestAnimationFrame(processPendingNodes);
+        }
+      });
+
+      const rootTarget = document.getElementById('root') || document.body || document.documentElement;
+      mutationObserver.observe(rootTarget, {
+        childList: true,
+        subtree: true,
+      });
+
+      window.addEventListener(
+        'pagehide',
+        () => {
+          if (rafId !== null) cancelAnimationFrame(rafId);
+          mutationObserver.disconnect();
+          animObserver.disconnect();
+        },
+        { once: true }
+      );
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', observeAnimElements, { once: true });
+  } else {
+    setTimeout(observeAnimElements, 200);
+  }
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

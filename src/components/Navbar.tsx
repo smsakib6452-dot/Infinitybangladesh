@@ -349,7 +349,7 @@ export const Navbar: React.FC = () => {
                         aria-label={tText(item.label)}
                         className="absolute top-full left-0 pt-2 w-64 z-50 animate-in fade-in zoom-in-95 duration-150 before:content-[''] before:absolute before:-top-3 before:inset-x-0 before:h-3 before:bg-transparent"
                       >
-                        <div className="bg-white/98 backdrop-blur-xl rounded-2xl shadow-warm-lg border border-[#EAE3D9] p-2 space-y-1">
+                        <div className="bg-white/98 rounded-2xl shadow-warm-lg border border-[#EAE3D9] p-2 space-y-1">
                           {item.children.filter(c => c.active !== false).map(subItem => {
                             const isPastCommitteeSub = subItem.isNestedDropdown || subItem.id === 'sub-past' || subItem.path.includes('past-committees');
 
@@ -384,7 +384,7 @@ export const Navbar: React.FC = () => {
                                       aria-label="Past Committees Archive"
                                       className="absolute top-0 left-full pl-2 w-56 z-50 animate-in fade-in zoom-in-95 duration-150 before:content-[''] before:absolute before:inset-y-0 before:-left-3 before:w-3 before:bg-transparent"
                                     >
-                                      <div className="bg-white/98 backdrop-blur-xl rounded-2xl shadow-warm-lg border border-[#EAE3D9] p-2 space-y-1 max-h-72 overflow-y-auto">
+                                      <div className="bg-white/98 rounded-2xl shadow-warm-lg border border-[#EAE3D9] p-2 space-y-1 max-h-72 overflow-y-auto">
                                         <Link
                                           to="team/past-committees"
                                           onClick={() => {

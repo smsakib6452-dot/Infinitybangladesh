@@ -56,13 +56,26 @@
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
 
-    <!-- Preload Critical LCP Hero Image for Core Web Vitals (Homepage LCP optimization) -->
-    <link rel="preload" as="image" href="/images/infinity-cover-hero.jpg" fetchpriority="high" />
+    <!-- Responsive Preload for Critical LCP Hero Image (Matching <picture> source media candidates) -->
+    <link
+      rel="preload"
+      as="image"
+      type="image/webp"
+      media="(max-width: 640px)"
+      href="/images/infinity-cover-hero-640.webp"
+      fetchpriority="high"
+    />
+    <link
+      rel="preload"
+      as="image"
+      type="image/webp"
+      media="(min-width: 641px)"
+      href="/images/infinity-cover-hero.webp"
+      fetchpriority="high"
+    />
 
-    <!-- Google Fonts: Anek Bangla & Plus Jakarta Sans (High-performance web fonts with complete Bengali & Latin coverage) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Preload only Latin variable font used above the fold on initial load. Bengali font uses unicode-range on demand -->
+    <link rel="preload" href="/fonts/plus-jakarta-sans-latin-variable.woff2" as="font" type="font/woff2" crossorigin />
 
     <!-- Enterprise Google Knowledge Graph & AI Entity Schema (JSON-LD) -->
     <script type="application/ld+json">
@@ -219,13 +232,12 @@
       ]
     }
     </script>
-    <script type="module" crossorigin src="/assets/index-C0Vr8Jil.js"></script>
+    <script type="module" crossorigin src="/assets/index-D7SSLmiz.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/vendor-react-DDwC_z6H.js">
-    <link rel="modulepreload" crossorigin href="/assets/app-initial-data-_gqzG9w3.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-supabase-CSIM0fnT.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-icons-mjYoqyx3.js">
+    <link rel="modulepreload" crossorigin href="/assets/app-initial-data-BY9BFyQ2.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-icons-DBQxMarI.js">
     <link rel="modulepreload" crossorigin href="/assets/vendor-motion-DD69RR8Q.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-C6WQllaP.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-dqiW2_we.css">
   </head>
   <body class="bg-[#FAF7F2] text-slate-900 font-sans antialiased selection:bg-[#006A4E] selection:text-white">
     <!-- Non-JavaScript Crawlability & Search Bot Fallback -->

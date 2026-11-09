@@ -15,7 +15,7 @@ import {
 } from '../../data/initialData';
 import { cleanBloodDonor, cleanEmergencyRequest } from '../../data/bloodDonationData';
 import { getFreshImageUrl } from '../../lib/cloudinary';
-import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { getSupabase, isSupabaseConfigured } from '../../lib/supabase';
 import { STORAGE_PREFIX, getStoredOrDefault, saveToStorage } from '../dataStorage';
 import { resolveMediaFieldUpdate, isValidPermanentUrl } from '../../lib/utils/mediaSanitizer';
 import { safeDbUpsert, safeDbInsert, safeDbDelete, createAuditLog, generateSecureId, REMOTE_CMS_MUTATIONS_LOCKED } from '../dbAdapter';
@@ -61,7 +61,7 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
   // 3. Blood Donation Settings State
   const [bloodDonationSettings, setBloodDonationSettings] = useState<BloodDonationSettings>(() => {
     const stored = getStoredOrDefault<any>('bloodDonationSettings', INITIAL_BLOOD_SETTINGS);
-    const resolvedWingLogo = stored?.wingLogoUrl || INITIAL_BLOOD_SETTINGS.wingLogoUrl || '/brand/Infinitylifeline-logo.svg';
+    const resolvedWingLogo = stored?.wingLogoUrl || INITIAL_BLOOD_SETTINGS.wingLogoUrl || '/brand/Infinitylifeline-logo.webp';
     return {
       ...INITIAL_BLOOD_SETTINGS,
       ...(stored || {}),
@@ -256,10 +256,13 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
       return filtered;
     });
     onAuditLog('DELETE', 'BloodDonor', cleanId, 'Deleted blood donor');
-    if (!REMOTE_CMS_MUTATIONS_LOCKED && supabase && isSupabaseConfigured) {
-      Promise.resolve(supabase.from('blood_donation_history').delete().eq('donor_id', cleanId))
-        .then(() => (supabase ? Promise.resolve(supabase.from('blood_donors').delete().eq('id', cleanId)) : undefined))
-        .catch(err => console.warn('Supabase donor delete error (handled):', err));
+    if (!REMOTE_CMS_MUTATIONS_LOCKED && isSupabaseConfigured) {
+      getSupabase().then(client => {
+        if (!client) return;
+        Promise.resolve(client.from('blood_donation_history').delete().eq('donor_id', cleanId))
+          .then(() => client.from('blood_donors').delete().eq('id', cleanId))
+          .catch(err => console.warn('Supabase donor delete error (handled):', err));
+      });
     }
   }, [onAuditLog]);
 

@@ -19,7 +19,7 @@ import {
 } from '../../data/initialData';
 import { getFreshImageUrl } from '../../lib/cloudinary';
 import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL, isBlacklistedMedia } from '../../lib/utils/mediaHelper';
-import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { getSupabase, isSupabaseConfigured } from '../../lib/supabase';
 import { STORAGE_PREFIX, getStoredOrDefault, saveToStorage } from '../dataStorage';
 import { resolveMediaFieldUpdate, isValidPermanentUrl } from '../../lib/utils/mediaSanitizer';
 import { safeDbUpsert, safeDbDelete } from '../dbAdapter';
@@ -348,17 +348,20 @@ export function useMediaSlice(logAudit: (action: string, entity: string, entityI
 
     logAudit('DELETE', 'VideoItem', id, 'Deleted video permanently');
 
-    if (supabase && isSupabaseConfigured) {
+    if (isSupabaseConfigured) {
       try {
-        const [res1, res2] = await Promise.allSettled([
-          supabase.from('video_items').delete().eq('id', id),
-          supabase.from('media_library').delete().eq('id', id)
-        ]);
-        if (res1.status === 'rejected' || (res1.status === 'fulfilled' && res1.value.error)) {
-          console.error('Supabase video_items delete failed:', res1);
-        }
-        if (res2.status === 'rejected' || (res2.status === 'fulfilled' && res2.value.error)) {
-          console.error('Supabase media_library delete failed:', res2);
+        const client = await getSupabase();
+        if (client) {
+          const [res1, res2] = await Promise.allSettled([
+            client.from('video_items').delete().eq('id', id),
+            client.from('media_library').delete().eq('id', id)
+          ]);
+          if (res1.status === 'rejected' || (res1.status === 'fulfilled' && res1.value.error)) {
+            console.error('Supabase video_items delete failed:', res1);
+          }
+          if (res2.status === 'rejected' || (res2.status === 'fulfilled' && res2.value.error)) {
+            console.error('Supabase media_library delete failed:', res2);
+          }
         }
       } catch (err) {
         console.error('Supabase delete exception:', err);
@@ -463,8 +466,10 @@ export function useMediaSlice(logAudit: (action: string, entity: string, entityI
 
     logAudit('CREATE', 'JourneyVideo', id, `Added journey video: ${cleanTimeline.en || cleanTitle.en}`);
 
-    if (newVid.isFeatured && supabase && isSupabaseConfigured) {
-      void supabase.from('journey_videos').update({ is_featured: false }).neq('id', id);
+    if (newVid.isFeatured && isSupabaseConfigured) {
+      getSupabase().then(client => {
+        if (client) void client.from('journey_videos').update({ is_featured: false }).neq('id', id);
+      });
     }
 
     safeDbUpsert('journey_videos', {
@@ -515,8 +520,10 @@ export function useMediaSlice(logAudit: (action: string, entity: string, entityI
 
       const match = updated.find(v => v.id === id);
       if (match) {
-        if (willBeFeatured && supabase && isSupabaseConfigured) {
-          void supabase.from('journey_videos').update({ is_featured: false }).neq('id', id);
+        if (willBeFeatured && isSupabaseConfigured) {
+          getSupabase().then(client => {
+            if (client) void client.from('journey_videos').update({ is_featured: false }).neq('id', id);
+          });
         }
 
         safeDbUpsert('journey_videos', {
@@ -601,9 +608,12 @@ export function useMediaSlice(logAudit: (action: string, entity: string, entityI
         updatedAt: v.id === id ? new Date().toISOString() : v.updatedAt
       }));
 
-      if (supabase && isSupabaseConfigured) {
-        void supabase.from('journey_videos').update({ is_featured: false }).neq('id', id).then(() => {
-          void supabase?.from('journey_videos').update({ is_featured: true }).eq('id', id);
+      if (isSupabaseConfigured) {
+        getSupabase().then(client => {
+          if (!client) return;
+          void client.from('journey_videos').update({ is_featured: false }).neq('id', id).then(() => {
+            void client.from('journey_videos').update({ is_featured: true }).eq('id', id);
+          });
         });
       }
 
@@ -709,18 +719,21 @@ export function useMediaSlice(logAudit: (action: string, entity: string, entityI
 
     logAudit('DELETE', 'MediaItem', id, 'Deleted media asset');
 
-    if (supabase && isSupabaseConfigured) {
+    if (isSupabaseConfigured) {
       try {
-        const [res1, res2, res3] = await Promise.allSettled([
-          supabase.from('media_library').delete().eq('id', id),
-          supabase.from('video_items').delete().eq('id', id),
-          supabase.from('gallery_photos').delete().eq('id', id)
-        ]);
-        if (res1.status === 'rejected' || (res1.status === 'fulfilled' && res1.value.error)) {
-          console.error('Supabase media_library delete warning:', res1);
-        }
-        if (res2.status === 'rejected' || (res2.status === 'fulfilled' && res2.value.error)) {
-          console.error('Supabase video_items delete warning:', res2);
+        const client = await getSupabase();
+        if (client) {
+          const [res1, res2, res3] = await Promise.allSettled([
+            client.from('media_library').delete().eq('id', id),
+            client.from('video_items').delete().eq('id', id),
+            client.from('gallery_photos').delete().eq('id', id)
+          ]);
+          if (res1.status === 'rejected' || (res1.status === 'fulfilled' && res1.value.error)) {
+            console.error('Supabase media_library delete warning:', res1);
+          }
+          if (res2.status === 'rejected' || (res2.status === 'fulfilled' && res2.value.error)) {
+            console.error('Supabase video_items delete warning:', res2);
+          }
         }
       } catch (err) {
         console.error('Supabase delete exception:', err);

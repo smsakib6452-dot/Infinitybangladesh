@@ -111,7 +111,7 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({
               alt={aboutPreview?.imageAlt || "Infinity Bangladesh Field Mission"}
               cropPosition={aboutPreview?.imageCrop || 'center center'}
               aspectRatio="4/3"
-              sizes="(max-width: 1024px) 100vw, 600px"
+              sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1024px) 100vw, 600px"
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent pointer-events-none" />

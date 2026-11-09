@@ -47,14 +47,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
     },
   };
 
-  const photoVariants = {
-    hidden: { opacity: 0, scale: shouldReduceMotion ? 1 : 0.95 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: shouldReduceMotion ? { duration: 0.01 } : spring.gentle,
-    },
-  };
 
   const renderTrustIcon = (iconName: string) => {
     switch (iconName) {
@@ -91,7 +83,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
           <motion.div variants={containerVariants} initial="hidden" animate="visible" className="lg:col-span-7 space-y-3.5 sm:space-y-6 text-left">
             {/* Eyebrow Pill Badge - Refined & Natural Branding */}
             <motion.div variants={itemVariants}>
-            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-0.5 sm:px-3.5 sm:py-1 rounded-full bg-[#E6F3EF]/90 backdrop-blur-xs border border-[#C2E2D7] text-[#00523C] text-[11px] sm:text-xs font-extrabold shadow-2xs">
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-0.5 sm:px-3.5 sm:py-1 rounded-full bg-[#E6F3EF] border border-[#C2E2D7] text-[#00523C] text-[11px] sm:text-xs font-extrabold shadow-2xs">
               <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#006A4E] animate-pulse shrink-0" />
               <span className="tracking-wide">
                 {isBn ? 'মানবতায় নিবেদিত তারুণ্যের অঙ্গীকার • ২০১৫ থেকে' : 'Youth Dedicated to Humanity • Since 2015'}
@@ -162,7 +154,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
               {hero.trustIndicators?.filter((t: any) => t.active).map((indicator: any, idx: number) => (
                 <div
                   key={idx}
-                  className="flex items-center gap-2.5 bg-white/95 backdrop-blur-xs p-3 rounded-2xl border border-[#EAE3D9] shadow-2xs hover:shadow-warm-sm transition-all duration-200"
+                  className="flex items-center gap-2.5 bg-white/95 p-3 rounded-2xl border border-[#EAE3D9] shadow-2xs hover:shadow-warm-sm transition-all duration-200"
                 >
                   <div className="w-7 h-7 rounded-xl bg-[#E6F3EF] flex items-center justify-center shrink-0 border border-[#C2E2D7]/60 shadow-xs">
                     {renderTrustIcon(indicator.icon)}
@@ -175,23 +167,36 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
             </motion.div>
           </motion.div>
 
-          {/* Right Column: Hero Real Photography Container (Spring Reveal) */}
-          <motion.div variants={photoVariants} initial="hidden" animate="visible" className="lg:col-span-5 relative mt-0">
+          {/* Right Column: Hero Real Photography Container (Native CSS Transform Entrance - No Opacity 0 Delay) */}
+          <div className="lg:col-span-5 relative mt-0 hero-scale-entrance">
             <div className="absolute -inset-3 bg-gradient-to-tr from-[#D97706]/20 via-[#006A4E]/15 to-transparent rounded-[2.5rem] blur-xl" />
             <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-[#D97706]/15 rounded-full blur-2xl" />
 
             {/* Hero Card Container */}
             <div className="relative rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden shadow-warm-xl border-4 border-white bg-[#0F221D]">
               <div className="relative w-full aspect-16/10 sm:aspect-5/4 lg:aspect-4/5 overflow-hidden">
-                <OptimizedImage
-                  src={hero.heroImageUrl}
-                  alt={hero.heroImageAlt || 'Infinity Bangladesh Official Photo'}
-                  cropPosition={hero.heroImageCropPosition || 'center center'}
-                  className="w-full h-full object-cover"
-                  priority
-                  aspectRatio="16/10"
-                  sizes="(max-width: 1024px) 100vw, 600px"
-                />
+                <picture className="w-full h-full block">
+                  <source
+                    type="image/webp"
+                    media="(max-width: 640px)"
+                    srcSet="/images/infinity-cover-hero-640.webp"
+                  />
+                  <source
+                    type="image/webp"
+                    srcSet="/images/infinity-cover-hero.webp"
+                  />
+                  <OptimizedImage
+                    src={hero.heroImageUrl || "/images/infinity-cover-hero.jpg"}
+                    alt={hero.heroImageAlt || 'Infinity Bangladesh Official Photo'}
+                    cropPosition={hero.heroImageCropPosition || 'center center'}
+                    className="w-full h-full object-cover"
+                    priority
+                    width={1200}
+                    height={750}
+                    aspectRatio="16/10"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 600px"
+                  />
+                </picture>
                 <div className="hidden sm:block absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/15 to-transparent pointer-events-none" />
 
                 {/* Floating Established 2015 Badge on Desktop */}
@@ -241,8 +246,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
               </div>
             </div>
 
-            {/* Mobile 3 Hero Trust Indicators - Refined non-clipping typography strip */}
-            <div className="sm:hidden mt-2.5 px-2 py-1.5 rounded-xl bg-white/95 backdrop-blur-xs border border-[#EAE3D9] flex items-center justify-between text-slate-700 shadow-2xs divide-x divide-slate-200/80">
+            {/* Mobile 3 Hero Trust Indicators - Two-line wrapping without truncation */}
+            <div className="sm:hidden mt-2.5 px-2 py-1.5 rounded-xl bg-white border border-[#EAE3D9] flex items-center justify-between text-slate-700 shadow-2xs divide-x divide-slate-200/80">
               {hero.trustIndicators?.filter((t: any) => t.active).map((indicator: any, idx: number) => (
                 <div
                   key={idx}
@@ -251,13 +256,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, isBn, tText }) =
                   <div className="w-3.5 h-3.5 rounded-md bg-[#E6F3EF] flex items-center justify-center shrink-0 text-[#006A4E]">
                     {renderTrustIcon(indicator.icon)}
                   </div>
-                  <span className="font-bold text-slate-800 text-[11px] sm:text-xs leading-tight text-center truncate">
+                  <span className="font-bold text-slate-800 text-[11px] sm:text-xs leading-tight text-center">
                     {tText(indicator.text)}
                   </span>
                 </div>
               ))}
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

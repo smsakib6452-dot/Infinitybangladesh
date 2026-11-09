@@ -30,7 +30,13 @@ export const SpotlightBentoCard: React.FC<SpotlightBentoCardProps> = ({
   const rotateY = useSpring(0, { stiffness: 280, damping: 28 });
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (shouldReduceMotion || !cardRef.current) return;
+    if (
+      shouldReduceMotion ||
+      !cardRef.current ||
+      (typeof window !== 'undefined' && !window.matchMedia('(pointer: fine)').matches)
+    ) {
+      return;
+    }
     const rect = cardRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -78,12 +84,14 @@ export const SpotlightBentoCard: React.FC<SpotlightBentoCardProps> = ({
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={handleMouseLeave}
+      whileTap={{ scale: shouldReduceMotion ? 1 : 0.97 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       style={{
         rotateX: shouldReduceMotion ? 0 : rotateX,
         rotateY: shouldReduceMotion ? 0 : rotateY,
         transformStyle: 'preserve-3d',
       }}
-      className={`relative rounded-3xl backdrop-blur-md transition-shadow duration-300 group overflow-hidden ${
+      className={`relative rounded-3xl transition-shadow duration-300 group overflow-hidden ${
         isDark
           ? 'bg-[#06241B]/95 border border-emerald-700/40 text-white shadow-lg shadow-black/30'
           : 'bg-white/95 border border-[#EAE3D9] text-slate-800 shadow-warm-xs'

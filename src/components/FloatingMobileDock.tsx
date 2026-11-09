@@ -50,7 +50,7 @@ export const FloatingMobileDock: React.FC = () => {
         initial={{ y: 50, opacity: 0, scale: 0.95 }}
         animate={{ y: 0, opacity: 1, scale: 1 }}
         transition={{ type: 'spring', stiffness: 350, damping: 28, delay: 0.08 }}
-        className="pointer-events-auto flex items-center justify-around gap-0.5 sm:gap-1 px-2 sm:px-2.5 py-1.5 rounded-full bg-white/95 backdrop-blur-xl border border-[#EAE3D9] shadow-warm-lg text-slate-700 max-w-[350px] w-[calc(100vw-1.5rem)] mx-auto select-none"
+        className="pointer-events-auto flex items-center justify-around gap-0.5 sm:gap-1 px-2 sm:px-2.5 py-1.5 rounded-full bg-white/95 md:backdrop-blur-xl border border-[#EAE3D9] shadow-warm-lg text-slate-700 max-w-[350px] w-[calc(100vw-1.5rem)] mx-auto select-none"
         role="navigation"
         aria-label={isBn ? 'মোবাইল দ্রুত নেভিগেশন ডক' : 'Mobile Quick Action Navigation'}
       >
@@ -92,7 +92,13 @@ export const FloatingMobileDock: React.FC = () => {
           )}
           <div className="relative shrink-0 text-rose-600">
             <Droplet className="w-4 h-4 fill-rose-500/20" />
-            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+            <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5 pointer-events-none">
+              <span
+                className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"
+                style={{ animationIterationCount: 3 }}
+              />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500" />
+            </span>
           </div>
           <div className="flex flex-col items-center leading-none">
             <span className={`text-[10px] tracking-tight leading-none ${isBloodActive && !isMenuOpen ? 'font-extrabold text-rose-700' : 'font-semibold text-slate-800'}`}>

@@ -31,7 +31,14 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
   const y = useSpring(0, { stiffness: 350, damping: 22 });
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (shouldReduceMotion || !btnRef.current || disabled) return;
+    if (
+      shouldReduceMotion ||
+      !btnRef.current ||
+      disabled ||
+      (typeof window !== 'undefined' && !window.matchMedia('(pointer: fine)').matches)
+    ) {
+      return;
+    }
     const { left, top, width, height } = btnRef.current.getBoundingClientRect();
     const centerX = left + width / 2;
     const centerY = top + height / 2;

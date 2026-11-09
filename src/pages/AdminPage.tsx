@@ -152,7 +152,7 @@ import { BloodDonorModal } from '../components/BloodDonorModal';
 import { EmergencyRequestAdminModal } from '../components/EmergencyRequestAdminModal';
 import { AdminHomepageManager } from '../components/AdminHomepageManager';
 import { AdminErrorBoundary } from '../components/AdminErrorBoundary';
-import { supabase, isSupabaseConfigured, signInWithEmail, signOutAdmin } from '../lib/supabase';
+import { getSupabase, isSupabaseConfigured, signInWithEmail, signOutAdmin } from '../lib/supabase';
 import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL, isPortraitVideo } from '../lib/utils/mediaHelper';
 import { uploadToCloudinary } from '../lib/cloudinary';
 import { isValidPermanentUrl } from '../lib/utils/mediaSanitizer';
@@ -242,7 +242,7 @@ export const AdminPage: React.FC = () => {
   // Auth State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    if (isSupabaseConfigured && supabase) return false;
+    if (isSupabaseConfigured) return false;
     return sessionStorage.getItem('infinity_admin_user') !== null;
   });
   const [authEmail, setAuthEmail] = useState('');
@@ -253,23 +253,30 @@ export const AdminPage: React.FC = () => {
   // Validate active session on mount if Supabase Auth is enabled
   React.useEffect(() => {
     localStorage.removeItem('infinity_bd_admin_auth'); // Purge legacy insecure storage key
-    if (isSupabaseConfigured && supabase) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setIsAuthenticated(Boolean(session));
-        if (!session) {
-          sessionStorage.removeItem('infinity_admin_user');
-        }
-      }).catch(() => {
-        setIsAuthenticated(false);
-      });
+    if (isSupabaseConfigured) {
+      let unsubscribe: (() => void) | undefined;
+      getSupabase().then(client => {
+        if (!client) return;
+        client.auth.getSession().then(({ data: { session } }) => {
+          setIsAuthenticated(Boolean(session));
+          if (!session) {
+            sessionStorage.removeItem('infinity_admin_user');
+          }
+        }).catch(() => {
+          setIsAuthenticated(false);
+        });
 
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        setIsAuthenticated(Boolean(session));
-        if (!session) {
-          sessionStorage.removeItem('infinity_admin_user');
-        }
+        const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
+          setIsAuthenticated(Boolean(session));
+          if (!session) {
+            sessionStorage.removeItem('infinity_admin_user');
+          }
+        });
+        unsubscribe = () => subscription.unsubscribe();
       });
-      return () => subscription.unsubscribe();
+      return () => {
+        if (unsubscribe) unsubscribe();
+      };
     }
   }, []);
 
@@ -5025,7 +5032,7 @@ export const AdminPage: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => updateBloodDonationSettings({
-                              wingLogoUrl: '/brand/Infinitylifeline-logo.svg',
+                              wingLogoUrl: '/brand/Infinitylifeline-logo.webp',
                               wingLogoSize: 480,
                               wingLogoZoom: 1,
                               wingLogoCrop: 'contain'
@@ -5058,7 +5065,7 @@ export const AdminPage: React.FC = () => {
                                 }}
                               >
                                 <img
-                                  src={getAssetUrl(bloodDonationSettings.wingLogoUrl || '/brand/Infinitylifeline-logo.svg')}
+                                  src={getAssetUrl(bloodDonationSettings.wingLogoUrl || '/brand/Infinitylifeline-logo.webp')}
                                   alt="Infinity LifeLine Logo Preview"
                                   style={{
                                     transform: `scale(${bloodDonationSettings.wingLogoZoom || 1})`,
@@ -5069,7 +5076,7 @@ export const AdminPage: React.FC = () => {
                               </div>
                             </div>
                             <p className="text-[10px] text-slate-400 text-center font-mono truncate">
-                              {bloodDonationSettings.wingLogoUrl || '/brand/Infinitylifeline-logo.svg'}
+                              {bloodDonationSettings.wingLogoUrl || '/brand/Infinitylifeline-logo.webp'}
                             </p>
                           </div>
 
@@ -5083,7 +5090,7 @@ export const AdminPage: React.FC = () => {
                                 type="text"
                                 value={bloodDonationSettings.wingLogoUrl || ''}
                                 onChange={(e) => updateBloodDonationSettings({ wingLogoUrl: e.target.value })}
-                                placeholder="https://res.cloudinary.com/... or /brand/Infinitylifeline-logo.svg"
+                                placeholder="https://res.cloudinary.com/... or /brand/Infinitylifeline-logo.webp"
                                 className="w-full px-3.5 py-2.5 rounded-xl border border-[#EAE3D9] bg-white text-xs font-mono focus:ring-2 focus:ring-[#006A4E] focus:outline-none shadow-2xs"
                               />
                             </div>
@@ -5115,7 +5122,7 @@ export const AdminPage: React.FC = () => {
 
                               <button
                                 type="button"
-                                onClick={() => updateBloodDonationSettings({ wingLogoUrl: '/brand/Infinitylifeline-logo.svg' })}
+                                onClick={() => updateBloodDonationSettings({ wingLogoUrl: '/brand/Infinitylifeline-logo.webp' })}
                                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold hover:bg-emerald-100 shadow-2xs transition-colors cursor-pointer"
                               >
                                 <span>{isBn ? 'অফিসিয়াল SVG ব্যবহার করুন' : 'Use Official SVG'}</span>

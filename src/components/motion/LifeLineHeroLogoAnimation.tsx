@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+import { motion, useReducedMotion, useInView } from 'motion/react';
 import { getAssetUrl } from '../../lib/utils/assetHelper';
 
 interface LifeLineHeroLogoAnimationProps {
@@ -10,12 +10,14 @@ interface LifeLineHeroLogoAnimationProps {
 }
 
 export const LifeLineHeroLogoAnimation: React.FC<LifeLineHeroLogoAnimationProps> = ({
-  logoUrl = '/brand/Infinitylifeline-logo.svg',
+  logoUrl = '/brand/Infinitylifeline-logo.webp',
   logoSize = 440,
   logoZoom = 1,
   logoCrop = 'contain'
 }) => {
   const shouldReduceMotion = useReducedMotion();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(containerRef, { margin: '80px' });
   const [phase, setPhase] = useState<'idle' | 'falling' | 'impact' | 'settled'>('idle');
   const [cycleCount, setCycleCount] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -52,9 +54,9 @@ export const LifeLineHeroLogoAnimation: React.FC<LifeLineHeroLogoAnimationProps>
     };
   }, [shouldReduceMotion]);
 
-  // Initial trigger + Gentle periodic heartbeat life-cycle (every 7.5 seconds)
+  // Initial trigger + Gentle periodic heartbeat life-cycle (every 7.5 seconds) - active only when in view
   useEffect(() => {
-    if (shouldReduceMotion) {
+    if (shouldReduceMotion || !isInView) {
       setPhase('settled');
       return;
     }
@@ -73,10 +75,11 @@ export const LifeLineHeroLogoAnimation: React.FC<LifeLineHeroLogoAnimationProps>
       clearInterval(interval);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [triggerDropAnimation, shouldReduceMotion]);
+  }, [triggerDropAnimation, shouldReduceMotion, isInView]);
 
   return (
     <div
+      ref={containerRef}
       className="relative select-none cursor-pointer group"
       onClick={() => triggerDropAnimation()}
       title="Click to replay lifeline drop animation"
@@ -192,10 +195,14 @@ export const LifeLineHeroLogoAnimation: React.FC<LifeLineHeroLogoAnimationProps>
 
           {/* C. Ambient Living Pulse (Gentle rhythmic breathing between cycles, zero fill to preserve crisp vector) */}
           <motion.div
-            animate={{
-              scale: [0.98, 1.06, 0.98],
-              opacity: [0.25, 0.55, 0.25]
-            }}
+            animate={
+              isInView && !shouldReduceMotion
+                ? {
+                    scale: [0.98, 1.06, 0.98],
+                    opacity: [0.25, 0.55, 0.25]
+                  }
+                : { scale: 1, opacity: 0 }
+            }
             transition={{
               duration: 2.0,
               repeat: Infinity,

@@ -47,7 +47,7 @@ export const LifelineSection: React.FC<LifelineSectionProps> = ({
             <div className="lg:col-span-7 space-y-2.5 sm:space-y-4 text-center lg:text-left flex flex-col justify-center">
               {/* Eyebrow Badge: Emergency Blood Initiative */}
               <div className="flex items-center justify-center lg:justify-start">
-                <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-emerald-950/70 text-emerald-300/90 border border-emerald-500/25 text-xs font-bold uppercase tracking-widest backdrop-blur-md shadow-inner">
+                <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-emerald-950/90 text-emerald-300/90 border border-emerald-500/25 text-xs font-bold uppercase tracking-widest shadow-inner">
                   <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-emerald-500" />
@@ -62,7 +62,7 @@ export const LifelineSection: React.FC<LifelineSectionProps> = ({
               {/* Official Sub-brand Animated Logo (Prominent & crystal-clear on mobile) */}
               <div className="flex items-center justify-center lg:justify-start py-1 max-w-[220px] sm:max-w-[400px] mx-auto lg:mx-0">
                 <LifeLineHeroLogoAnimation
-                  logoUrl={bloodDonationSettings?.wingLogoUrl || '/brand/Infinitylifeline-logo.svg'}
+                  logoUrl={bloodDonationSettings?.wingLogoUrl || '/brand/Infinitylifeline-logo.webp'}
                   logoSize={380}
                   logoZoom={bloodDonationSettings?.wingLogoZoom || 1}
                   logoCrop={bloodDonationSettings?.wingLogoCrop || 'contain'}
@@ -143,7 +143,7 @@ export const LifelineSection: React.FC<LifelineSectionProps> = ({
 
             {/* RIGHT COLUMN: Refined Live Coordination Panel */}
             <div className="lg:col-span-5 relative">
-              <div className="rounded-2xl sm:rounded-[2rem] bg-[#051B13]/90 border border-emerald-500/25 p-3 sm:p-6 lg:p-7 space-y-2.5 sm:space-y-5 backdrop-blur-xl shadow-2xl hover:border-emerald-400/40 transition-all duration-300">
+              <div className="rounded-2xl sm:rounded-[2rem] bg-[#051B13]/95 border border-emerald-500/25 p-3 sm:p-6 lg:p-7 space-y-2.5 sm:space-y-5 md:backdrop-blur-xl shadow-2xl hover:border-emerald-400/40 transition-all duration-300">
                 {/* Panel Header */}
                 <div className="flex items-center justify-between border-b border-emerald-800/40 pb-2.5 sm:pb-3.5">
                   <div className="flex items-center gap-2">

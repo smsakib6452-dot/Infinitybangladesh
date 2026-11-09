@@ -26,6 +26,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event }) => {
           alt={tText(event.title)}
           aspectRatio="16/9"
           width={480}
+          sizes="(max-width: 768px) 100vw, 400px"
           className="w-full h-full object-cover motion-img-zoom"
         />
         <div className="absolute top-3 left-3 bg-[#006A4E] text-white text-xs font-bold px-3 py-1 rounded-full shadow-xs">
