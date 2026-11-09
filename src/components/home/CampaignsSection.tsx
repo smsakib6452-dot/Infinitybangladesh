@@ -115,7 +115,7 @@ export const CampaignsSection: React.FC<CampaignsSectionProps> = ({
                     alt={tText(featuredCampaign.title)}
                     width={700}
                     aspectRatio="16/10"
-                    sizes="(max-width: 1024px) 100vw, 600px"
+                    sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1024px) 100vw, 600px"
                     className="w-full h-full object-cover"
                   />
                 ) : (

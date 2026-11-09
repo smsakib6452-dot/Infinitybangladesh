@@ -23,9 +23,9 @@ export const StoryCard: React.FC<StoryCardProps> = ({ story }) => {
           src={story.imageUrl}
           alt={tText(story.title)}
           className="w-full h-full object-cover motion-img-zoom"
-          width={600}
+          width={480}
           aspectRatio="16/10"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
+          sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1024px) 50vw, 380px"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
 

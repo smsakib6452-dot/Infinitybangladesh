@@ -21,6 +21,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
           alt={tText(article.title)}
           aspectRatio="16/9"
           width={480}
+          sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1024px) 50vw, 380px"
           className="w-full h-full object-cover motion-img-zoom"
         />
         <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold bg-[#006A4E] text-white shadow-xs">
