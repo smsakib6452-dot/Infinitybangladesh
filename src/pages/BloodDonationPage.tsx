@@ -104,9 +104,15 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
     donorCategories,
     addBloodDonor,
     updateBloodDonor,
-    addEmergencyBloodRequest
+    addEmergencyBloodRequest,
+    syncRouteData
   } = useData();
   const { currentPage, navigate } = useRouter();
+
+  // Live REST sync on blood donation page mount (fetches public_blood_donors and public_emergency_requests, zero SDK)
+  useEffect(() => {
+    syncRouteData?.('blood-donation');
+  }, [syncRouteData]);
 
   // Active tab state
   const [activeTab, setActiveTab] = useState<

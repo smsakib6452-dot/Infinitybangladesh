@@ -327,6 +327,7 @@ export interface DataContextType {
   // Global System Controls
   setPreviewMode: (enabled: boolean) => void;
   syncWithSupabase: (forceAdmin?: boolean) => Promise<void>;
+  syncRouteData: (route: string) => Promise<void>;
   loadAdminData: () => Promise<void>;
   isAdminLoaded: boolean;
   pushAllToSupabase: () => Promise<{ success: boolean; message: string }>;
@@ -560,17 +561,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [hum, setSlice, gov, media]);
 
+  // Shared lightweight deep comparison to avoid unnecessary React re-renders and storage writes
+  const isDeepEqual = useCallback((a: any, b: any): boolean => {
+    try {
+      return JSON.stringify(a) === JSON.stringify(b);
+    } catch {
+      return false;
+    }
+  }, []);
+
   // Lightweight Homepage REST Sync (Zero SDK loading, pure fetch via Promise.allSettled + Deep Compare)
   const syncHomepageViaRest = useCallback(async () => {
     if (!isSupabaseConfigured) return;
-
-    const isDeepEqual = (a: any, b: any): boolean => {
-      try {
-        return JSON.stringify(a) === JSON.stringify(b);
-      } catch {
-        return false;
-      }
-    };
 
     try {
       const results = await Promise.allSettled([
@@ -836,7 +838,409 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn('[DataContext] Homepage REST sync error:', err);
       }
     }
-  }, [setSlice, hum, blood]);
+  }, [setSlice, hum, blood, isDeepEqual]);
+
+  // Route-Specific On-Demand REST Syncers (Zero SDK, native fetch + deep compare + local storage)
+  const syncBloodData = useCallback(async () => {
+    if (!isSupabaseConfigured) return;
+    try {
+      const [donorsRes, requestsRes] = await Promise.allSettled([
+        fetchSupabaseRest<any[]>('public_blood_donors', 'select=*'),
+        fetchSupabaseRest<any[]>('public_emergency_requests', 'select=*')
+      ]);
+
+      const bData = donorsRes.status === 'fulfilled' ? donorsRes.value : null;
+      if (bData && Array.isArray(bData)) {
+        const legacyMockIds = new Set(['donor-1', 'donor-2', 'donor-3', 'donor-4', 'donor-5', 'donor-6', 'donor-7', 'donor-8', 'donor-9', 'donor-10']);
+        const remoteDonors: BloodDonor[] = bData
+          .filter(d => !legacyMockIds.has(d.id))
+          .map(d => ({
+            id: d.id,
+            fullName: d.full_name,
+            bloodGroup: d.blood_group,
+            gender: d.gender || 'Male',
+            dateOfBirth: d.date_of_birth || d.dob,
+            dob: d.date_of_birth || d.dob,
+            phone: d.phone || '',
+            email: d.email || undefined,
+            photoUrl: getFreshImageUrl(d.photo_url),
+            district: d.district,
+            upazila: d.upazila,
+            area: d.area,
+            orgCategory: (d.org_category === 'Executive Committee' || d.org_category === 'Standing Committee' || d.org_category === 'Infinity Bangladesh Volunteer')
+              ? 'Infinity Bangladesh Member'
+              : (d.org_category || 'Open Voluntary Blood Donor'),
+            committeePosition: d.committee_position || ((d.org_category === 'Executive Committee' || d.org_category === 'Standing Committee') ? d.org_category : undefined),
+            availabilityStatus: d.availability_status || 'AVAILABLE_EMERGENCY',
+            lastDonationDate: d.last_donation_date || undefined,
+            totalDonations: Number(d.total_donations) || 0,
+            experienceNotes: d.experience_notes,
+            privacyConsent: d.privacy_consent ?? true,
+            showPhonePublicly: (d.gender || 'Male') === 'Male' ? true : Boolean(d.show_phone_publicly),
+            approvalStatus: d.approval_status || 'APPROVED',
+            isVerified: d.is_verified !== undefined && d.is_verified !== null ? Boolean(d.is_verified) : true,
+            donationHistory: Array.isArray(d.blood_donation_history) ? d.blood_donation_history.map((h: any) => ({
+              id: h.id,
+              donorId: h.donor_id,
+              donationDate: h.donation_date,
+              patientName: h.patient_name,
+              hospitalName: h.hospital_name,
+              location: h.location,
+              notes: h.notes,
+              recordedAt: h.created_at || h.recorded_at
+            })) : [],
+            createdAt: d.created_at,
+            updatedAt: d.updated_at
+          }));
+
+        blood.setBloodDonors(prevLocal => {
+          const remoteIds = new Set(remoteDonors.map(r => r.id));
+          const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+          const merged = [...remoteDonors, ...localOnly];
+          if (isDeepEqual(prevLocal, merged)) return prevLocal;
+          saveToStorage('bloodDonors', merged);
+          return merged;
+        });
+      }
+
+      const emgData = requestsRes.status === 'fulfilled' ? requestsRes.value : null;
+      if (emgData && Array.isArray(emgData)) {
+        const remoteRequests: EmergencyBloodRequest[] = emgData.map(r => cleanEmergencyRequest({
+          id: r.id,
+          requesterName: r.requester_name || 'Coordinator Desk',
+          contactNumber: r.coordinator_contact || r.contact_number || '',
+          patientName: r.patient_label || r.patient_name || 'Emergency Patient',
+          bloodGroup: r.blood_group,
+          unitsNeeded: Number(r.units_needed) || 1,
+          hospitalName: r.hospital_name,
+          district: r.district,
+          upazila: r.upazila,
+          emergencyLevel: r.emergency_level || 'URGENT',
+          requiredDate: r.required_date,
+          additionalNotes: r.additional_notes,
+          status: r.status || 'PENDING',
+          matchedDonorIds: Array.isArray(r.matched_donor_ids) ? r.matched_donor_ids : [],
+          createdAt: r.created_at,
+          updatedAt: r.updated_at
+        }));
+
+        blood.setEmergencyBloodRequests(prevLocal => {
+          const remoteIds = new Set(remoteRequests.map(r => r.id));
+          const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+          const merged = [...remoteRequests, ...localOnly];
+          if (isDeepEqual(prevLocal, merged)) return prevLocal;
+          saveToStorage('emergencyRequests', merged);
+          return merged;
+        });
+      }
+    } catch (err) {
+      if (import.meta.env?.DEV) console.warn('[DataContext] Blood REST sync notice:', err);
+    }
+  }, [blood, isDeepEqual]);
+
+  const syncGovernanceData = useCallback(async () => {
+    if (!isSupabaseConfigured) return;
+    try {
+      const [personsRes, positionsRes, committeesRes, membersRes] = await Promise.allSettled([
+        fetchSupabaseRest<any[]>('persons', 'select=*&order=created_at.asc'),
+        fetchSupabaseRest<any[]>('positions', 'select=*&order=sort_order.asc'),
+        fetchSupabaseRest<any[]>('committees', 'select=*&order=sort_order.asc'),
+        fetchSupabaseRest<any[]>('committee_members', 'select=*&order=sort_order.asc'),
+      ]);
+
+      const personData = personsRes.status === 'fulfilled' ? personsRes.value : null;
+      if (personData && personData.length > 0) {
+        const remotePersons: Person[] = personData.map(p => ({
+          id: p.id,
+          fullName: p.full_name,
+          banglaName: p.bangla_name,
+          englishName: p.english_name,
+          photoUrl: getFreshImageUrl(p.photo_url),
+          photoPosition: p.photo_position || 'center top',
+          photoZoom: Number(p.photo_zoom) || 1.0,
+          shortBio: p.short_bio,
+          fullBio: p.full_bio,
+          district: p.district,
+          facebookUrl: p.facebook_url,
+          linkedinUrl: p.linkedin_url,
+          email: p.email,
+          phone: p.phone,
+          socialLinks: p.social_links,
+          joiningYear: p.joining_year,
+          active: p.active
+        }));
+        gov.setPersons(prevLocal => {
+          const remoteIds = new Set(remotePersons.map(r => r.id));
+          const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+          const next = localOnly.length > 0 ? [...localOnly, ...remotePersons] : remotePersons;
+          return isDeepEqual(prevLocal, next) ? prevLocal : next;
+        });
+      }
+
+      const posData = positionsRes.status === 'fulfilled' ? positionsRes.value : null;
+      if (posData && posData.length > 0) {
+        const remotePositions: Position[] = posData.map(p => ({
+          id: p.id,
+          name: p.name,
+          level: Number(p.level) || 5,
+          sortOrder: Number(p.sort_order) || 10,
+          description: p.description
+        }));
+        gov.setPositions(prevLocal => {
+          const remoteIds = new Set(remotePositions.map(r => r.id));
+          const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+          const next = localOnly.length > 0 ? [...localOnly, ...remotePositions] : remotePositions;
+          return isDeepEqual(prevLocal, next) ? prevLocal : next;
+        });
+      }
+
+      const comData = committeesRes.status === 'fulfilled' ? committeesRes.value : null;
+      if (comData && comData.length > 0) {
+        const remoteCommittees: Committee[] = comData.map(c => ({
+          id: c.id,
+          slug: c.slug,
+          name: c.name,
+          type: c.type,
+          year: c.year,
+          description: c.description,
+          status: c.status,
+          sortOrder: c.sort_order,
+          isFeatured: c.is_featured,
+          bannerImageUrl: getFreshImageUrl(c.banner_image_url)
+        }));
+        gov.setCommittees(prevLocal => {
+          const remoteIds = new Set(remoteCommittees.map(r => r.id));
+          const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+          const next = localOnly.length > 0 ? [...localOnly, ...remoteCommittees] : remoteCommittees;
+          return isDeepEqual(prevLocal, next) ? prevLocal : next;
+        });
+      }
+
+      const memData = membersRes.status === 'fulfilled' ? membersRes.value : null;
+      if (memData && memData.length > 0) {
+        const remoteMembers: CommitteeMember[] = memData.map(m => ({
+          id: m.id,
+          committeeId: m.committee_id,
+          personId: m.person_id,
+          positionId: m.position_id,
+          serialNumber: m.serial_number,
+          sortOrder: m.sort_order,
+          isFeaturedLeader: m.is_featured_leader,
+          startDate: m.start_date,
+          endDate: m.end_date,
+          status: m.status
+        }));
+        gov.setCommitteeMembers(prevLocal => {
+          const remoteIds = new Set(remoteMembers.map(r => r.id));
+          const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+          const next = localOnly.length > 0 ? [...localOnly, ...remoteMembers] : remoteMembers;
+          return isDeepEqual(prevLocal, next) ? prevLocal : next;
+        });
+      }
+    } catch (err) {
+      if (import.meta.env?.DEV) console.warn('[DataContext] Governance REST sync notice:', err);
+    }
+  }, [gov, isDeepEqual]);
+
+  const syncGalleryData = useCallback(async () => {
+    if (!isSupabaseConfigured) return;
+    try {
+      const [galRes, vidRes] = await Promise.allSettled([
+        fetchSupabaseRest<any[]>('gallery_photos', 'select=*&order=created_at.desc'),
+        fetchSupabaseRest<any[]>('video_items', 'select=*&order=created_at.desc')
+      ]);
+
+      const galData = galRes.status === 'fulfilled' ? galRes.value : null;
+      if (galData && Array.isArray(galData)) {
+        const remoteGallery = galData.map(g => ({
+          id: g.id,
+          albumId: g.album_id,
+          title: g.title,
+          caption: g.caption,
+          imageUrl: getFreshImageUrl(g.image_url),
+          category: g.category,
+          date: g.date,
+          location: g.location,
+          campaignSlug: g.campaign_slug,
+          displayOrder: g.display_order
+        }));
+
+        media.setGallery(prevLocal => {
+          const remoteIds = new Set(remoteGallery.map(r => r.id));
+          const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+          const merged = localOnly.length > 0 ? [...localOnly, ...remoteGallery] : remoteGallery;
+          if (isDeepEqual(prevLocal, merged)) return prevLocal;
+          try {
+            localStorage.setItem(`${STORAGE_PREFIX}gallery`, JSON.stringify(merged));
+          } catch {}
+          return merged;
+        });
+      }
+
+      const vidData = vidRes.status === 'fulfilled' ? vidRes.value : null;
+      if (vidData && Array.isArray(vidData)) {
+        const remoteVideos: VideoItem[] = vidData
+          .filter(v => !isBlacklistedMedia(v.id, v.video_url) && !(v.video_url && v.video_url.includes('dQw4w9WgXcQ')))
+          .map(v => {
+            const det = detectAndNormalizeMedia(v.video_url || '');
+            const isShorts = v.is_shorts ?? det.isShorts;
+            const aspectRatio = v.aspect_ratio || det.aspectRatio || (isShorts ? '9/16' : '16/9');
+            return {
+              id: v.id,
+              title: v.title,
+              videoUrl: det.originalUrl || v.video_url,
+              embedUrl: v.embed_url || det.embedUrl || '',
+              thumbnailUrl: getFreshImageUrl(v.thumbnail_url || det.thumbnailUrl || DEFAULT_VIDEO_THUMBNAIL),
+              platform: v.platform || det.platform || 'youtube',
+              duration: v.duration || (isShorts ? 'Shorts' : 'Video'),
+              date: v.date || '',
+              description: v.description || { en: '', bn: '' },
+              category: v.category || 'General',
+              status: v.status || 'published',
+              isFeatured: v.is_featured ?? false,
+              sourceType: v.source_type || 'url',
+              aspectRatio,
+              isShorts,
+              displayOrder: v.display_order ?? undefined,
+              createdAt: v.created_at,
+              updatedAt: v.updated_at
+            };
+          });
+
+        media.setVideos(prevLocal => {
+          const remoteIds = new Set(remoteVideos.map(r => r.id));
+          const localOnly = prevLocal.filter(l =>
+            !isBlacklistedMedia(l.id, l.videoUrl) &&
+            !remoteIds.has(l.id) &&
+            !(l.videoUrl && l.videoUrl.includes('dQw4w9WgXcQ'))
+          );
+          const cleanMerged = [...localOnly, ...remoteVideos].filter(v => !isBlacklistedMedia(v.id, v.videoUrl));
+          cleanMerged.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+          if (isDeepEqual(prevLocal, cleanMerged)) return prevLocal;
+          try {
+            localStorage.setItem(`${STORAGE_PREFIX}videos`, JSON.stringify(cleanMerged));
+          } catch {}
+          return cleanMerged;
+        });
+      }
+    } catch (err) {
+      if (import.meta.env?.DEV) console.warn('[DataContext] Gallery REST sync notice:', err);
+    }
+  }, [media, isDeepEqual]);
+
+  const syncPartnersData = useCallback(async () => {
+    if (!isSupabaseConfigured) return;
+    try {
+      const partData = await fetchSupabaseRest<any[]>('partners', 'select=*&order=partnership_year.desc');
+      if (partData && partData.length > 0) {
+        const remotePartners: Partner[] = partData.map(p => ({
+          id: p.id,
+          name: p.name,
+          logoUrl: getFreshImageUrl(p.logo_url),
+          website: p.website,
+          type: p.type,
+          description: p.description,
+          partnershipYear: p.partnership_year
+        }));
+        hum.setPartners(prevLocal => {
+          const remoteIds = new Set(remotePartners.map(r => r.id));
+          const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+          const next = localOnly.length > 0 ? [...localOnly, ...remotePartners] : remotePartners;
+          return isDeepEqual(prevLocal, next) ? prevLocal : next;
+        });
+      }
+    } catch (err) {
+      if (import.meta.env?.DEV) console.warn('[DataContext] Partners REST sync notice:', err);
+    }
+  }, [hum, isDeepEqual]);
+
+  const syncNewsAndEventsData = useCallback(async () => {
+    if (!isSupabaseConfigured) return;
+    try {
+      const [newsRes, evRes] = await Promise.allSettled([
+        fetchSupabaseRest<any[]>('news_articles', 'select=*&order=created_at.desc'),
+        fetchSupabaseRest<any[]>('event_items', 'select=*&order=created_at.desc')
+      ]);
+
+      const newsData = newsRes.status === 'fulfilled' ? newsRes.value : null;
+      if (newsData && newsData.length > 0) {
+        const remoteNews: NewsArticle[] = newsData.map(n => ({
+          id: n.id,
+          slug: n.slug,
+          title: n.title,
+          excerpt: n.excerpt,
+          content: n.content,
+          category: n.category,
+          author: n.author,
+          date: n.date,
+          imageUrl: getFreshImageUrl(n.image_url),
+          tags: n.tags || [],
+          status: n.status
+        }));
+        hum.setNews(prevLocal => {
+          const remoteIds = new Set(remoteNews.map(r => r.id));
+          const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+          const next = localOnly.length > 0 ? [...localOnly, ...remoteNews] : remoteNews;
+          return isDeepEqual(prevLocal, next) ? prevLocal : next;
+        });
+      }
+
+      const evData = evRes.status === 'fulfilled' ? evRes.value : null;
+      if (evData && evData.length > 0) {
+        const remoteEvents: EventItem[] = evData.map(e => ({
+          id: e.id,
+          slug: e.slug,
+          title: e.title,
+          date: e.date,
+          time: e.time,
+          location: e.location,
+          description: e.description,
+          imageUrl: getFreshImageUrl(e.image_url),
+          status: e.status,
+          registrationOpen: e.registration_open
+        }));
+        hum.setEvents(prevLocal => {
+          const remoteIds = new Set(remoteEvents.map(r => r.id));
+          const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+          const next = localOnly.length > 0 ? [...localOnly, ...remoteEvents] : remoteEvents;
+          return isDeepEqual(prevLocal, next) ? prevLocal : next;
+        });
+      }
+    } catch (err) {
+      if (import.meta.env?.DEV) console.warn('[DataContext] News & Events REST sync notice:', err);
+    }
+  }, [hum, isDeepEqual]);
+
+  // Unified route-based data syncer (calls the appropriate lightweight REST fetcher based on active route)
+  const lastRouteSyncRef = useRef<Record<string, number>>({});
+  const syncRouteData = useCallback(async (route: string) => {
+    if (!isSupabaseConfigured || !route) return;
+    const cleanRoute = route.replace(/^\/+/, '').toLowerCase();
+    if (cleanRoute === '' || cleanRoute === 'home') return;
+
+    const now = Date.now();
+    const lastSync = lastRouteSyncRef.current[cleanRoute] || 0;
+    // Debounce per route group for 3 minutes (180,000ms)
+    if (now - lastSync < 180000) return;
+    lastRouteSyncRef.current[cleanRoute] = now;
+
+    if (cleanRoute.startsWith('blood-donation')) {
+      await syncBloodData();
+    } else if (
+      cleanRoute.startsWith('about') ||
+      cleanRoute.startsWith('team') ||
+      cleanRoute.includes('committee') ||
+      cleanRoute === 'governance'
+    ) {
+      await syncGovernanceData();
+    } else if (cleanRoute === 'gallery' || cleanRoute === 'videos' || cleanRoute === 'media-coverage') {
+      await syncGalleryData();
+    } else if (cleanRoute === 'partners') {
+      await syncPartnersData();
+    } else if (cleanRoute === 'news' || cleanRoute.startsWith('news/') || cleanRoute === 'events' || cleanRoute.startsWith('events/')) {
+      await syncNewsAndEventsData();
+    }
+  }, [syncBloodData, syncGovernanceData, syncGalleryData, syncPartnersData, syncNewsAndEventsData]);
 
   // Supabase Fetch & Sync implementation
   const syncWithSupabase = useCallback(async () => {
@@ -1946,6 +2350,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     previewMode,
     setPreviewMode,
     syncWithSupabase,
+    syncRouteData,
     loadAdminData,
     isAdminLoaded,
     pushAllToSupabase,
