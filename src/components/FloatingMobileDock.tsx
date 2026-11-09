@@ -92,7 +92,13 @@ export const FloatingMobileDock: React.FC = () => {
           )}
           <div className="relative shrink-0 text-rose-600">
             <Droplet className="w-4 h-4 fill-rose-500/20" />
-            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+            <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5 pointer-events-none">
+              <span
+                className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"
+                style={{ animationIterationCount: 3 }}
+              />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500" />
+            </span>
           </div>
           <div className="flex flex-col items-center leading-none">
             <span className={`text-[10px] tracking-tight leading-none ${isBloodActive && !isMenuOpen ? 'font-extrabold text-rose-700' : 'font-semibold text-slate-800'}`}>

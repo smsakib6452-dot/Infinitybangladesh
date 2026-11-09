@@ -1628,25 +1628,31 @@ export const InfinityAgentBot: React.FC = () => {
                   <div className="absolute inset-[1.5px] sm:inset-[2px] rounded-[100%] border border-emerald-400/40 bg-gradient-to-tr from-emerald-500/15 via-teal-400/20 to-emerald-400/5 blur-[0.5px]" />
                   <div className="absolute top-[1px] sm:top-[1.5px] inset-x-2 sm:inset-x-2.5 h-[0.75px] sm:h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-95" />
                   <span className="absolute -top-0.5 right-0.5 sm:right-1 flex h-2 w-2 sm:h-2.5 sm:w-2.5 z-30">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span
+                      className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"
+                      style={{ animationIterationCount: 3 }}
+                    />
                     <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-emerald-500 border border-white shadow-[0_0_5px_rgba(16,185,129,0.8)]" />
                   </span>
                 </div>
 
-                {/* 3. Dynamic Contact Shadow on top of Glass Disc */}
+                {/* 3. Dynamic Contact Shadow on top of Glass Disc (3 cycles, resting state on reduced motion) */}
                 <motion.div
-                  animate={{ scale: [1, 0.75, 1], opacity: [0.5, 0.2, 0.5] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  animate={shouldReduceMotion ? { scale: 1, opacity: 0.35 } : { scale: [1, 0.75, 1], opacity: [0.5, 0.2, 0.5] }}
+                  transition={shouldReduceMotion ? { duration: 0 } : { duration: 3, repeat: 2, ease: "easeInOut" }}
                   className="absolute bottom-1 sm:bottom-1.5 w-5 sm:w-8 h-1 sm:h-1.5 bg-emerald-950/40 blur-[1.5px] sm:blur-[2px] rounded-[100%] z-10 pointer-events-none"
                 />
 
-                {/* 4. Robot Container with levitation */}
+                {/* 4. Robot Container with levitation (3 cycles, resting state on reduced motion) */}
                 <motion.div
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  animate={shouldReduceMotion ? { y: 0 } : { y: [0, -6, 0] }}
+                  transition={shouldReduceMotion ? { duration: 0 } : { duration: 3, repeat: 2, ease: "easeInOut" }}
                   className="relative z-20 w-10 h-10 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center mb-1 sm:mb-1.5"
                 >
-                  <div className="absolute inset-1 sm:inset-2 bg-emerald-400/25 blur-md sm:blur-lg rounded-full animate-pulse pointer-events-none" />
+                  <div
+                    className="absolute inset-1 sm:inset-2 bg-emerald-400/25 blur-md sm:blur-lg rounded-full motion-safe:animate-pulse pointer-events-none"
+                    style={{ animationIterationCount: 3 }}
+                  />
                   <img
                     src="/brand/infi-robot.webp"
                     alt="Infi Robot"
