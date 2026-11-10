@@ -42,9 +42,7 @@ export const EmergencyBloodContactModal: React.FC<EmergencyBloodContactModalProp
   const cleanHelpline = emergencyHelpline.replace(/[^0-9+]/g, '');
   const eligibility = isEligibleToDonate(donor.lastDonationDate);
   const isCooldown = !eligibility.eligible;
-  const isMale = donor.gender === 'Male';
-  const isMaleClean = (donor.gender || 'Male') === 'Male';
-  const canDirectContact = !isCooldown && Boolean(cleanPhone) && (isMaleClean || Boolean(donor.showPhonePublicly) || phoneVis.isPublic);
+  const canDirectContact = !isCooldown && Boolean(cleanPhone) && (Boolean(donor.showPhonePublicly) || phoneVis.isPublic);
 
   const contactPhone = canDirectContact ? cleanPhone : cleanHelpline;
   const whatsappUrl = `https://wa.me/${contactPhone.replace('+', '')}?text=${encodeURIComponent(
@@ -171,12 +169,12 @@ export const EmergencyBloodContactModal: React.FC<EmergencyBloodContactModalProp
                 <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-2">
                   <div className="flex items-center gap-2 text-[#00523C] font-bold text-xs">
                     <ShieldCheck className="w-4 h-4 text-[#006A4E] shrink-0" />
-                    <span>{isBn ? 'নারী রক্তদাতার প্রাইভেসি সুরক্ষা সক্রিয়' : 'Female Donor Privacy Active'}</span>
+                    <span>{isBn ? 'ব্যক্তিগত প্রাইভেসি সুরক্ষা সক্রিয়' : 'Donor Privacy Active'}</span>
                   </div>
                   <p className="text-xs text-emerald-950 leading-relaxed">
                     {isBn
-                      ? 'নারী রক্তদাতার ব্যক্তিগত গোপনীয়তা ও নিরাপত্তা সুরক্ষার স্বার্থে ফোন নম্বর সম্পূর্ণ গোপন রাখা হয়েছে। ইনফিনিটি বাংলাদেশ ২৪/৭ ব্লাড কো-অর্ডিনেটর ডেস্ক সরাসরি রক্তদাতার সাথে যোগাযোগ করে দ্রুত আপনার জন্য রক্তের ব্যবস্থা করে দেবে।'
-                      : 'This donor phone number is safeguarded under our female privacy policy. Team Infinity 24/7 Blood Coordination Helpline will immediately contact this donor for you.'}
+                      ? 'এই দাতার ব্যক্তিগত সুরক্ষার্থে সরাসরি নম্বর গোপন রাখা হয়েছে। হেল্পলাইনের মাধ্যমে যোগাযোগ করুন।'
+                      : 'This donor\'s phone number is kept private for personal safety. Please contact via 24/7 Helpline.'}
                   </p>
                   {phoneVis.maskedPhone && (
                     <div className="pt-1 flex items-center justify-between text-[11px] font-mono font-bold text-emerald-900 bg-white/70 px-2.5 py-1.5 rounded-xl border border-emerald-200">

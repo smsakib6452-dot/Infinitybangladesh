@@ -232,7 +232,7 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
   const [regTotalDonations, setRegTotalDonations] = useState<number>(0);
   const [regExperienceNotes, setRegExperienceNotes] = useState('');
   const [regConsent, setRegConsent] = useState(false);
-  const [regShowPhone, setRegShowPhone] = useState(true);
+  const [regShowPhone, setRegShowPhone] = useState(false);
   const [regSubmitted, setRegSubmitted] = useState(false);
   const [regRefId, setRegRefId] = useState('');
   const [regWhatsAppUrl, setRegWhatsAppUrl] = useState('');
@@ -328,7 +328,7 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
     setRegTotalDonations(0);
     setRegExperienceNotes('');
     setRegConsent(false);
-    setRegShowPhone(true);
+    setRegShowPhone(false);
     setRegFormError(null);
     setRegSubmitted(false);
     setRegWhatsAppUrl('');
@@ -1457,8 +1457,6 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                               type="button"
                               onClick={() => {
                                 setRegGender(g.val);
-                                if (g.val === 'Female') setRegShowPhone(false);
-                                else setRegShowPhone(true);
                               }}
                               className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
                                 isSelected
@@ -1471,19 +1469,11 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                           );
                         })}
                       </div>
-                      {regGender === 'Male' ? (
-                        <p className="text-[11px] text-slate-500 pt-0.5">
-                          {isBn
-                            ? '📢 পুরুষ রক্তদাতাদের নম্বর জরুরি রক্তের প্রয়োজনে রোগীর স্বজনদের কাছে ডিরেক্টরিতে দৃশ্যমান থাকবে।'
-                            : 'Phone numbers of male donors are displayed for emergency patient contacts.'}
-                        </p>
-                      ) : (
-                        <p className="text-[11px] text-emerald-700 pt-0.5 font-medium">
-                          {isBn
-                            ? '🛡️ নারী রক্তদাতাদের ফোন নম্বর সম্পূর্ণ সুরক্ষিত ও গোপন থাকবে; কেবলমাত্র নারী সমন্বয়ক যোগাযোগ করবেন।'
-                            : 'Female donor numbers remain protected; coordination is routed exclusively via female coordinators.'}
-                        </p>
-                      )}
+                      <p className="text-[11px] text-slate-600 pt-0.5 font-medium">
+                        {isBn
+                          ? 'আপনার ফোন নম্বর তালিকায় দেখানো হবে কিনা, তা আপনি নিচের টিক দিয়ে ঠিক করবেন।'
+                          : 'You decide below whether your phone number is shown in the list.'}
+                      </p>
                     </div>
 
                     {/* Dual Age / Date of Birth Input */}

@@ -141,7 +141,7 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
       isVerified: donor.isVerified ?? false,
       approvalStatus: donor.approvalStatus || 'APPROVED',
       privacyConsent: donor.privacyConsent ?? true,
-      showPhonePublicly: donor.gender === 'Male' ? true : (donor.showPhonePublicly ?? false),
+      showPhonePublicly: Boolean(donor.showPhonePublicly),
       donationHistory: (donor.donationHistory || []).map(h => ({ ...h, donorId: id })),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
