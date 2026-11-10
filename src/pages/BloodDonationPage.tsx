@@ -34,6 +34,7 @@ import { EmergencyBloodContactModal } from '../components/EmergencyBloodContactM
 import { ImageEditorModal } from '../components/ImageEditorModal';
 import { DateInput } from '../components/DateInput';
 import { formatDateDDMMYYYY } from '../lib/utils/formatters';
+import { DonorOnboardingTrustBanner } from '../components/blood/DonorOnboardingTrustBanner';
 import { ExactBloodGroupSelector } from '../components/blood/ExactBloodGroupSelector';
 import { HyperModernDonorCard } from '../components/blood/HyperModernDonorCard';
 import { InfinityLifeLineHero } from '../components/blood/InfinityLifeLineHero';
@@ -1282,7 +1283,9 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-3xl p-7 sm:p-10 border border-[#EAE3D9] shadow-warm-md space-y-8">
+              <>
+                <DonorOnboardingTrustBanner isBn={isBn} emergencyHelpline={bloodDonationSettings.emergencyHelpline} />
+                <div className="bg-white rounded-3xl p-7 sm:p-10 border border-[#EAE3D9] shadow-warm-md space-y-8">
                 <div className="border-b border-slate-100 pb-5 space-y-1">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-extrabold border border-emerald-200">
                     <UserPlus className="w-3.5 h-3.5 text-[#006A4E]" />
@@ -1908,7 +1911,8 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                   </button>
                 </form>
               </div>
-            )}
+            </>
+          )}
             </div>
           </ScrollReveal>
         )}
