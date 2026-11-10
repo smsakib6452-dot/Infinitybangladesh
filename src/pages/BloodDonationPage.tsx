@@ -1284,7 +1284,7 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
               </div>
             ) : (
               <>
-                <DonorOnboardingTrustBanner isBn={isBn} emergencyHelpline={bloodDonationSettings.emergencyHelpline} />
+                <DonorOnboardingTrustBanner isBn={isBn} readyDonorsCount={stats.activeDonors} />
                 <div className="bg-white rounded-3xl p-7 sm:p-10 border border-[#EAE3D9] shadow-warm-md space-y-8">
                 <div className="border-b border-slate-100 pb-5 space-y-1">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-extrabold border border-emerald-200">
