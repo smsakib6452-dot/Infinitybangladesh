@@ -34,6 +34,7 @@ import { EmergencyBloodContactModal } from '../components/EmergencyBloodContactM
 import { ImageEditorModal } from '../components/ImageEditorModal';
 import { DateInput } from '../components/DateInput';
 import { formatDateDDMMYYYY } from '../lib/utils/formatters';
+import { DonorOnboardingTrustBanner } from '../components/blood/DonorOnboardingTrustBanner';
 import { ExactBloodGroupSelector } from '../components/blood/ExactBloodGroupSelector';
 import { HyperModernDonorCard } from '../components/blood/HyperModernDonorCard';
 import { InfinityLifeLineHero } from '../components/blood/InfinityLifeLineHero';
@@ -231,7 +232,7 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
   const [regTotalDonations, setRegTotalDonations] = useState<number>(0);
   const [regExperienceNotes, setRegExperienceNotes] = useState('');
   const [regConsent, setRegConsent] = useState(false);
-  const [regShowPhone, setRegShowPhone] = useState(true);
+  const [regShowPhone, setRegShowPhone] = useState(false);
   const [regSubmitted, setRegSubmitted] = useState(false);
   const [regRefId, setRegRefId] = useState('');
   const [regWhatsAppUrl, setRegWhatsAppUrl] = useState('');
@@ -327,7 +328,7 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
     setRegTotalDonations(0);
     setRegExperienceNotes('');
     setRegConsent(false);
-    setRegShowPhone(true);
+    setRegShowPhone(false);
     setRegFormError(null);
     setRegSubmitted(false);
     setRegWhatsAppUrl('');
@@ -1282,7 +1283,9 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-3xl p-7 sm:p-10 border border-[#EAE3D9] shadow-warm-md space-y-8">
+              <>
+                <DonorOnboardingTrustBanner isBn={isBn} readyDonorsCount={stats.activeDonors} />
+                <div className="bg-white rounded-3xl p-7 sm:p-10 border border-[#EAE3D9] shadow-warm-md space-y-8">
                 <div className="border-b border-slate-100 pb-5 space-y-1">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-extrabold border border-emerald-200">
                     <UserPlus className="w-3.5 h-3.5 text-[#006A4E]" />
@@ -1399,8 +1402,9 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
 
                     {/* Full Name */}
                     <div className="space-y-1.5">
-                      <label className="block text-xs font-bold text-slate-800">{isBn ? 'পূর্ণ নাম *' : 'Full Name *'}</label>
+                      <label htmlFor="regFullName" className="block text-xs font-bold text-slate-800">{isBn ? 'পূর্ণ নাম *' : 'Full Name *'}</label>
                       <input
+                        id="regFullName"
                         type="text"
                         required
                         value={regFullName}
@@ -1454,8 +1458,6 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                               type="button"
                               onClick={() => {
                                 setRegGender(g.val);
-                                if (g.val === 'Female') setRegShowPhone(false);
-                                else setRegShowPhone(true);
                               }}
                               className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
                                 isSelected
@@ -1468,19 +1470,11 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                           );
                         })}
                       </div>
-                      {regGender === 'Male' ? (
-                        <p className="text-[11px] text-slate-500 pt-0.5">
-                          {isBn
-                            ? '📢 পুরুষ রক্তদাতাদের নম্বর জরুরি রক্তের প্রয়োজনে রোগীর স্বজনদের কাছে ডিরেক্টরিতে দৃশ্যমান থাকবে।'
-                            : 'Phone numbers of male donors are displayed for emergency patient contacts.'}
-                        </p>
-                      ) : (
-                        <p className="text-[11px] text-emerald-700 pt-0.5 font-medium">
-                          {isBn
-                            ? '🛡️ নারী রক্তদাতাদের ফোন নম্বর সম্পূর্ণ সুরক্ষিত ও গোপন থাকবে; কেবলমাত্র নারী সমন্বয়ক যোগাযোগ করবেন।'
-                            : 'Female donor numbers remain protected; coordination is routed exclusively via female coordinators.'}
-                        </p>
-                      )}
+                      <p className="text-[11px] text-slate-600 pt-0.5 font-medium">
+                        {isBn
+                          ? 'আপনার ফোন নম্বর তালিকায় দেখানো হবে কিনা, তা আপনি নিচের টিক দিয়ে ঠিক করবেন।'
+                          : 'You decide below whether your phone number is shown in the list.'}
+                      </p>
                     </div>
 
                     {/* Dual Age / Date of Birth Input */}
@@ -1908,7 +1902,8 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                   </button>
                 </form>
               </div>
-            )}
+            </>
+          )}
             </div>
           </ScrollReveal>
         )}

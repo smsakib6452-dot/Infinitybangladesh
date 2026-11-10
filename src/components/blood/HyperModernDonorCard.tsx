@@ -44,11 +44,10 @@ export const HyperModernDonorCard: React.FC<HyperModernDonorCardProps> = ({
   // 2. If eligible:
   //    - Male -> directly callable (Call & WhatsApp)
   //    - Female / Other -> protected via Volunteer Desk unless showPhonePublicly is explicitly true
-  const isMale = (donor.gender || 'Male') === 'Male';
   const rawPhone = donor.phone ? String(donor.phone).trim() : '';
   const cleanPhone = rawPhone.replace(/[^0-9]/g, '');
   const hasPhone = Boolean(cleanPhone.length >= 6 && !rawPhone.includes('*'));
-  const canDirectContact = !isCooldown && hasPhone && (isMale || Boolean(donor.showPhonePublicly) || phoneVis.isPublic);
+  const canDirectContact = !isCooldown && hasPhone && (Boolean(donor.showPhonePublicly) || phoneVis.isPublic);
 
   const waFormattedPhone = cleanPhone.startsWith('880')
     ? cleanPhone
