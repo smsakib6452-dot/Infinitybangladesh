@@ -3,6 +3,8 @@
 
 @layer base {
   :root {
+    color-scheme: light;
+
     /* ============================================================ */
     /* 1. INFINITY BANGLADESH — PRIMARY BRAND PALETTE               */
     /* Official Identity: United for Humanity / মানবতার জন্য একতাবদ্ধ */
@@ -182,6 +184,29 @@
     input, select, textarea {
       font-size: 16px !important;
     }
+  }
+
+  /* Accessible high-contrast readable typography for all form controls */
+  input, textarea, select {
+    color: var(--text-primary);
+    caret-color: var(--brand-green);
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: var(--text-muted);
+    opacity: 1;
+  }
+
+  /* Browser Autofill readability guard (Chrome, Safari, Edge) */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  select:-webkit-autofill {
+    -webkit-text-fill-color: var(--text-primary) !important;
+    caret-color: var(--brand-green) !important;
   }
 }
 
