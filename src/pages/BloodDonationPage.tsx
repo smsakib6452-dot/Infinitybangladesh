@@ -1402,8 +1402,9 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
 
                     {/* Full Name */}
                     <div className="space-y-1.5">
-                      <label className="block text-xs font-bold text-slate-800">{isBn ? 'পূর্ণ নাম *' : 'Full Name *'}</label>
+                      <label htmlFor="regFullName" className="block text-xs font-bold text-slate-800">{isBn ? 'পূর্ণ নাম *' : 'Full Name *'}</label>
                       <input
+                        id="regFullName"
                         type="text"
                         required
                         value={regFullName}
