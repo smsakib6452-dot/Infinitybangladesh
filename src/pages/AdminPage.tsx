@@ -600,10 +600,10 @@ export const AdminPage: React.FC = () => {
   const handleSaveBloodDonor = (donorData: Omit<BloodDonor, 'createdAt' | 'updatedAt'> & { id?: string }, editId?: string) => {
     if (editId) {
       updateBloodDonor(editId, donorData);
-      showToast(isBn ? 'রক্তদাতার তথ্য সফলভাবে আপডেট হয়েছে' : 'Donor record updated successfully');
+      showToast(isBn ? 'এই পরিবর্তন শুধু আপনার ব্রাউজারে সংরক্ষিত হয়েছে, ডাটাবেজে নয়।' : 'This change was saved in this browser only, not in the database.');
     } else {
       addBloodDonor(donorData);
-      showToast(isBn ? 'নতুন রক্তদাতা সফলভাবে তৈরি হয়েছে' : 'New blood donor record created');
+      showToast(isBn ? 'এই পরিবর্তন শুধু আপনার ব্রাউজারে সংরক্ষিত হয়েছে, ডাটাবেজে নয়।' : 'This change was saved in this browser only, not in the database.');
     }
   };
 
@@ -881,16 +881,18 @@ export const AdminPage: React.FC = () => {
               <>
                 <button
                   type="button"
-                  onClick={async () => {
-                    const res = await pushAllToSupabase();
-                    setToastMessage(res.message);
+                  onClick={() => {
+                    setToastMessage(
+                      isBn
+                        ? 'বাল্ক পুশ ডাটাবেজ সুরক্ষার স্বার্থে নিষ্ক্রিয় রাখা হয়েছে।'
+                        : 'Bulk cloud push is disabled to protect live database integrity.'
+                    );
                   }}
-                  disabled={isSyncing}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs text-white font-bold transition-all cursor-pointer shadow-sm"
-                  title="Push all local CMS changes and image URLs directly to Supabase cloud database"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-400 text-xs font-bold transition-all cursor-not-allowed opacity-60"
+                  title="Bulk cloud push is permanently disabled to protect database integrity."
                 >
                   <Upload className="w-3.5 h-3.5" />
-                  <span>{isSyncing ? 'Pushing...' : (isBn ? 'ক্লাউডে সেভ করুন' : 'Push to Cloud')}</span>
+                  <span>{isBn ? 'ক্লাউড পুশ (নিষ্ক্রিয়)' : 'Push to Cloud (Disabled)'}</span>
                 </button>
 
                 <button
@@ -924,6 +926,15 @@ export const AdminPage: React.FC = () => {
 
       {/* 2. Admin Workspace Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        {/* Branch Demo & Safety Notice Banner */}
+        <div className="mb-5 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-start sm:items-center gap-3 text-xs text-amber-900">
+          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
+          <p className="leading-relaxed font-medium">
+            {isBn
+              ? 'বেশিরভাগ বিষয়বস্তু সম্পাদনা এখন শুধু এই ব্রাঞ্চে ডেমো অবস্থায় (ডাটাবেজে সংরক্ষিত নয়); দাতা অনুমোদন ও জরুরি অনুরোধের স্ট্যাটাস ডাটাবেজে সংরক্ষিত হয়।'
+              : 'Most content edits are in local demo mode on this branch (not saved to database); donor approvals and emergency request status are saved to the database.'}
+          </p>
+        </div>
         {/* Mobile Quick Section Selector */}
         <div className="lg:hidden mb-4 bg-white rounded-2xl border border-[#EAE3D9] p-3.5 shadow-warm-sm space-y-2">
           <div className="flex items-center justify-between text-xs font-bold text-slate-700">
@@ -4416,9 +4427,13 @@ export const AdminPage: React.FC = () => {
                               <div className="flex items-center gap-2 w-full sm:w-auto">
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    approveBloodDonor(donor.id);
-                                    showToast(isBn ? `${donor.fullName}-এর আবেদন অনুমোদিত হয়েছে!` : `Approved ${donor.fullName}`);
+                                  onClick={async () => {
+                                    const res = await approveBloodDonor(donor.id);
+                                    if (res.success) {
+                                      showToast(isBn ? `${donor.fullName}-এর আবেদন অনুমোদিত হয়েছে!` : `Approved ${donor.fullName}`);
+                                    } else {
+                                      showToast(res.error || (isBn ? 'অনুমোদন ব্যর্থ হয়েছে' : 'Approval failed'));
+                                    }
                                   }}
                                   className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-2xs"
                                 >
@@ -4426,9 +4441,13 @@ export const AdminPage: React.FC = () => {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    rejectBloodDonor(donor.id);
-                                    showToast(isBn ? `${donor.fullName}-এর আবেদন বাতিল করা হয়েছে` : `Rejected ${donor.fullName}`);
+                                  onClick={async () => {
+                                    const res = await rejectBloodDonor(donor.id);
+                                    if (res.success) {
+                                      showToast(isBn ? `${donor.fullName}-এর আবেদন বাতিল করা হয়েছে` : `Rejected ${donor.fullName}`);
+                                    } else {
+                                      showToast(res.error || (isBn ? 'বাতিলকরণ ব্যর্থ হয়েছে' : 'Rejection failed'));
+                                    }
                                   }}
                                   className="px-3.5 py-1.5 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold text-xs cursor-pointer"
                                 >
@@ -4549,9 +4568,13 @@ export const AdminPage: React.FC = () => {
 
                               <button
                                 type="button"
-                                onClick={() => {
-                                  approveBloodDonor(donor.id);
-                                  showToast(isBn ? `রক্তদাতা ${donor.fullName}-এর আবেদন অনুমোদিত হয়েছে!` : `Donor ${donor.fullName} approved!`);
+                                onClick={async () => {
+                                  const res = await approveBloodDonor(donor.id);
+                                  if (res.success) {
+                                    showToast(isBn ? `রক্তদাতা ${donor.fullName}-এর আবেদন অনুমোদিত হয়েছে!` : `Donor ${donor.fullName} approved!`);
+                                  } else {
+                                    showToast(res.error || (isBn ? 'অনুমোদন ব্যর্থ হয়েছে' : 'Approval failed'));
+                                  }
                                 }}
                                 className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-warm-xs cursor-pointer flex items-center gap-1.5 transition-all"
                               >
@@ -4561,9 +4584,13 @@ export const AdminPage: React.FC = () => {
 
                               <button
                                 type="button"
-                                onClick={() => {
-                                  rejectBloodDonor(donor.id);
-                                  showToast(isBn ? `রক্তদাতা ${donor.fullName}-এর আবেদন বাতিল করা হয়েছে` : `Donor ${donor.fullName} rejected`);
+                                onClick={async () => {
+                                  const res = await rejectBloodDonor(donor.id);
+                                  if (res.success) {
+                                    showToast(isBn ? `রক্তদাতা ${donor.fullName}-এর আবেদন বাতিল করা হয়েছে` : `Donor ${donor.fullName} rejected`);
+                                  } else {
+                                    showToast(res.error || (isBn ? 'বাতিলকরণ ব্যর্থ হয়েছে' : 'Rejection failed'));
+                                  }
                                 }}
                                 className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs cursor-pointer transition-colors"
                               >
@@ -4794,13 +4821,17 @@ export const AdminPage: React.FC = () => {
                                       <div className="flex items-center gap-1">
                                         <button
                                           type="button"
-                                          onClick={() => {
-                                            approveBloodDonor(donor.id);
-                                            showToast(
-                                              isBn
-                                                ? `রক্তদাতা ${donor.fullName}-এর আবেদন ও প্রোফাইল আপডেট সফলভাবে অনুমোদন করা হয়েছে!`
-                                                : `Donor profile/update for ${donor.fullName} approved!`
-                                            );
+                                          onClick={async () => {
+                                            const res = await approveBloodDonor(donor.id);
+                                            if (res.success) {
+                                              showToast(
+                                                isBn
+                                                  ? `রক্তদাতা ${donor.fullName}-এর আবেদন ও প্রোফাইল আপডেট সফলভাবে অনুমোদন করা হয়েছে!`
+                                                  : `Donor profile/update for ${donor.fullName} approved!`
+                                              );
+                                            } else {
+                                              showToast(res.error || (isBn ? 'অনুমোদন ব্যর্থ হয়েছে' : 'Approval failed'));
+                                            }
                                           }}
                                           className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
                                           title={isBn ? 'অনুমোদন করুন (Approve)' : 'Approve'}
@@ -4811,13 +4842,17 @@ export const AdminPage: React.FC = () => {
 
                                         <button
                                           type="button"
-                                          onClick={() => {
-                                            rejectBloodDonor(donor.id);
-                                            showToast(
-                                              isBn
-                                                ? `রক্তদাতা ${donor.fullName}-এর আবেদন বাতিল করা হয়েছে।`
-                                                : `Donor request for ${donor.fullName} rejected.`
-                                            );
+                                          onClick={async () => {
+                                            const res = await rejectBloodDonor(donor.id);
+                                            if (res.success) {
+                                              showToast(
+                                                isBn
+                                                  ? `রক্তদাতা ${donor.fullName}-এর আবেদন বাতিল করা হয়েছে।`
+                                                  : `Donor request for ${donor.fullName} rejected.`
+                                              );
+                                            } else {
+                                              showToast(res.error || (isBn ? 'বাতিলকরণ ব্যর্থ হয়েছে' : 'Rejection failed'));
+                                            }
                                           }}
                                           className="p-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors cursor-pointer border border-rose-200"
                                           title={isBn ? 'বাতিল করুন (Reject)' : 'Reject'}
@@ -4855,7 +4890,14 @@ export const AdminPage: React.FC = () => {
 
                                     <button
                                       type="button"
-                                      onClick={() => verifyBloodDonor(donor.id, !donor.isVerified)}
+                                      onClick={async () => {
+                                        const res = await verifyBloodDonor(donor.id, !donor.isVerified);
+                                        if (res.success) {
+                                          showToast(isBn ? 'ভেরিফিকেশন স্ট্যাটাস আপডেট হয়েছে' : 'Verification status updated');
+                                        } else {
+                                          showToast(res.error || (isBn ? 'ভেরিফিকেশন আপডেট ব্যর্থ হয়েছে' : 'Verification update failed'));
+                                        }
+                                      }}
                                       className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                                         donor.isVerified ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-400 hover:bg-slate-100'
                                       }`}
@@ -8941,7 +8983,7 @@ export const AdminPage: React.FC = () => {
         onSave={handleSaveBloodDonor}
         onDelete={(id) => {
           deleteBloodDonor(id);
-          showToast(isBn ? 'রক্তদাতার রেকর্ড মুছে ফেলা হয়েছে' : 'Donor record deleted successfully');
+          showToast(isBn ? 'এই পরিবর্তন শুধু আপনার ব্রাউজারে সংরক্ষিত হয়েছে, ডাটাবেজে নয়।' : 'This change was saved in this browser only, not in the database.');
         }}
       />
 
@@ -9003,7 +9045,7 @@ export const AdminPage: React.FC = () => {
                 onClick={() => {
                   deleteBloodDonor(donorToDelete.id);
                   setDonorToDelete(null);
-                  showToast(isBn ? 'রক্তদাতার রেকর্ড মুছে ফেলা হয়েছে' : 'Donor record deleted successfully');
+                  showToast(isBn ? 'এই পরিবর্তন শুধু আপনার ব্রাউজারে সংরক্ষিত হয়েছে, ডাটাবেজে নয়।' : 'This change was saved in this browser only, not in the database.');
                 }}
                 className="flex-1 px-4 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-warm-sm transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
@@ -9025,9 +9067,13 @@ export const AdminPage: React.FC = () => {
           setEditingEmergencyRequest(null);
         }}
         request={editingEmergencyRequest}
-        onUpdateStatus={(id, status) => {
-          updateEmergencyBloodRequestStatus(id, status);
-          showToast('Emergency request status updated');
+        onUpdateStatus={async (id, status) => {
+          const res = await updateEmergencyBloodRequestStatus(id, status);
+          if (res.success) {
+            showToast(isBn ? 'জরুরি অনুরোধের স্ট্যাটাস সফলভাবে আপডেট হয়েছে' : 'Emergency request status updated successfully');
+          } else {
+            showToast(res.error || (isBn ? 'স্ট্যাটাস আপডেট ব্যর্থ হয়েছে' : 'Status update failed'));
+          }
         }}
       />
 

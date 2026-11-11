@@ -5,7 +5,8 @@ import {
   EmergencyBloodRequest,
   EmergencyRequestStatus,
   BloodDonationSettings,
-  DonorCategoryOption
+  DonorCategoryOption,
+  DonorApprovalStatus
 } from '../../types';
 import {
   INITIAL_BLOOD_DONORS,
@@ -18,7 +19,7 @@ import { getFreshImageUrl } from '../../lib/cloudinary';
 import { getSupabase, isSupabaseConfigured } from '../../lib/supabase';
 import { STORAGE_PREFIX, getStoredOrDefault, saveToStorage } from '../dataStorage';
 import { resolveMediaFieldUpdate, isValidPermanentUrl } from '../../lib/utils/mediaSanitizer';
-import { safeDbUpsert, safeDbInsert, safeDbDelete, createAuditLog, generateSecureId, REMOTE_CMS_MUTATIONS_LOCKED, InsertResult } from '../dbAdapter';
+import { safeDbUpsert, safeDbInsert, safeDbDelete, safeDbAdminUpdate, createAuditLog, generateSecureId, REMOTE_CMS_MUTATIONS_LOCKED, InsertResult, AdminUpdateResult } from '../dbAdapter';
 
 export function useBloodDonationSlice(onAuditLog: (action: string, entity: string, entityId: string, details: string) => void) {
   const deletedDonorIdsRef = useRef<Set<string>>(new Set(getStoredOrDefault<string[]>('deleted_donor_ids', [])));
@@ -284,20 +285,56 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
     }
   }, [onAuditLog]);
 
-  const approveBloodDonor = useCallback((id: string) => {
-    updateBloodDonor(id, { approvalStatus: 'APPROVED' });
-    onAuditLog('APPROVE', 'BloodDonor', id, 'Approved blood donor application');
-  }, [updateBloodDonor, onAuditLog]);
+  const approveBloodDonor = useCallback(async (id: string): Promise<AdminUpdateResult> => {
+    const res = await safeDbAdminUpdate('blood_donors', id, {
+      approval_status: 'APPROVED',
+      updated_at: new Date().toISOString()
+    });
 
-  const rejectBloodDonor = useCallback((id: string) => {
-    updateBloodDonor(id, { approvalStatus: 'REJECTED' });
-    onAuditLog('REJECT', 'BloodDonor', id, 'Rejected blood donor application');
-  }, [updateBloodDonor, onAuditLog]);
+    if (res.success) {
+      setBloodDonors(prev => {
+        const updated = prev.map(d => (d.id === id ? { ...d, approvalStatus: 'APPROVED' as DonorApprovalStatus, updatedAt: new Date().toISOString() } : d));
+        saveToStorage('bloodDonors', updated);
+        return updated;
+      });
+      onAuditLog('APPROVE', 'BloodDonor', id, 'Approved blood donor application in database');
+    }
+    return res;
+  }, [onAuditLog]);
 
-  const verifyBloodDonor = useCallback((id: string, isVerified: boolean = true) => {
-    updateBloodDonor(id, { isVerified });
-    onAuditLog('VERIFY', 'BloodDonor', id, `Updated verification status to: ${isVerified}`);
-  }, [updateBloodDonor, onAuditLog]);
+  const rejectBloodDonor = useCallback(async (id: string): Promise<AdminUpdateResult> => {
+    const res = await safeDbAdminUpdate('blood_donors', id, {
+      approval_status: 'REJECTED',
+      updated_at: new Date().toISOString()
+    });
+
+    if (res.success) {
+      setBloodDonors(prev => {
+        const updated = prev.map(d => (d.id === id ? { ...d, approvalStatus: 'REJECTED' as DonorApprovalStatus, updatedAt: new Date().toISOString() } : d));
+        saveToStorage('bloodDonors', updated);
+        return updated;
+      });
+      onAuditLog('REJECT', 'BloodDonor', id, 'Rejected blood donor application in database');
+    }
+    return res;
+  }, [onAuditLog]);
+
+  const verifyBloodDonor = useCallback(async (id: string, isVerified: boolean = true): Promise<AdminUpdateResult> => {
+    const res = await safeDbAdminUpdate('blood_donors', id, {
+      is_verified: isVerified,
+      updated_at: new Date().toISOString()
+    });
+
+    if (res.success) {
+      setBloodDonors(prev => {
+        const updated = prev.map(d => (d.id === id ? { ...d, isVerified, updatedAt: new Date().toISOString() } : d));
+        saveToStorage('bloodDonors', updated);
+        return updated;
+      });
+      onAuditLog('VERIFY', 'BloodDonor', id, `Updated verification status to: ${isVerified} in database`);
+    }
+    return res;
+  }, [onAuditLog]);
 
   const addDonationHistoryEntry = useCallback((donorId: string, entry: Omit<BloodDonationHistoryEntry, 'id' | 'donorId' | 'createdAt'>) => {
     const histId = `hist-${Date.now()}`;
@@ -426,46 +463,23 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
     };
   }, [onAuditLog]);
 
-  const updateEmergencyBloodRequestStatus = useCallback((id: string, status: EmergencyRequestStatus) => {
-    setEmergencyBloodRequests(prev => {
-      const updated = prev.map(r => {
-        if (r.id !== id) return r;
-        return {
-          ...r,
-          status,
-          updatedAt: new Date().toISOString()
-        };
-      });
-
-      const match = updated.find(r => r.id === id);
-      if (match) {
-        safeDbUpsert('emergency_blood_requests', {
-          id: match.id,
-          requester_name: match.requesterName,
-          contact_number: match.contactNumber,
-          patient_name: match.patientName,
-          blood_group: match.bloodGroup,
-          units_needed: match.unitsNeeded,
-          hospital_name: match.hospitalName,
-          district: match.district,
-          upazila: match.upazila,
-          emergency_level: match.emergencyLevel,
-          required_date: match.requiredDate,
-          additional_notes: match.additionalNotes || null,
-          status: match.status,
-          matched_donor_ids: match.matchedDonorIds,
-          created_at: match.createdAt || new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-      }
-
-      try {
-        localStorage.setItem(`${STORAGE_PREFIX}emergencyRequests`, JSON.stringify(updated));
-      } catch {}
-      return updated;
+  const updateEmergencyBloodRequestStatus = useCallback(async (id: string, status: EmergencyRequestStatus): Promise<AdminUpdateResult> => {
+    const res = await safeDbAdminUpdate('emergency_blood_requests', id, {
+      status,
+      updated_at: new Date().toISOString()
     });
 
-    onAuditLog('UPDATE', 'EmergencyBloodRequest', id, `Updated emergency request status to: ${status}`);
+    if (res.success) {
+      setEmergencyBloodRequests(prev => {
+        const updated = prev.map(r => (r.id === id ? { ...r, status, updatedAt: new Date().toISOString() } : r));
+        try {
+          localStorage.setItem(`${STORAGE_PREFIX}emergencyRequests`, JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+      onAuditLog('UPDATE', 'EmergencyBloodRequest', id, `Updated emergency request status to: ${status} in database`);
+    }
+    return res;
   }, [onAuditLog]);
 
   const deleteEmergencyBloodRequest = useCallback((id: string) => {

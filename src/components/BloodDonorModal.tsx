@@ -62,7 +62,7 @@ export const BloodDonorModal: React.FC<BloodDonorModalProps> = ({
   const [availabilityStatus, setAvailabilityStatus] = useState<DonorAvailabilityStatus>('AVAILABLE_EMERGENCY');
   const [approvalStatus, setApprovalStatus] = useState<DonorApprovalStatus>('APPROVED');
   const [isVerified, setIsVerified] = useState<boolean>(true);
-  const [showPhonePublicly, setShowPhonePublicly] = useState<boolean>(true);
+  const [showPhonePublicly, setShowPhonePublicly] = useState<boolean>(false);
   const [lastDonationDate, setLastDonationDate] = useState('');
   const [totalDonations, setTotalDonations] = useState<number>(0);
   const [experienceNotes, setExperienceNotes] = useState('');
@@ -177,7 +177,7 @@ export const BloodDonorModal: React.FC<BloodDonorModalProps> = ({
       setAvailabilityStatus('AVAILABLE_EMERGENCY');
       setApprovalStatus('APPROVED');
       setIsVerified(true);
-      setShowPhonePublicly(true);
+      setShowPhonePublicly(false);
       setLastDonationDate('');
       setTotalDonations(0);
       setExperienceNotes('');
@@ -741,15 +741,22 @@ export const BloodDonorModal: React.FC<BloodDonorModalProps> = ({
                   <span>{isBn ? 'যাচাইকৃত রক্তদাতা ব্যাজ (Verified Badge)' : 'Verified Donor Badge'}</span>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-800">
-                  <input
-                    type="checkbox"
-                    checked={showPhonePublicly}
-                    onChange={(e) => setShowPhonePublicly(e.target.checked)}
-                    className="w-4 h-4 text-[#006A4E] rounded-md focus:ring-[#006A4E]"
-                  />
-                  <span>{isBn ? 'সরাসরি কল বাটন ও ফোন নম্বর দৃশ্যমান রাখুন (পাবলিক প্রাইভেসি অপশন)' : 'Show Direct Phone Number to Public (Privacy Option)'}</span>
-                </label>
+                <div className="space-y-1">
+                  <label className="flex items-center gap-2 text-xs font-bold text-slate-500 cursor-not-allowed">
+                    <input
+                      type="checkbox"
+                      checked={showPhonePublicly}
+                      disabled={true}
+                      className="w-4 h-4 text-slate-400 rounded-md cursor-not-allowed opacity-60"
+                    />
+                    <span>{isBn ? 'সরাসরি কল বাটন ও ফোন নম্বর দৃশ্যমান রাখুন (পাবলিক প্রাইভেসি অপশন)' : 'Show Direct Phone Number to Public (Privacy Option)'}</span>
+                  </label>
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400 pl-6 font-medium">
+                    {isBn
+                      ? 'এটি দাতার নিজের পছন্দ, অ্যাডমিন বদলাতে পারে না।'
+                      : "This is the donor's own choice; admins cannot change it."}
+                  </p>
+                </div>
               </div>
             </div>
 
