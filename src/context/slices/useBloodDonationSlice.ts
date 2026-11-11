@@ -448,9 +448,7 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
 
     setEmergencyBloodRequests(prev => {
       const updated = [newReq, ...prev];
-      try {
-        localStorage.setItem(`${STORAGE_PREFIX}emergencyRequests`, JSON.stringify(updated));
-      } catch {}
+      saveToStorage('emergencyRequests', updated);
       return updated;
     });
 
@@ -472,9 +470,7 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
     if (res.success) {
       setEmergencyBloodRequests(prev => {
         const updated = prev.map(r => (r.id === id ? { ...r, status, updatedAt: new Date().toISOString() } : r));
-        try {
-          localStorage.setItem(`${STORAGE_PREFIX}emergencyRequests`, JSON.stringify(updated));
-        } catch {}
+        saveToStorage('emergencyRequests', updated);
         return updated;
       });
       onAuditLog('UPDATE', 'EmergencyBloodRequest', id, `Updated emergency request status to: ${status} in database`);
@@ -492,9 +488,7 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
 
     setEmergencyBloodRequests(prev => {
       const filtered = prev.filter(r => r.id !== id);
-      try {
-        localStorage.setItem(`${STORAGE_PREFIX}emergencyRequests`, JSON.stringify(filtered));
-      } catch {}
+      saveToStorage('emergencyRequests', filtered);
       return filtered;
     });
     safeDbDelete('emergency_blood_requests', 'id', id);
@@ -579,6 +573,17 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
     onAuditLog('DELETE', 'DonorCategory', id, `Deleted donor category`);
   }, [onAuditLog]);
 
+  const resetBloodDonationMemoryState = useCallback(() => {
+    setBloodDonors(prev =>
+      prev
+        .filter(d => d.approvalStatus === 'APPROVED')
+        .map(d => ({ ...d, phone: d.showPhonePublicly ? d.phone : '' }))
+    );
+    setEmergencyBloodRequests(prev =>
+      prev.filter(r => (r.status as string) !== 'PENDING')
+    );
+  }, []);
+
   return {
     bloodDonors,
     setBloodDonors,
@@ -602,7 +607,8 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
     updateBloodDonationSettings,
     addDonorCategory,
     updateDonorCategory,
-    deleteDonorCategory
+    deleteDonorCategory,
+    resetBloodDonationMemoryState
   };
 }
 

@@ -435,9 +435,62 @@ export function initializeStorage(): MigrationState {
 if (typeof window !== 'undefined') {
   try {
     initializeStorage();
+    purgeInsecureStorageOnStartup();
   } catch (initErr) {
     console.error('[STORAGE MIGRATION] Critical initialization exception:', initErr);
     migrationState = 'FATAL_FAILURE';
+  }
+}
+
+/**
+ * Sanitizes blood donor records before writing to persistent localStorage.
+ * Guarantee: PENDING or REJECTED records are NEVER persisted.
+ * Guarantee: Donors who have NOT opted in to show phone publicly have their phone number stripped.
+ */
+export function sanitizeDonorsForStorage(donors: any[]): any[] {
+  if (!Array.isArray(donors)) return [];
+  return donors
+    .filter(d => d && (d.approvalStatus === 'APPROVED' || d.approval_status === 'APPROVED'))
+    .map(d => ({
+      ...d,
+      phone: (d.showPhonePublicly || d.show_phone_publicly) ? (d.phone || '') : ''
+    }));
+}
+
+/**
+ * Sanitizes emergency blood request records before writing to persistent localStorage.
+ * Guarantee: PENDING requests are never stored in persistent localStorage.
+ */
+export function sanitizeEmergencyRequestsForStorage(reqs: any[]): any[] {
+  if (!Array.isArray(reqs)) return [];
+  return reqs.filter(r => r && (r.status !== 'PENDING'));
+}
+
+/**
+ * Purges any insecure donor PII or pending records leftover in localStorage on application startup.
+ */
+export function purgeInsecureStorageOnStartup(): void {
+  const storage = getSafeLocalStorage();
+  if (!storage) return;
+  try {
+    const rawDonors = storage.getItem(`${STORAGE_PREFIX}bloodDonors`);
+    if (rawDonors) {
+      const parsed = JSON.parse(rawDonors);
+      if (Array.isArray(parsed)) {
+        const cleaned = sanitizeDonorsForStorage(parsed);
+        storage.setItem(`${STORAGE_PREFIX}bloodDonors`, JSON.stringify(cleaned));
+      }
+    }
+    const rawReqs = storage.getItem(`${STORAGE_PREFIX}emergencyRequests`);
+    if (rawReqs) {
+      const parsed = JSON.parse(rawReqs);
+      if (Array.isArray(parsed)) {
+        const cleaned = sanitizeEmergencyRequestsForStorage(parsed);
+        storage.setItem(`${STORAGE_PREFIX}emergencyRequests`, JSON.stringify(cleaned));
+      }
+    }
+  } catch (err) {
+    console.warn('[STORAGE] Insecure storage startup purge notice:', err);
   }
 }
 
@@ -481,7 +534,14 @@ export function saveToStorage<T>(key: string, value: T): boolean {
   if (!storage) return false;
 
   try {
-    const serialized = JSON.stringify(value);
+    let payload = value;
+    if (norm === 'bloodDonors' && Array.isArray(payload)) {
+      payload = sanitizeDonorsForStorage(payload) as any;
+    } else if (norm === 'emergencyRequests' && Array.isArray(payload)) {
+      payload = sanitizeEmergencyRequestsForStorage(payload) as any;
+    }
+
+    const serialized = JSON.stringify(payload);
     storage.setItem(`${STORAGE_PREFIX}${norm}`, serialized);
     return true;
   } catch (err) {
