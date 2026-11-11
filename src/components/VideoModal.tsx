@@ -4,7 +4,6 @@ import { VideoItem } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL, isPortraitVideo } from '../lib/utils/mediaHelper';
 import { DateInput } from './DateInput';
-import { ModalShell } from './ModalShell';
 
 interface VideoModalProps {
   isOpen: boolean;
@@ -155,7 +154,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
     'Emergency Flood Relief'
   ];
 
-
+  if (!isOpen) return null;
 
   return (
     <div

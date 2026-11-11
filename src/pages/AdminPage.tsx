@@ -8708,23 +8708,25 @@ export const AdminPage: React.FC = () => {
       {/* ======================================================== */}
       {/* DEDICATED VIDEO PUBLISH & EDIT MODAL */}
       {/* ======================================================== */}
-      <VideoModal
-        isOpen={isVideoModalOpen}
-        onClose={() => {
-          setIsVideoModalOpen(false);
-          setEditingVideo(null);
-        }}
-        videoToEdit={editingVideo}
-        onSave={(videoData) => {
-          if ('id' in videoData && videoData.id) {
-            updateVideo(videoData.id, videoData);
-            showToast(isBn ? 'ভিডিও সফলভাবে আপডেট হয়েছে' : 'Video details updated successfully');
-          } else {
-            addVideo(videoData);
-            showToast(isBn ? 'নতুন ভিডিও সফলভাবে প্রকাশিত হয়েছে' : 'Video published successfully to website');
-          }
-        }}
-      />
+      {isVideoModalOpen && (
+        <VideoModal
+          isOpen={isVideoModalOpen}
+          onClose={() => {
+            setIsVideoModalOpen(false);
+            setEditingVideo(null);
+          }}
+          videoToEdit={editingVideo}
+          onSave={(videoData) => {
+            if ('id' in videoData && videoData.id) {
+              updateVideo(videoData.id, videoData);
+              showToast(isBn ? 'ভিডিও সফলভাবে আপডেট হয়েছে' : 'Video details updated successfully');
+            } else {
+              addVideo(videoData);
+              showToast(isBn ? 'নতুন ভিডিও সফলভাবে প্রকাশিত হয়েছে' : 'Video published successfully to website');
+            }
+          }}
+        />
+      )}
 
       {/* ======================================================== */}
       {/* DYNAMIC IMAGE CROPPER MODAL */}
