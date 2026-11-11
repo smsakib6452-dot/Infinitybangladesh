@@ -92,7 +92,7 @@ import { getSupabase, isSupabaseConfigured, fetchSupabaseRest } from '../lib/sup
 import { getFreshImageUrl } from '../lib/cloudinary';
 import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL, isBlacklistedMedia } from '../lib/utils/mediaHelper';
 import { STORAGE_PREFIX, DATA_VERSION_KEY, CURRENT_DATA_VERSION, getStoredOrDefault, saveToStorage } from './dataStorage';
-import { safeDbUpsert, safeDbDelete, createAuditLog, REMOTE_CMS_MUTATIONS_LOCKED, InsertResult } from './dbAdapter';
+import { safeDbUpsert, safeDbDelete, createAuditLog, REMOTE_CMS_MUTATIONS_LOCKED, InsertResult, AdminUpdateResult } from './dbAdapter';
 import { useBloodDonationSlice } from './slices/useBloodDonationSlice';
 import { useMediaSlice } from './slices/useMediaSlice';
 import { useGovernanceSlice } from './slices/useGovernanceSlice';
@@ -263,13 +263,13 @@ export interface DataContextType {
   addBloodDonor: (donor: Omit<BloodDonor, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }) => Promise<InsertResult<BloodDonor>>;
   updateBloodDonor: (id: string, updates: Partial<BloodDonor>) => void;
   deleteBloodDonor: (id: string) => void;
-  approveBloodDonor: (id: string) => void;
-  rejectBloodDonor: (id: string) => void;
-  verifyBloodDonor: (id: string, isVerified?: boolean) => void;
+  approveBloodDonor: (id: string) => Promise<AdminUpdateResult>;
+  rejectBloodDonor: (id: string) => Promise<AdminUpdateResult>;
+  verifyBloodDonor: (id: string, isVerified?: boolean) => Promise<AdminUpdateResult>;
   addDonationHistoryEntry: (donorId: string, entry: Omit<BloodDonationHistoryEntry, 'id' | 'donorId' | 'createdAt'>) => BloodDonationHistoryEntry;
   deleteDonationHistoryEntry: (donorId: string, entryId: string) => void;
   addEmergencyBloodRequest: (req: Omit<EmergencyBloodRequest, 'id' | 'status' | 'createdAt' | 'updatedAt'>) => Promise<InsertResult<EmergencyBloodRequest>>;
-  updateEmergencyBloodRequestStatus: (id: string, status: EmergencyRequestStatus) => void;
+  updateEmergencyBloodRequestStatus: (id: string, status: EmergencyRequestStatus) => Promise<AdminUpdateResult>;
   deleteEmergencyBloodRequest: (id: string) => void;
   updateBloodDonationSettings: (settings: Partial<BloodDonationSettings>) => void;
   addDonorCategory: (category: Omit<DonorCategoryOption, 'id'>) => DonorCategoryOption;
@@ -2088,42 +2088,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (error) console.warn('campaigns push notice:', error.message);
         } catch (e: any) {
           console.warn('campaigns push exception:', e.message);
-        }
-      }
-
-      // Blood Donors
-      for (const d of blood.bloodDonors) {
-        try {
-          const { error } = await supabase.from('blood_donors').upsert({
-            id: d.id,
-            full_name: d.fullName,
-            blood_group: d.bloodGroup,
-            gender: d.gender || null,
-            date_of_birth: d.dateOfBirth || d.dob || null,
-            phone: d.phone,
-            email: d.email || null,
-            photo_url: d.photoUrl || null,
-            district: d.district,
-            upazila: d.upazila,
-            area: d.area,
-            detailed_address: d.detailedAddress || null,
-            org_category: d.orgCategory,
-            committee_position: d.committeePosition || null,
-            availability_status: d.availabilityStatus,
-            first_donation_date: d.firstDonationDate || null,
-            last_donation_date: d.lastDonationDate || null,
-            total_donations: d.totalDonations,
-            experience_notes: d.experienceNotes || null,
-            is_verified: d.isVerified,
-            approval_status: d.approvalStatus,
-            privacy_consent: d.privacyConsent,
-            show_phone_publicly: d.showPhonePublicly,
-            created_at: d.createdAt || new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-          if (error) console.warn('blood_donors push notice:', error.message);
-        } catch (e: any) {
-          console.warn('blood_donors push exception:', e.message);
         }
       }
 

@@ -16,6 +16,53 @@ export type PublicSubmissionTable =
 export const REMOTE_CMS_MUTATIONS_LOCKED = true;
 export const PUBLIC_SUBMISSION_LOCKED_PHASE_1_1 = false;
 
+let _testClientOverride: any = null;
+export function setTestClientOverride(client: any) {
+  _testClientOverride = client;
+}
+
+export type AdminMutationTable =
+  | 'blood_donors'
+  | 'emergency_blood_requests';
+
+export type AdminUpdateResult<T = { id: string }> =
+  | { success: true; status: 'SUCCESS'; id: string; data?: T; count: number; error?: string }
+  | { success: false; status: 'AUTH_REQUIRED'; error: string; count?: number }
+  | { success: false; status: 'PERMISSION_DENIED'; error: string; count?: number }
+  | { success: false; status: 'VALIDATION_FAILED'; error: string; count?: number }
+  | { success: false; status: 'DATABASE_ERROR'; error: string; count?: number }
+  | { success: false; status: 'ONLINE_REQUIRED'; error: string; count?: number }
+  | { success: false; status: 'FEATURE_DISABLED'; error: string; count?: number };
+
+/**
+ * Admin Mutation Gates: strictly whitelisted tables and columns
+ * for authenticated admin operations in Phase 1.1.
+ * 'show_phone_publicly' and PII are strictly excluded.
+ */
+export const ADMIN_MUTATION_GATES: Record<AdminMutationTable, {
+  readonly allowedColumns: readonly string[];
+  readonly allowUpdate: boolean;
+}> = {
+  blood_donors: Object.freeze({
+    allowedColumns: Object.freeze([
+      'approval_status',
+      'is_verified',
+      'availability_status',
+      'total_donations',
+      'last_donation_date',
+      'updated_at'
+    ]),
+    allowUpdate: true
+  }),
+  emergency_blood_requests: Object.freeze({
+    allowedColumns: Object.freeze([
+      'status',
+      'updated_at'
+    ]),
+    allowUpdate: true
+  })
+};
+
 export type InsertResult<T = { id: string }> =
   | { success: true; status: 'SUCCESS'; id: string; data?: T; code?: string; error?: string }
   | { success: false; status: 'VALIDATION_FAILED'; error: string; code?: string }
@@ -283,7 +330,7 @@ export async function safeDbInsert<T = { id: string }>(
     };
   }
 
-  if (!isSupabaseConfigured) {
+  if (!_testClientOverride && !isSupabaseConfigured) {
     return {
       success: false,
       status: 'DATABASE_ERROR',
@@ -291,7 +338,7 @@ export async function safeDbInsert<T = { id: string }>(
     };
   }
 
-  const client = await getSupabase();
+  const client = _testClientOverride || (await getSupabase());
   if (!client) {
     return {
       success: false,
@@ -332,7 +379,143 @@ export async function safeDbInsert<T = { id: string }>(
 }
 
 /**
- * 7. Existing Authenticated Admin Operations (safeDbUpsert & safeDbDelete)
+ * 7. Hardened Authenticated Admin Updates (safeDbAdminUpdate)
+ * Strictly verifies active session, filters against ADMIN_MUTATION_GATES,
+ * and enforces .update().eq().select('id') with exactly 1 row returned.
+ */
+export async function safeDbAdminUpdate(
+  tableName: string,
+  id: string,
+  updates: Record<string, any>
+): Promise<AdminUpdateResult> {
+  const cleanId = id?.trim();
+  if (!cleanId) {
+    return {
+      success: false,
+      status: 'VALIDATION_FAILED',
+      error: 'Invalid or missing record identifier.'
+    };
+  }
+
+  // 1. Gate check: must be explicitly allowed
+  const gate = (ADMIN_MUTATION_GATES as Record<string, any>)[tableName];
+  if (!gate || !gate.allowUpdate) {
+    if (import.meta.env?.DEV) {
+      console.warn(`[SECURITY] Admin update blocked on unwhitelisted table '${tableName}'.`);
+    }
+    return {
+      success: false,
+      status: 'FEATURE_DISABLED',
+      error: `Admin remote modification is locked for table '${tableName}' during Phase 1.1 containment.`
+    };
+  }
+
+  // 2. Connectivity check
+  if (!_testClientOverride && !isSupabaseConfigured) {
+    return {
+      success: false,
+      status: 'ONLINE_REQUIRED',
+      error: 'Supabase credentials are not configured in environment.'
+    };
+  }
+
+  const client = _testClientOverride || (await getSupabase());
+  if (!client) {
+    return {
+      success: false,
+      status: 'DATABASE_ERROR',
+      error: 'Database client failed to initialize.'
+    };
+  }
+
+  // 3. Active Admin Session verification (Addition 2)
+  try {
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session?.user?.email) {
+      return {
+        success: false,
+        status: 'AUTH_REQUIRED',
+        error: 'আপনার লগইন সেশন নেই, আবার সাইন ইন করুন / No active admin session. Please sign in again.'
+      };
+    }
+  } catch (authErr: any) {
+    return {
+      success: false,
+      status: 'AUTH_REQUIRED',
+      error: 'আপনার লগইন সেশন নেই, আবার সাইন ইন করুন / No active admin session. Please sign in again.'
+    };
+  }
+
+  // 4. Sanitize payload against allowlist (strictly excluding show_phone_publicly or any PII)
+  const sanitized: Record<string, any> = {};
+  for (const col of gate.allowedColumns) {
+    if (col in updates && updates[col] !== undefined) {
+      sanitized[col] = updates[col];
+    }
+  }
+
+  if (gate.allowedColumns.includes('updated_at') && !sanitized.updated_at) {
+    sanitized.updated_at = new Date().toISOString();
+  }
+
+  const sanitizedKeys = Object.keys(sanitized);
+  if (sanitizedKeys.length === 0 || (sanitizedKeys.length === 1 && sanitizedKeys[0] === 'updated_at')) {
+    return {
+      success: false,
+      status: 'VALIDATION_FAILED',
+      error: 'No allowable update fields provided for this admin operation.'
+    };
+  }
+
+  // 5. Execute .update(sanitized).eq('id', cleanId).select('id') (Addition 1)
+  try {
+    const { data, error } = await client
+      .from(tableName)
+      .update(sanitized)
+      .eq('id', cleanId)
+      .select('id');
+
+    if (error) {
+      if (import.meta.env?.DEV) {
+        console.warn(`Admin update error on ${tableName}:`, error.message);
+      }
+      return {
+        success: false,
+        status: 'DATABASE_ERROR',
+        error: error.message || 'Database error occurred during update.'
+      };
+    }
+
+    // Exact count check: 1 row required (Addition 1)
+    if (!data || data.length === 0) {
+      return {
+        success: false,
+        status: 'PERMISSION_DENIED',
+        error: 'কোনো সারি পাওয়া যায়নি বা অনুমতি নেই / Record not found or permission denied.'
+      };
+    }
+
+    return {
+      success: true,
+      status: 'SUCCESS',
+      id: cleanId,
+      data: data[0],
+      count: data.length
+    };
+  } catch (networkErr: any) {
+    if (import.meta.env?.DEV) {
+      console.warn(`Network error during admin update on ${tableName}:`, networkErr.message);
+    }
+    return {
+      success: false,
+      status: 'DATABASE_ERROR',
+      error: networkErr.message || 'Network communication failure occurred while connecting to database.'
+    };
+  }
+}
+
+/**
+ * 8. Existing Authenticated Admin Operations (safeDbUpsert & safeDbDelete)
  * Preserved strictly for authenticated Admin CMS operations.
  */
 export async function safeDbUpsert(tableName: string, data: any): Promise<void> {
