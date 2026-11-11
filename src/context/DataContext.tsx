@@ -1475,6 +1475,66 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [hum, isDeepEqual]);
 
+  const syncAboutData = useCallback(async () => {
+    if (!isSupabaseConfigured) return;
+    try {
+      const jvData = await fetchSupabaseRest<any[]>('journey_videos', 'select=*&order=display_order.asc');
+      if (jvData && Array.isArray(jvData) && jvData.length > 0) {
+        const remoteJourneyVideos: JourneyVideo[] = jvData.map(v => ({
+          id: v.id,
+          title: v.title,
+          timelineLabel: v.timeline_label || v.timelineLabel || { en: '', bn: '' },
+          description: v.description || { en: '', bn: '' },
+          category: v.category || 'Organizational Journey',
+          videoUrl: v.video_url || v.videoUrl || '',
+          videoPlatform: v.video_platform || v.videoPlatform || 'auto',
+          embedUrl: v.embed_url || v.embedUrl || '',
+          thumbnailUrl: getFreshImageUrl(v.thumbnail_url || v.thumbnailUrl || DEFAULT_VIDEO_THUMBNAIL),
+          displayOrder: v.display_order ?? v.displayOrder ?? 0,
+          isPublished: v.is_published ?? v.isPublished ?? true,
+          isFeatured: v.is_featured ?? v.isFeatured ?? false,
+          createdAt: v.created_at,
+          updatedAt: v.updated_at
+        }));
+        media.setJourneyVideos(prevLocal => {
+          const remoteIds = new Set(remoteJourneyVideos.map(r => r.id));
+          const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+          const next = localOnly.length > 0 ? [...localOnly, ...remoteJourneyVideos] : remoteJourneyVideos;
+          next.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+          return isDeepEqual(prevLocal, next) ? prevLocal : next;
+        });
+      }
+    } catch (err) {
+      if (import.meta.env?.DEV) console.warn('[DataContext] About REST sync notice:', err);
+    }
+  }, [media, isDeepEqual]);
+
+  const syncFaqData = useCallback(async () => {
+    if (!isSupabaseConfigured) return;
+    try {
+      const faqData = await fetchSupabaseRest<any[]>('faqs', 'select=*&order=display_order.asc');
+      if (faqData && Array.isArray(faqData) && faqData.length > 0) {
+        const remoteFaqs: FAQItem[] = faqData.map(f => ({
+          id: f.id,
+          question: f.question,
+          answer: f.answer,
+          category: f.category || 'General',
+          displayOrder: f.display_order ?? f.displayOrder ?? 0,
+          active: f.active ?? true
+        }));
+        setSlice.setFaqs(prevLocal => {
+          const remoteIds = new Set(remoteFaqs.map(r => r.id));
+          const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+          const next = localOnly.length > 0 ? [...localOnly, ...remoteFaqs] : remoteFaqs;
+          next.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+          return isDeepEqual(prevLocal, next) ? prevLocal : next;
+        });
+      }
+    } catch (err) {
+      if (import.meta.env?.DEV) console.warn('[DataContext] FAQs REST sync notice:', err);
+    }
+  }, [setSlice, isDeepEqual]);
+
   // Unified route-based data syncer (calls the appropriate lightweight REST fetcher based on active route)
   const lastRouteSyncRef = useRef<Record<string, number>>({});
   const syncRouteData = useCallback(async (route: string) => {
@@ -1490,21 +1550,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (cleanRoute.startsWith('blood-donation')) {
       await syncBloodData();
+    } else if (cleanRoute === 'about') {
+      await syncAboutData();
     } else if (
-      cleanRoute.startsWith('about') ||
+      cleanRoute.startsWith('about/') ||
       cleanRoute.startsWith('team') ||
       cleanRoute.includes('committee') ||
       cleanRoute === 'governance'
     ) {
       await syncGovernanceData();
-    } else if (cleanRoute === 'gallery' || cleanRoute === 'videos' || cleanRoute === 'media-coverage') {
+    } else if (cleanRoute === 'gallery' || cleanRoute === 'videos') {
       await syncGalleryData();
     } else if (cleanRoute === 'partners') {
       await syncPartnersData();
     } else if (cleanRoute === 'news' || cleanRoute.startsWith('news/') || cleanRoute === 'events' || cleanRoute.startsWith('events/')) {
       await syncNewsAndEventsData();
+    } else if (cleanRoute === 'faq') {
+      await syncFaqData();
     }
-  }, [syncBloodData, syncGovernanceData, syncGalleryData, syncPartnersData, syncNewsAndEventsData]);
+  }, [syncBloodData, syncAboutData, syncGovernanceData, syncGalleryData, syncPartnersData, syncNewsAndEventsData, syncFaqData]);
 
   // Supabase Fetch & Sync implementation
   const syncWithSupabase = useCallback(async (_forceAdmin?: boolean): Promise<SyncResult> => {
