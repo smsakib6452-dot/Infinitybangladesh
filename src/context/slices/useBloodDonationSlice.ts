@@ -18,7 +18,7 @@ import { getFreshImageUrl } from '../../lib/cloudinary';
 import { getSupabase, isSupabaseConfigured } from '../../lib/supabase';
 import { STORAGE_PREFIX, getStoredOrDefault, saveToStorage } from '../dataStorage';
 import { resolveMediaFieldUpdate, isValidPermanentUrl } from '../../lib/utils/mediaSanitizer';
-import { safeDbUpsert, safeDbInsert, safeDbDelete, createAuditLog, generateSecureId, REMOTE_CMS_MUTATIONS_LOCKED } from '../dbAdapter';
+import { safeDbUpsert, safeDbInsert, safeDbDelete, createAuditLog, generateSecureId, REMOTE_CMS_MUTATIONS_LOCKED, InsertResult } from '../dbAdapter';
 
 export function useBloodDonationSlice(onAuditLog: (action: string, entity: string, entityId: string, details: string) => void) {
   const deletedDonorIdsRef = useRef<Set<string>>(new Set(getStoredOrDefault<string[]>('deleted_donor_ids', [])));
@@ -111,14 +111,45 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
     };
   };
 
-  const addBloodDonor = useCallback((donor: Omit<BloodDonor, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }) => {
-    const id = donor.id?.trim() || `donor-${Date.now()}`;
+  const addBloodDonor = useCallback(async (donor: Omit<BloodDonor, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }): Promise<InsertResult<BloodDonor>> => {
+    let id = donor.id?.trim();
+    if (!id) {
+      try {
+        id = generateSecureId('donor');
+      } catch {
+        id = `donor-${Date.now()}`;
+      }
+    }
     if (deletedDonorIdsRef.current.has(id)) {
       deletedDonorIdsRef.current.delete(id);
       try {
         localStorage.setItem(`${STORAGE_PREFIX}deleted_donor_ids`, JSON.stringify(Array.from(deletedDonorIdsRef.current)));
       } catch {}
     }
+
+    const dbPayload = {
+      id,
+      full_name: donor.fullName.trim(),
+      blood_group: donor.bloodGroup,
+      gender: donor.gender || 'Male',
+      date_of_birth: donor.dateOfBirth || donor.dob || null,
+      phone: donor.phone.trim(),
+      email: donor.email?.trim() || null,
+      photo_url: donor.photoUrl ? (isValidPermanentUrl(donor.photoUrl) ? donor.photoUrl.trim() : getFreshImageUrl(donor.photoUrl)) : null,
+      district: donor.district,
+      upazila: donor.upazila,
+      area: donor.area.trim(),
+      detailed_address: donor.detailedAddress?.trim() || null,
+      experience_notes: donor.experienceNotes?.trim() || null,
+      privacy_consent: Boolean(donor.privacyConsent ?? true),
+      show_phone_publicly: Boolean(donor.showPhonePublicly)
+    };
+
+    const dbResult = await safeDbInsert<BloodDonor>('blood_donors', dbPayload);
+    if (!dbResult.success) {
+      return dbResult;
+    }
+
     const stats = calculateDonorStats(donor.donationHistory || [], donor.firstDonationDate, donor.lastDonationDate, donor.totalDonations || 0);
     const newDonor: BloodDonor = cleanBloodDonor({
       ...donor,
@@ -139,7 +170,7 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
       firstDonationDate: stats.firstDonationDate,
       lastDonationDate: stats.lastDonationDate,
       isVerified: donor.isVerified ?? false,
-      approvalStatus: donor.approvalStatus || 'APPROVED',
+      approvalStatus: donor.approvalStatus || 'PENDING',
       privacyConsent: donor.privacyConsent ?? true,
       showPhonePublicly: Boolean(donor.showPhonePublicly),
       donationHistory: (donor.donationHistory || []).map(h => ({ ...h, donorId: id })),
@@ -153,26 +184,13 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
       return updated;
     });
 
-    safeDbInsert('blood_donors', {
-      id: newDonor.id,
-      full_name: newDonor.fullName,
-      blood_group: newDonor.bloodGroup,
-      gender: newDonor.gender || 'Male',
-      date_of_birth: newDonor.dateOfBirth || newDonor.dob || null,
-      phone: newDonor.phone,
-      email: newDonor.email || null,
-      photo_url: newDonor.photoUrl || null,
-      district: newDonor.district,
-      upazila: newDonor.upazila,
-      area: newDonor.area,
-      detailed_address: newDonor.detailedAddress || null,
-      experience_notes: newDonor.experienceNotes || null,
-      privacy_consent: Boolean(newDonor.privacyConsent),
-      show_phone_publicly: Boolean(newDonor.showPhonePublicly)
-    });
-
     onAuditLog('CREATE', 'BloodDonor', id, `Registered blood donor: ${donor.fullName} (${donor.bloodGroup})`);
-    return newDonor;
+    return {
+      success: true,
+      status: 'SUCCESS',
+      id,
+      data: newDonor
+    };
   }, [onAuditLog]);
 
   const updateBloodDonor = useCallback((id: string, updates: Partial<BloodDonor>) => {
@@ -352,8 +370,29 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
     onAuditLog('DELETE', 'BloodDonationHistory', entryId, `Deleted donation history record`);
   }, [onAuditLog]);
 
-  const addEmergencyBloodRequest = useCallback((req: Omit<EmergencyBloodRequest, 'id' | 'status' | 'createdAt' | 'updatedAt'>) => {
+  const addEmergencyBloodRequest = useCallback(async (req: Omit<EmergencyBloodRequest, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Promise<InsertResult<EmergencyBloodRequest>> => {
     const id = generateSecureId('req');
+
+    const dbPayload = {
+      id,
+      requester_name: req.requesterName.trim(),
+      contact_number: req.contactNumber.trim(),
+      patient_name: req.patientName.trim(),
+      blood_group: req.bloodGroup,
+      units_needed: req.unitsNeeded,
+      hospital_name: req.hospitalName.trim(),
+      district: req.district,
+      upazila: req.upazila,
+      emergency_level: req.emergencyLevel,
+      required_date: req.requiredDate,
+      additional_notes: req.additionalNotes?.trim() || null
+    };
+
+    const dbResult = await safeDbInsert<EmergencyBloodRequest>('emergency_blood_requests', dbPayload);
+    if (!dbResult.success) {
+      return dbResult;
+    }
+
     const newReq: EmergencyBloodRequest = cleanEmergencyRequest({
       ...req,
       id,
@@ -378,23 +417,13 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
       return updated;
     });
 
-    safeDbInsert('emergency_blood_requests', {
-      id: newReq.id,
-      requester_name: newReq.requesterName,
-      contact_number: newReq.contactNumber,
-      patient_name: newReq.patientName,
-      blood_group: newReq.bloodGroup,
-      units_needed: newReq.unitsNeeded,
-      hospital_name: newReq.hospitalName,
-      district: newReq.district,
-      upazila: newReq.upazila,
-      emergency_level: newReq.emergencyLevel,
-      required_date: newReq.requiredDate,
-      additional_notes: newReq.additionalNotes || null
-    });
-
     onAuditLog('CREATE', 'EmergencyBloodRequest', id, `Created emergency request for ${newReq.patientName} (${newReq.bloodGroup})`);
-    return newReq;
+    return {
+      success: true,
+      status: 'SUCCESS',
+      id,
+      data: newReq
+    };
   }, [onAuditLog]);
 
   const updateEmergencyBloodRequestStatus = useCallback((id: string, status: EmergencyRequestStatus) => {

@@ -373,8 +373,19 @@ async function runTestSuite() {
     'REMOTE_CMS_MUTATIONS_LOCKED is active (true) in dbAdapter'
   );
   assert(
-    PUBLIC_SUBMISSION_LOCKED_PHASE_1_1 === true,
-    'PUBLIC_SUBMISSION_LOCKED_PHASE_1_1 is active (true) in dbAdapter'
+    PUBLIC_SUBMISSION_LOCKED_PHASE_1_1 === false,
+    'PUBLIC_SUBMISSION_LOCKED_PHASE_1_1 is false in dbAdapter (table-level gates active)'
+  );
+  assert(
+    PUBLIC_SUBMISSION_GATES.blood_donors === 'ACTIVE',
+    'blood_donors public submission gate is ACTIVE'
+  );
+  assert(
+    PUBLIC_SUBMISSION_GATES.emergency_blood_requests === 'BLOCKED_PENDING_MIGRATION' &&
+    PUBLIC_SUBMISSION_GATES.volunteer_applications === 'BLOCKED_PENDING_MIGRATION' &&
+    PUBLIC_SUBMISSION_GATES.donation_records === 'BLOCKED_PENDING_MIGRATION' &&
+    PUBLIC_SUBMISSION_GATES.contact_messages === 'BLOCKED_PENDING_MIGRATION',
+    'Other 4 public tables remain BLOCKED_PENDING_MIGRATION'
   );
   assert(
     CLOUDINARY_UPLOADS_LOCKED === true,
@@ -385,16 +396,15 @@ async function runTestSuite() {
     'SUPABASE_STORAGE_UPLOADS_LOCKED is active (true) in supabase service'
   );
 
-  // Test 7.2: Public Ingestion Fail-Closed (Zero Network Dispatches)
-  const publicTables = [
-    'blood_donors',
+  // Test 7.2: Public Ingestion Fail-Closed (Zero Network Dispatches for Gated Tables)
+  const gatedTables = [
     'emergency_blood_requests',
     'volunteer_applications',
     'donation_records',
     'contact_messages'
   ] as const;
 
-  for (const table of publicTables) {
+  for (const table of gatedTables) {
     const res = await safeDbInsert(table, { id: 'test-id', test: true });
     assert(
       res.success === false && res.code === 'DISABLED_PHASE_2',

@@ -32,7 +32,7 @@ import { getFreshImageUrl } from '../../lib/cloudinary';
 import { getSupabase, isSupabaseConfigured } from '../../lib/supabase';
 import { STORAGE_PREFIX, getStoredOrDefault, saveToStorage } from '../dataStorage';
 import { resolveMediaFieldUpdate, sanitizeMediaUrlArray, isValidPermanentUrl } from '../../lib/utils/mediaSanitizer';
-import { safeDbUpsert, safeDbInsert, safeDbDelete, generateSecureId } from '../dbAdapter';
+import { safeDbUpsert, safeDbInsert, safeDbDelete, generateSecureId, InsertResult } from '../dbAdapter';
 
 export function useHumanitarianSlice(
   logAudit: (action: string, entity: string, entityId: string, details: string) => void,
@@ -883,17 +883,9 @@ export function useHumanitarianSlice(
   // ----------------------------------------------------
   // VOLUNTEERS & DONATIONS ACTIONS
   // ----------------------------------------------------
-  const submitVolunteerApplication = useCallback((app: Omit<VolunteerApplication, 'id' | 'submittedAt' | 'status'>): string => {
+  const submitVolunteerApplication = useCallback(async (app: Omit<VolunteerApplication, 'id' | 'submittedAt' | 'status'>): Promise<InsertResult<VolunteerApplication>> => {
     const id = generateSecureId('vol');
-    const newApp: VolunteerApplication = {
-      ...app,
-      id,
-      submittedAt: new Date().toISOString(),
-      status: 'New'
-    };
-    setVolunteers(prev => [newApp, ...prev]);
-    logAudit('SUBMIT', 'VolunteerApplication', id, `New application from ${app.fullName}`);
-    safeDbInsert('volunteer_applications', {
+    const dbPayload = {
       id,
       full_name: app.fullName,
       email: app.email,
@@ -907,12 +899,47 @@ export function useHumanitarianSlice(
       availability: app.availability || '',
       message: app.message || '',
       agreed_code_of_conduct: Boolean(app.agreedCodeOfConduct)
-    });
-    return id;
+    };
+
+    const dbResult = await safeDbInsert<VolunteerApplication>('volunteer_applications', dbPayload);
+    if (!dbResult.success) {
+      return dbResult;
+    }
+
+    const newApp: VolunteerApplication = {
+      ...app,
+      id,
+      submittedAt: new Date().toISOString(),
+      status: 'New'
+    };
+    setVolunteers(prev => [newApp, ...prev]);
+    logAudit('SUBMIT', 'VolunteerApplication', id, `New application from ${app.fullName}`);
+    return { success: true, status: 'SUCCESS', id, data: newApp };
   }, [logAudit]);
 
-  const addVolunteerApplication = useCallback((app: Partial<VolunteerApplication>): string => {
-    const id = app.id || `vol-${Date.now()}`;
+  const addVolunteerApplication = useCallback(async (app: Partial<VolunteerApplication>): Promise<InsertResult<VolunteerApplication>> => {
+    const id = app.id || generateSecureId('vol');
+    const dbPayload = {
+      id,
+      full_name: app.fullName || 'Anonymous Volunteer',
+      email: app.email || '',
+      phone: app.phone || '',
+      district: app.district || 'Chattogram',
+      institution: app.institution || '',
+      occupation: app.occupation || '',
+      blood_group: app.bloodGroup || '',
+      skills: app.skills || [],
+      preferred_areas: app.preferredAreas || [],
+      availability: app.availability || '',
+      message: app.message || '',
+      agreed_code_of_conduct: Boolean(app.agreedCodeOfConduct)
+    };
+
+    const dbResult = await safeDbInsert<VolunteerApplication>('volunteer_applications', dbPayload);
+    if (!dbResult.success) {
+      return dbResult;
+    }
+
     const newApp: VolunteerApplication = {
       id,
       fullName: app.fullName || 'Anonymous Volunteer',
@@ -925,8 +952,7 @@ export function useHumanitarianSlice(
     };
     setVolunteers(prev => [newApp, ...prev]);
     logAudit('CREATE', 'VolunteerApplication', id, `Added manual volunteer record: ${newApp.fullName}`);
-    safeDbUpsert('volunteer_applications', newApp);
-    return id;
+    return { success: true, status: 'SUCCESS', id, data: newApp };
   }, [logAudit]);
 
   const updateVolunteerStatus = useCallback((id: string, status: VolunteerApplication['status'], adminNotes?: string) => {
@@ -945,8 +971,28 @@ export function useHumanitarianSlice(
     safeDbDelete('volunteer_applications', 'id', id);
   }, [logAudit]);
 
-  const submitDonation = useCallback((donation: Omit<DonationRecord, 'id' | 'date' | 'status'>): string => {
+  const submitDonation = useCallback(async (donation: Omit<DonationRecord, 'id' | 'date' | 'status'>): Promise<InsertResult<DonationRecord>> => {
     const id = generateSecureId('don');
+    const dbPayload = {
+      id,
+      donor_name: donation.donorName,
+      donor_email: donation.donorEmail || null,
+      donor_phone: donation.donorPhone || null,
+      amount_bdt: donation.amountBDT || donation.amount || 0,
+      campaign_slug: donation.campaignSlug || '',
+      campaign_title: donation.campaignTitle || '',
+      donation_type: donation.donationType || 'One-time',
+      payment_method: donation.paymentMethod || 'bKash',
+      transaction_id: donation.transactionId || null,
+      is_anonymous: Boolean(donation.isAnonymous),
+      notes: donation.notes || null
+    };
+
+    const dbResult = await safeDbInsert<DonationRecord>('donation_records', dbPayload);
+    if (!dbResult.success) {
+      return dbResult;
+    }
+
     const newDon: DonationRecord = {
       ...donation,
       id,
@@ -955,21 +1001,7 @@ export function useHumanitarianSlice(
     };
     setDonations(prev => [newDon, ...prev]);
     logAudit('SUBMIT', 'DonationRecord', id, `Donation submitted by ${donation.donorName}: ৳${donation.amountBDT || donation.amount || 0}`);
-    safeDbInsert('donation_records', {
-      id,
-      donor_name: donation.donorName,
-      donor_email: donation.donorEmail,
-      donor_phone: donation.donorPhone,
-      amount_bdt: donation.amountBDT || donation.amount || 0,
-      campaign_slug: donation.campaignSlug,
-      campaign_title: donation.campaignTitle,
-      donation_type: donation.donationType,
-      payment_method: donation.paymentMethod,
-      transaction_id: donation.transactionId,
-      is_anonymous: Boolean(donation.isAnonymous),
-      notes: donation.notes
-    });
-    return id;
+    return { success: true, status: 'SUCCESS', id, data: newDon };
   }, [logAudit]);
 
   const addDonationRecord = useCallback((donation: Partial<DonationRecord>): DonationRecord => {

@@ -234,9 +234,11 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
   const [regConsent, setRegConsent] = useState(false);
   const [regShowPhone, setRegShowPhone] = useState(false);
   const [regSubmitted, setRegSubmitted] = useState(false);
+  const [isRegSubmitting, setIsRegSubmitting] = useState(false);
   const [regRefId, setRegRefId] = useState('');
   const [regWhatsAppUrl, setRegWhatsAppUrl] = useState('');
   const [regFormError, setRegFormError] = useState<string | null>(null);
+  const [regDisabledHelpline, setRegDisabledHelpline] = useState<string | null>(null);
 
   // Handle Donor Photo Selection with interactive Crop & Zoom Modal
   const handleDonorPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -330,6 +332,8 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
     setRegConsent(false);
     setRegShowPhone(false);
     setRegFormError(null);
+    setRegDisabledHelpline(null);
+    setIsRegSubmitting(false);
     setRegSubmitted(false);
     setRegWhatsAppUrl('');
   };
@@ -667,8 +671,10 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
   const [emgRequiredDate, setEmgRequiredDate] = useState(new Date().toISOString().split('T')[0]);
   const [emgNotes, setEmgNotes] = useState('');
   const [emgSubmitted, setEmgSubmitted] = useState(false);
+  const [isEmgSubmitting, setIsEmgSubmitting] = useState(false);
   const [emgRefId, setEmgRefId] = useState('');
   const [emgFormError, setEmgFormError] = useState<string | null>(null);
+  const [emgDisabledHelpline, setEmgDisabledHelpline] = useState<string | null>(null);
 
   // ----------------------------------------------------
   // LIVE COMPUTED STATISTICS
@@ -793,9 +799,10 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
   // ----------------------------------------------------
   // HANDLERS
   // ----------------------------------------------------
-  const handleDonorRegisterSubmit = (e: React.FormEvent) => {
+  const handleDonorRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegFormError(null);
+    setRegDisabledHelpline(null);
 
     if (!regFullName.trim() || !regPhone.trim() || !regDistrict || !regUpazila || !regDateOfBirth || regDateOfBirth.length < 10) {
       setRegFormError(isBn ? 'অনুগ্রহ করে জন্ম তারিখসহ (দিন, মাস, বছর) সকল আবশ্যকীয় তথ্য সঠিকভাবে পূরণ করুন।' : 'Please fill in all required fields including a complete Date of Birth (Day, Month, Year).');
@@ -849,7 +856,9 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
       return;
     }
 
-    const newDonor = addBloodDonor({
+    setIsRegSubmitting(true);
+
+    const res = await addBloodDonor({
       fullName: regFullName.trim(),
       bloodGroup: regBloodGroup,
       gender: regGender,
@@ -875,8 +884,23 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
       donationHistory: []
     });
 
+    if (!res.success) {
+      setIsRegSubmitting(false);
+      const helpline = bloodDonationSettings.emergencyHelpline || '+8801839008339';
+      if (res.status === 'FEATURE_DISABLED') {
+        setRegDisabledHelpline(helpline);
+        setRegFormError(
+          isBn
+            ? 'অনলাইনে জমা দেওয়া এখন সাময়িকভাবে বন্ধ আছে। জরুরি প্রয়োজনে সরাসরি হেল্পলাইনে কল করুন: '
+            : 'Online submission is temporarily unavailable. For urgent needs, please call the helpline: '
+        );
+      } else {
+        setRegFormError(res.error || (isBn ? 'রক্তদাতা নিবন্ধন সম্পন্ন করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।' : 'Donor registration could not be completed. Please try again.'));
+      }
+      return;
+    }
+
     const cleanHelpline = (bloodDonationSettings.emergencyHelpline || '+8801839008339').replace(/[^0-9]/g, '');
-    const lastDonationText = regLastDonationDate ? `${regLastDonationDate}` : 'রেকর্ড নেই';
     const whatsappMsg = encodeURIComponent(
       isBn
         ? `আসসালামু আলাইকুম ইনফিনিটি বাংলাদেশ কোঅর্ডিনেটর,\nআমি রক্তদান নেটওয়ার্কে নতুন রক্তদাতা হিসেবে যুক্ত হতে আবেদন করেছি।\n\nঅনুগ্রহ করে পরিচয় ও তথ্য যাচাই সাপেক্ষে আমার আবেদনটি প্রক্রিয়া করুন। ধন্যবাদ।`
@@ -885,18 +909,21 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
     const waUrl = `https://wa.me/${cleanHelpline}?text=${whatsappMsg}`;
     setRegWhatsAppUrl(waUrl);
 
-    setRegRefId(newDonor.id);
+    setRegRefId(res.id);
     setRegSubmitted(true);
+    setIsRegSubmitting(false);
   };
 
-  const handleEmergencyRequestSubmit = (e: React.FormEvent) => {
+  const handleEmergencyRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEmgFormError(null);
+    setEmgDisabledHelpline(null);
     if (!emgRequesterName.trim() || !emgContactNumber.trim() || !emgPatientName.trim() || !emgHospital.trim()) return;
 
     // Validate 11-digit BD Phone Number
     const cleanPhone = emgContactNumber.replace(/\D/g, '');
     if (!/^01[3-9]\d{8}$/.test(cleanPhone)) {
-      alert(
+      setEmgFormError(
         isBn
           ? 'যোগাযোগের জন্য সঠিক ১১ ডিজিটের বাংলাদেশি মোবাইল নম্বর প্রদান করুন (যেমন: 018XXXXXXXX)'
           : 'Please enter a valid 11-digit Bangladeshi contact number (e.g. 018XXXXXXXX)'
@@ -904,12 +931,14 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
       return;
     }
 
+    setIsEmgSubmitting(true);
+
     // Auto-match donors
     const matched = bloodDonors.filter(
       d => d.approvalStatus === 'APPROVED' && d.bloodGroup === emgBloodGroup && d.availabilityStatus !== 'UNAVAILABLE'
     ).map(d => d.id);
 
-    const newReq = addEmergencyBloodRequest({
+    const res = await addEmergencyBloodRequest({
       requesterName: emgRequesterName.trim(),
       contactNumber: cleanPhone,
       patientName: emgPatientName.trim(),
@@ -924,6 +953,22 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
       matchedDonorIds: matched
     });
 
+    if (!res.success) {
+      setIsEmgSubmitting(false);
+      const helpline = bloodDonationSettings.emergencyHelpline || '+8801839008339';
+      if (res.status === 'FEATURE_DISABLED') {
+        setEmgDisabledHelpline(helpline);
+        setEmgFormError(
+          isBn
+            ? 'অনলাইনে জমা দেওয়া এখন সাময়িকভাবে বন্ধ আছে। জরুরি প্রয়োজনে সরাসরি হেল্পলাইনে কল করুন: '
+            : 'Online submission is temporarily unavailable. For urgent needs, please call the helpline: '
+        );
+      } else {
+        setEmgFormError(res.error || (isBn ? 'জরুরি রক্তের আবেদন জমা নেওয়া যায়নি।' : 'Emergency blood request could not be processed.'));
+      }
+      return;
+    }
+
     const cleanHelpline = (bloodDonationSettings.emergencyHelpline || '+8801839008339').replace(/[^0-9]/g, '');
     const emgWhatsAppMsg = encodeURIComponent(
       `🚨 জরুরি রক্তের আবেদন!\n\n📋 বিবরণ:\n• রোগীর নাম: ${emgPatientName.trim()}\n• রক্তের গ্রুপ: ${emgBloodGroup} (${emgUnits || 1} ব্যাগ)\n• হাসপাতাল: ${emgHospital.trim()}\n• অবস্থান: ${emgUpazila}, ${emgDistrict}\n• যোগাযোগের নম্বর: ${cleanPhone}\n• প্রয়োজনীয় তারিখ: ${emgRequiredDate || 'জরুরি'}\n• অনুরোধকারী: ${emgRequesterName.trim()}\n\nঅনুগ্রহ করে জরুরিভাবে রক্তদাতা সমন্বয়ে সহায়তা করুন।`
@@ -936,8 +981,9 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
       // Pop-up blocker fallback
     }
 
-    setEmgRefId(newReq.id);
+    setEmgRefId(res.id);
     setEmgSubmitted(true);
+    setIsEmgSubmitting(false);
   };
 
   return (
@@ -1233,8 +1279,8 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
                     {isBn
-                      ? 'স্বেচ্ছাসেবী রক্তদাতা হিসেবে আবেদনের জন্য ধন্যবাদ। আমাদের টিম শীঘ্রই তথ্য যাচাই করে আপনার প্রোফাইলটি পাবলিক ডিরেক্টরিতে সক্রিয় করবে।'
-                      : 'Thank you for registering. Your profile is currently under review by Team Infinity coordinators and will be verified shortly.'}
+                      ? 'আপনার তথ্য জমা হয়েছে। স্বেচ্ছাসেবকরা যাচাই করার পর আপনার নাম তালিকায় আসবে।'
+                      : 'Your details have been submitted. Your name will appear on the list once verified by volunteers.'}
                   </p>
                 </div>
 
@@ -1878,7 +1924,17 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                       <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
                       <div>
                         <p className="font-extrabold text-rose-950">{isBn ? 'আবেদন জমাদানে ত্রুটি:' : 'Submission Error:'}</p>
-                        <p className="font-medium text-rose-800 mt-0.5 leading-relaxed">{regFormError}</p>
+                        <p className="font-medium text-rose-800 mt-0.5 leading-relaxed">
+                          {regFormError}
+                          {regDisabledHelpline && (
+                            <a
+                              href={`tel:${regDisabledHelpline.replace(/[^0-9+]/g, '')}`}
+                              className="font-extrabold underline text-rose-900 hover:text-rose-950 focus:outline-none focus:ring-2 focus:ring-rose-500 rounded px-0.5 inline-block"
+                            >
+                              {regDisabledHelpline}
+                            </a>
+                          )}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -1886,16 +1942,18 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                   {/* Submit Button */}
                   <button
                     type="submit"
-                    disabled={Boolean(regLastDonationDate && regLastDonationDate > new Date().toISOString().split('T')[0])}
+                    disabled={isRegSubmitting || Boolean(regLastDonationDate && regLastDonationDate > new Date().toISOString().split('T')[0])}
                     className={`w-full py-3.5 rounded-2xl font-extrabold text-sm shadow-warm-md transition-all flex items-center justify-center gap-2 ${
-                      regLastDonationDate && regLastDonationDate > new Date().toISOString().split('T')[0]
+                      isRegSubmitting || (regLastDonationDate && regLastDonationDate > new Date().toISOString().split('T')[0])
                         ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-80'
                         : 'bg-[#006A4E] hover:bg-[#00523C] text-white cursor-pointer transform hover:-translate-y-0.5'
                     }`}
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>
-                      {regLastDonationDate && regLastDonationDate > new Date().toISOString().split('T')[0]
+                      {isRegSubmitting
+                        ? (isBn ? 'জমা হচ্ছে...' : 'Submitting...')
+                        : regLastDonationDate && regLastDonationDate > new Date().toISOString().split('T')[0]
                         ? (isBn ? 'ভবিষ্যতের তারিখ সংশোধন করুন' : 'Correct Future Date')
                         : (isBn ? 'রক্তদাতা আবেদন জমা দিন' : 'Submit Donor Registration')}
                     </span>
@@ -2742,6 +2800,26 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                       </p>
                     </div>
 
+                    {emgFormError && (
+                      <div className="p-4 rounded-2xl bg-rose-50 border-2 border-rose-300 text-rose-900 text-xs sm:text-sm font-bold flex items-start gap-2.5 shadow-warm-xs animate-in fade-in">
+                        <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-extrabold text-rose-950">{isBn ? 'আবেদন জমাদানে ত্রুটি:' : 'Submission Error:'}</p>
+                          <p className="font-medium text-rose-800 mt-0.5 leading-relaxed">
+                            {emgFormError}
+                            {emgDisabledHelpline && (
+                              <a
+                                href={`tel:${emgDisabledHelpline.replace(/[^0-9+]/g, '')}`}
+                                className="font-extrabold underline text-rose-900 hover:text-rose-950 focus:outline-none focus:ring-2 focus:ring-rose-500 rounded px-0.5 inline-block"
+                              >
+                                {emgDisabledHelpline}
+                              </a>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     <form onSubmit={handleEmergencyRequestSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1">
@@ -2904,10 +2982,15 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
 
                       <button
                         type="submit"
-                        className="w-full py-3.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-warm-sm transition-all flex items-center justify-center gap-2 cursor-pointer transform hover:-translate-y-0.5"
+                        disabled={isEmgSubmitting}
+                        className={`w-full py-3.5 rounded-2xl font-extrabold text-xs shadow-warm-sm transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                          isEmgSubmitting
+                            ? 'bg-rose-300 text-white cursor-not-allowed'
+                            : 'bg-rose-600 hover:bg-rose-700 text-white transform hover:-translate-y-0.5'
+                        }`}
                       >
                         <Send className="w-4 h-4" />
-                        <span>{isBn ? 'জরুরি আবেদন প্রচার করুন' : 'Broadcast Emergency Request'}</span>
+                        <span>{isEmgSubmitting ? (isBn ? 'জমা হচ্ছে...' : 'Submitting...') : (isBn ? 'জরুরি আবেদন প্রচার করুন' : 'Broadcast Emergency Request')}</span>
                       </button>
                     </form>
                   </>

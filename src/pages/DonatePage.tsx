@@ -49,6 +49,9 @@ export const DonatePage: React.FC = () => {
     waUrl: string;
   } | null>(null);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [donationError, setDonationError] = useState<string | null>(null);
+  const [disabledHelpline, setDisabledHelpline] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const handleCopy = (text: string, fieldId: string) => {
@@ -57,8 +60,12 @@ export const DonatePage: React.FC = () => {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const handleDonationSubmit = (e: React.FormEvent) => {
+  const handleDonationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    setDonationError(null);
+    setDisabledHelpline(null);
+    setIsSubmitting(true);
 
     const numericAmount = Number(amount) || 0;
     const effectiveName = isAnonymous ? (isBn ? 'নাম প্রকাশে অনিচ্ছুক শুভাকাঙ্ক্ষী' : 'Anonymous Supporter') : donorName;
@@ -78,8 +85,25 @@ export const DonatePage: React.FC = () => {
       notes: note.trim() || undefined
     };
 
-    const submissionId = submitDonation(record);
+    const res = await submitDonation(record);
 
+    if (!res.success) {
+      setIsSubmitting(false);
+      const helpline = supportSettings.bKashNumber || settings.bKashNumber || '01839008339';
+      if (res.status === 'FEATURE_DISABLED') {
+        setDisabledHelpline(helpline);
+        setDonationError(
+          isBn
+            ? 'অনলাইনে জমা দেওয়া এখন সাময়িকভাবে বন্ধ আছে। জরুরি প্রয়োজনে সরাসরি হেল্পলাইনে কল করুন: '
+            : 'Online submission is temporarily unavailable. For urgent needs, please call the helpline: '
+        );
+      } else {
+        setDonationError(res.error || (isBn ? 'অনুদান জমা নেওয়া সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।' : 'Donation submission could not be processed. Please try again.'));
+      }
+      return;
+    }
+
+    const submissionId = res.id;
     const financePhone = supportSettings.bKashNumber || settings.bKashNumber || '01839008339';
     const cleanFinance = financePhone.replace(/[^0-9]/g, '');
     const waNumber = cleanFinance.startsWith('880') ? cleanFinance : cleanFinance.startsWith('0') ? `88${cleanFinance}` : cleanFinance;
@@ -103,6 +127,7 @@ export const DonatePage: React.FC = () => {
       status: 'Pending Verification',
       waUrl
     });
+    setIsSubmitting(false);
   };
 
   const bKashNum = supportSettings.bKashNumber || settings.bKashNumber || '01839-008339';
@@ -507,12 +532,37 @@ export const DonatePage: React.FC = () => {
               />
             </div>
 
+            {donationError && (
+              <div className="p-4 rounded-2xl bg-rose-50 border-2 border-rose-300 text-rose-900 text-xs sm:text-sm font-bold flex items-start gap-3 shadow-warm-xs animate-in fade-in">
+                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-extrabold text-rose-950">{isBn ? 'অনুদান জমাদানে ত্রুটি:' : 'Submission Error:'}</p>
+                  <p className="font-medium text-rose-800 mt-0.5 leading-relaxed">
+                    {donationError}
+                    {disabledHelpline && (
+                      <a
+                        href={`tel:${disabledHelpline.replace(/[^0-9+]/g, '')}`}
+                        className="font-extrabold underline text-rose-900 hover:text-rose-950 focus:outline-none focus:ring-2 focus:ring-rose-500 rounded px-0.5 inline-block"
+                      >
+                        {disabledHelpline}
+                      </a>
+                    )}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <button
               type="submit"
-              className="w-full py-3.5 rounded-2xl bg-[#006A4E] hover:bg-[#00523C] text-white font-extrabold text-sm shadow-warm-sm transition-all flex items-center justify-center gap-2 cursor-pointer transform hover:-translate-y-0.5"
+              disabled={isSubmitting}
+              className={`w-full py-3.5 rounded-2xl font-extrabold text-sm shadow-warm-sm transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                isSubmitting
+                  ? 'bg-emerald-300 text-white cursor-not-allowed'
+                  : 'bg-[#006A4E] hover:bg-[#00523C] text-white transform hover:-translate-y-0.5'
+              }`}
             >
               <Heart className="w-4 h-4 fill-white" />
-              <span>{isBn ? 'অনুদান নিশ্চিত করুন ও রিসিট নিন' : 'Confirm Contribution & Get Receipt'}</span>
+              <span>{isSubmitting ? (isBn ? 'জমা হচ্ছে...' : 'Submitting...') : (isBn ? 'অনুদান নিশ্চিত করুন ও রিসিট নিন' : 'Confirm Contribution & Get Receipt')}</span>
             </button>
           </form>
         </ScrollReveal>

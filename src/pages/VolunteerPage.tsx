@@ -37,7 +37,7 @@ import { EducationCategory, VolunteerApplication } from '../types';
 import { ScrollReveal } from '../components/motion/ScrollReveal';
 export const VolunteerPage: React.FC = () => {
   const { isBn, tText } = useLanguage();
-  const { volunteerSettings, addVolunteerApplication } = useData();
+  const { volunteerSettings, settings, addVolunteerApplication } = useData();
 
   // Wizard Step State (1 to 8)
   const [currentStep, setCurrentStep] = useState<number>(1);
@@ -47,6 +47,7 @@ export const VolunteerPage: React.FC = () => {
   const [submittedRef, setSubmittedRef] = useState<string>('');
   const [copiedRef, setCopiedRef] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [disabledHelpline, setDisabledHelpline] = useState<string | null>(null);
 
   // Anti-spam honeypot
   const [honeypot, setHoneypot] = useState<string>('');
@@ -552,13 +553,14 @@ export const VolunteerPage: React.FC = () => {
     };
 
     try {
-      // 1. Save locally and in Supabase CRM
-      const ref = addVolunteerApplication(applicationPayload);
-      setSubmittedRef(trackingRefId || ref);
+      setSubmitError(null);
+      setDisabledHelpline(null);
 
-      // 2. Dispatch to Google Apps Script Web App Endpoint
+      // 1. Dispatch to Google Apps Script Web App Endpoint
       const DEFAULT_GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwcxmsl9WY-EPo5OMdnouohrwCx1m93BM_DoPZhKTh1Gfi-BdyQ4bncu2hkXq4-vcoN/exec';
       const scriptUrl = volunteerSettings.googleScriptUrl || DEFAULT_GOOGLE_SCRIPT_URL;
+      let googleScriptSuccess = false;
+
       if (scriptUrl && scriptUrl.startsWith('http')) {
         try {
           await fetch(scriptUrl, {
@@ -569,13 +571,39 @@ export const VolunteerPage: React.FC = () => {
             },
             body: JSON.stringify(applicationPayload)
           });
+          googleScriptSuccess = true;
         } catch (fetchErr) {
           console.warn('Google Apps Script submission notice:', fetchErr);
         }
       }
 
-      setIsSubmitted(true);
-      window.scrollTo({ top: 300, behavior: 'smooth' });
+      // 2. Dispatch to Supabase DB Adapter
+      const dbResult = await addVolunteerApplication(applicationPayload);
+
+      // 3. Special Rule: If Google Script succeeded OR DB write succeeded, treat as SUCCESS!
+      if (googleScriptSuccess || dbResult.success) {
+        const finalRef = trackingRefId || (dbResult.success ? dbResult.id : `vol-${Date.now()}`);
+        setSubmittedRef(finalRef);
+        setIsSubmitted(true);
+        window.scrollTo({ top: 300, behavior: 'smooth' });
+      } else {
+        // Both failed
+        const officialPhone = settings.officialPhone || '+8801839008339';
+        if (dbResult.status === 'FEATURE_DISABLED') {
+          setDisabledHelpline(officialPhone);
+          setSubmitError(
+            isBn
+              ? 'অনলাইনে জমা দেওয়া এখন সাময়িকভাবে বন্ধ আছে। জরুরি প্রয়োজনে সরাসরি হেল্পলাইনে কল করুন: '
+              : 'Online submission is temporarily unavailable. For urgent needs, please call the helpline: '
+          );
+        } else {
+          setSubmitError(
+            dbResult.error || (isBn
+              ? 'দুঃখিত, আপনার আবেদন জমা দেওয়া যায়নি। কিছুক্ষণ পর আবার চেষ্টা করুন।'
+              : 'Sorry, your application could not be submitted. Please try again in a few moments.')
+          );
+        }
+      }
     } catch (err: any) {
       console.error('Submission error:', err);
       setSubmitError(
@@ -2023,9 +2051,22 @@ export const VolunteerPage: React.FC = () => {
 
                     {/* Submit Error */}
                     {submitError && (
-                      <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-semibold flex items-center gap-3">
-                        <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
-                        <span>{submitError}</span>
+                      <div className="p-4 rounded-2xl bg-rose-50 border-2 border-rose-300 text-rose-900 text-xs sm:text-sm font-bold flex items-start gap-3 shadow-warm-xs animate-in fade-in">
+                        <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-extrabold text-rose-950">{isBn ? 'আবেদন জমাদানে ত্রুটি:' : 'Submission Error:'}</p>
+                          <p className="font-medium text-rose-800 mt-0.5 leading-relaxed">
+                            {submitError}
+                            {disabledHelpline && (
+                              <a
+                                href={`tel:${disabledHelpline.replace(/[^0-9+]/g, '')}`}
+                                className="font-extrabold underline text-rose-900 hover:text-rose-950 focus:outline-none focus:ring-2 focus:ring-rose-500 rounded px-0.5 inline-block"
+                              >
+                                {disabledHelpline}
+                              </a>
+                            )}
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>
