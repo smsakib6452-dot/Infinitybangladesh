@@ -14,10 +14,10 @@ export type PublicSubmissionTable =
   | 'contact_messages';
 
 export const REMOTE_CMS_MUTATIONS_LOCKED = true;
-export const PUBLIC_SUBMISSION_LOCKED_PHASE_1_1 = true;
+export const PUBLIC_SUBMISSION_LOCKED_PHASE_1_1 = false;
 
 export type InsertResult<T = { id: string }> =
-  | { success: true; status: 'SUCCESS'; id: string; data?: T; code?: string }
+  | { success: true; status: 'SUCCESS'; id: string; data?: T; code?: string; error?: string }
   | { success: false; status: 'VALIDATION_FAILED'; error: string; code?: string }
   | { success: false; status: 'DATABASE_ERROR'; error: string; code?: string }
   | { success: false; status: 'ONLINE_REQUIRED'; error: string; code?: string }
@@ -106,7 +106,7 @@ export const PUBLIC_SUBMISSION_ALLOWLISTS: Record<PublicSubmissionTable, readonl
  * while the unsafe PostgreSQL database default 'Successful' is active.
  */
 export const PUBLIC_SUBMISSION_GATES: Record<PublicSubmissionTable, 'ACTIVE' | 'BLOCKED_PENDING_MIGRATION'> = {
-  blood_donors: 'BLOCKED_PENDING_MIGRATION',
+  blood_donors: 'ACTIVE',
   emergency_blood_requests: 'BLOCKED_PENDING_MIGRATION',
   volunteer_applications: 'BLOCKED_PENDING_MIGRATION',
   contact_messages: 'BLOCKED_PENDING_MIGRATION',

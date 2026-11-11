@@ -92,7 +92,7 @@ import { getSupabase, isSupabaseConfigured, fetchSupabaseRest } from '../lib/sup
 import { getFreshImageUrl } from '../lib/cloudinary';
 import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL, isBlacklistedMedia } from '../lib/utils/mediaHelper';
 import { STORAGE_PREFIX, DATA_VERSION_KEY, CURRENT_DATA_VERSION, getStoredOrDefault, saveToStorage } from './dataStorage';
-import { safeDbUpsert, safeDbDelete, createAuditLog, REMOTE_CMS_MUTATIONS_LOCKED } from './dbAdapter';
+import { safeDbUpsert, safeDbDelete, createAuditLog, REMOTE_CMS_MUTATIONS_LOCKED, InsertResult } from './dbAdapter';
 import { useBloodDonationSlice } from './slices/useBloodDonationSlice';
 import { useMediaSlice } from './slices/useMediaSlice';
 import { useGovernanceSlice } from './slices/useGovernanceSlice';
@@ -167,7 +167,7 @@ export interface DataContextType {
   deleteFAQ: (id: string) => void;
 
   // Contact Messages
-  addContactMessage: (msg: Omit<ContactMessage, 'id' | 'submittedAt' | 'status'>) => ContactMessage;
+  addContactMessage: (msg: Omit<ContactMessage, 'id' | 'submittedAt' | 'status'>) => Promise<InsertResult<ContactMessage>>;
 
   // Social Links
   addSocialLink: (link: Omit<SocialLink, 'id'>) => void;
@@ -260,7 +260,7 @@ export interface DataContextType {
   setFeaturedJourneyVideo: (id: string) => void;
 
   // Blood Donation Network
-  addBloodDonor: (donor: Omit<BloodDonor, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }) => BloodDonor;
+  addBloodDonor: (donor: Omit<BloodDonor, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }) => Promise<InsertResult<BloodDonor>>;
   updateBloodDonor: (id: string, updates: Partial<BloodDonor>) => void;
   deleteBloodDonor: (id: string) => void;
   approveBloodDonor: (id: string) => void;
@@ -268,7 +268,7 @@ export interface DataContextType {
   verifyBloodDonor: (id: string, isVerified?: boolean) => void;
   addDonationHistoryEntry: (donorId: string, entry: Omit<BloodDonationHistoryEntry, 'id' | 'donorId' | 'createdAt'>) => BloodDonationHistoryEntry;
   deleteDonationHistoryEntry: (donorId: string, entryId: string) => void;
-  addEmergencyBloodRequest: (req: Omit<EmergencyBloodRequest, 'id' | 'status' | 'createdAt' | 'updatedAt'>) => EmergencyBloodRequest;
+  addEmergencyBloodRequest: (req: Omit<EmergencyBloodRequest, 'id' | 'status' | 'createdAt' | 'updatedAt'>) => Promise<InsertResult<EmergencyBloodRequest>>;
   updateEmergencyBloodRequestStatus: (id: string, status: EmergencyRequestStatus) => void;
   deleteEmergencyBloodRequest: (id: string) => void;
   updateBloodDonationSettings: (settings: Partial<BloodDonationSettings>) => void;
@@ -285,16 +285,16 @@ export interface DataContextType {
   deletePartner: (id: string) => void;
 
   // Interactions: Volunteers, Donations, Messages
-  submitVolunteerApplication: (app: Omit<VolunteerApplication, 'id' | 'submittedAt' | 'status'>) => string;
-  addVolunteerApplication: (app: Partial<VolunteerApplication>) => string;
+  submitVolunteerApplication: (app: Omit<VolunteerApplication, 'id' | 'submittedAt' | 'status'>) => Promise<InsertResult<VolunteerApplication>>;
+  addVolunteerApplication: (app: Partial<VolunteerApplication>) => Promise<InsertResult<VolunteerApplication>>;
   updateVolunteerStatus: (id: string, status: VolunteerApplication['status'], adminNotes?: string) => void;
   deleteVolunteerApplication: (id: string) => void;
 
-  submitDonation: (donation: Omit<DonationRecord, 'id' | 'date' | 'status'>) => string;
+  submitDonation: (donation: Omit<DonationRecord, 'id' | 'date' | 'status'>) => Promise<InsertResult<DonationRecord>>;
   addDonationRecord: (donation: Partial<DonationRecord>) => DonationRecord;
   updateDonationStatus: (id: string, status: DonationRecord['status']) => void;
 
-  submitContactMessage: (msg: Omit<ContactMessage, 'id' | 'submittedAt' | 'status'>) => void;
+  submitContactMessage: (msg: Omit<ContactMessage, 'id' | 'submittedAt' | 'status'>) => Promise<InsertResult<ContactMessage>>;
   updateMessageStatus: (id: string, status: ContactMessage['status']) => void;
   deleteContactMessage: (id: string) => void;
 

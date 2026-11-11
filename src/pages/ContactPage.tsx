@@ -13,7 +13,8 @@ import {
   Clock,
   Building,
   ShieldCheck,
-  MessageSquare
+  MessageSquare,
+  AlertCircle
 } from 'lucide-react';
 
 export const ContactPage: React.FC = () => {
@@ -26,19 +27,45 @@ export const ContactPage: React.FC = () => {
   const [subject, setSubject] = useState('General Inquiry');
   const [message, setMessage] = useState('');
   const [isSent, setIsSent] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [disabledHelpline, setDisabledHelpline] = useState<string | null>(null);
   const [honeypot, setHoneypot] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (honeypot) return; // silent bot trap
     if (!name.trim() || !email.trim() || !message.trim()) return;
-    addContactMessage({
+
+    setFormError(null);
+    setDisabledHelpline(null);
+    setIsSubmitting(true);
+
+    const res = await addContactMessage({
       name: name.trim().slice(0, 120),
       email: email.trim().slice(0, 120),
       phone: phone.trim().slice(0, 50),
       subject: subject.slice(0, 100),
       message: message.trim().slice(0, 4000)
     });
+
+    if (!res.success) {
+      setIsSubmitting(false);
+      const helpline = contactSettings.phone || settings.officialPhone || '+880 1800-000000';
+      if (res.status === 'FEATURE_DISABLED') {
+        setDisabledHelpline(helpline);
+        setFormError(
+          isBn
+            ? 'অনলাইনে জমা দেওয়া এখন সাময়িকভাবে বন্ধ আছে। জরুরি প্রয়োজনে সরাসরি হেল্পলাইনে কল করুন: '
+            : 'Online submission is temporarily unavailable. For urgent needs, please call the helpline: '
+        );
+      } else {
+        setFormError(res.error || (isBn ? 'বার্তা পাঠানো সম্ভব হয়নি। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।' : 'Message could not be sent. Please try again.'));
+      }
+      return;
+    }
+
+    setIsSubmitting(false);
     setIsSent(true);
   };
 
@@ -195,12 +222,37 @@ export const ContactPage: React.FC = () => {
                 />
               </div>
 
+              {formError && (
+                <div className="p-4 rounded-2xl bg-rose-50 border-2 border-rose-300 text-rose-900 text-xs sm:text-sm font-bold flex items-start gap-3 shadow-warm-xs animate-in fade-in">
+                  <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-extrabold text-rose-950">{isBn ? 'বার্তা পাঠানোয় ত্রুটি:' : 'Submission Error:'}</p>
+                    <p className="font-medium text-rose-800 mt-0.5 leading-relaxed">
+                      {formError}
+                      {disabledHelpline && (
+                        <a
+                          href={`tel:${disabledHelpline.replace(/[^0-9+]/g, '')}`}
+                          className="font-extrabold underline text-rose-900 hover:text-rose-950 focus:outline-none focus:ring-2 focus:ring-rose-500 rounded px-0.5 inline-block"
+                        >
+                          {disabledHelpline}
+                        </a>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <button
                 type="submit"
-                className="w-full py-3.5 rounded-2xl bg-[#006A4E] hover:bg-[#00523C] text-white font-extrabold text-xs sm:text-sm shadow-warm-sm transition-all flex items-center justify-center gap-2 cursor-pointer transform hover:-translate-y-0.5"
+                disabled={isSubmitting}
+                className={`w-full py-3.5 rounded-2xl font-extrabold text-xs sm:text-sm shadow-warm-sm transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  isSubmitting
+                    ? 'bg-emerald-300 text-white cursor-not-allowed'
+                    : 'bg-[#006A4E] hover:bg-[#00523C] text-white transform hover:-translate-y-0.5'
+                }`}
               >
                 <Send className="w-4 h-4" />
-                <span>{isBn ? 'বার্তা পাঠান' : 'Send Message'}</span>
+                <span>{isSubmitting ? (isBn ? 'জমা হচ্ছে...' : 'Submitting...') : (isBn ? 'বার্তা পাঠান' : 'Send Message')}</span>
               </button>
             </form>
           )}

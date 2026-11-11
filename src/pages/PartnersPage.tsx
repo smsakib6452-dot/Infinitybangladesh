@@ -35,18 +35,28 @@ export const PartnersPage: React.FC = () => {
     ? partners
     : partners.filter((p) => p.type === activeCategory);
 
-  const handleInquirySubmit = (e: React.FormEvent) => {
+  const handleInquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (honeypot) return; // Silent bot defense
     if (!partnerOrgName.trim() || !contactPerson.trim() || !email.trim() || !proposalDetails.trim()) return;
 
-    addContactMessage({
+    const res = await addContactMessage({
       name: `${contactPerson.trim()} (${partnerOrgName.trim()})`.slice(0, 120),
       email: email.trim().slice(0, 120),
       phone: phone.trim().slice(0, 50),
       subject: `Institutional Partnership: ${partnershipType}`.slice(0, 100),
       message: proposalDetails.trim().slice(0, 4000)
     });
+
+    if (!res.success) {
+      setToastMessage(
+        res.status === 'FEATURE_DISABLED'
+          ? (isBn ? 'অনলাইনে জমা দেওয়া সাময়িকভাবে বন্ধ আছে। জরুরি প্রয়োজনে হেল্পলাইনে যোগাযোগ করুন।' : 'Online submission is temporarily unavailable. Please contact our helpline.')
+          : (res.error || (isBn ? 'প্রস্তাবনা জমা নেওয়া যায়নি।' : 'Inquiry could not be submitted.'))
+      );
+      setShowToast(true);
+      return;
+    }
 
     setToastMessage(
       isBn

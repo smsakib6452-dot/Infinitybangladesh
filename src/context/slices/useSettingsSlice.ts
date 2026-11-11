@@ -30,7 +30,7 @@ import {
 } from '../../data/initialData';
 import { getFreshImageUrl } from '../../lib/cloudinary';
 import { STORAGE_PREFIX, getStoredOrDefault, saveToStorage } from '../dataStorage';
-import { safeDbUpsert, safeDbInsert, safeDbDelete, generateSecureId } from '../dbAdapter';
+import { safeDbUpsert, safeDbInsert, safeDbDelete, generateSecureId, InsertResult } from '../dbAdapter';
 
 export function useSettingsSlice(
   logAudit: (action: string, entity: string, entityId: string, details: string) => void
@@ -443,8 +443,22 @@ export function useSettingsSlice(
   // ----------------------------------------------------
   // CONTACT MESSAGES ACTIONS
   // ----------------------------------------------------
-  const submitContactMessage = useCallback((msg: Omit<ContactMessage, 'id' | 'submittedAt' | 'status'>) => {
+  const submitContactMessage = useCallback(async (msg: Omit<ContactMessage, 'id' | 'submittedAt' | 'status'>): Promise<InsertResult<ContactMessage>> => {
     const id = generateSecureId('msg');
+    const dbPayload = {
+      id,
+      name: msg.name,
+      email: msg.email,
+      phone: msg.phone || '',
+      subject: msg.subject || '',
+      message: msg.message
+    };
+
+    const dbResult = await safeDbInsert<ContactMessage>('contact_messages', dbPayload);
+    if (!dbResult.success) {
+      return dbResult;
+    }
+
     const newMsg: ContactMessage = {
       ...msg,
       id,
@@ -453,36 +467,12 @@ export function useSettingsSlice(
     };
     setMessages(prev => [newMsg, ...prev]);
     logAudit('SUBMIT', 'ContactMessage', id, `Received message from ${msg.name}`);
-    safeDbInsert('contact_messages', {
-      id,
-      name: msg.name,
-      email: msg.email,
-      phone: msg.phone || '',
-      subject: msg.subject || '',
-      message: msg.message
-    });
+    return { success: true, status: 'SUCCESS', id, data: newMsg };
   }, [logAudit]);
 
-  const addContactMessage = useCallback((msg: Omit<ContactMessage, 'id' | 'submittedAt' | 'status'>): ContactMessage => {
-    const id = generateSecureId('msg');
-    const newMsg: ContactMessage = {
-      ...msg,
-      id,
-      submittedAt: new Date().toISOString(),
-      status: 'Unread'
-    };
-    setMessages(prev => [newMsg, ...prev]);
-    logAudit('SUBMIT', 'ContactMessage', id, `Received message from ${msg.name}`);
-    safeDbInsert('contact_messages', {
-      id,
-      name: msg.name,
-      email: msg.email,
-      phone: msg.phone || '',
-      subject: msg.subject || '',
-      message: msg.message
-    });
-    return newMsg;
-  }, [logAudit]);
+  const addContactMessage = useCallback(async (msg: Omit<ContactMessage, 'id' | 'submittedAt' | 'status'>): Promise<InsertResult<ContactMessage>> => {
+    return submitContactMessage(msg);
+  }, [submitContactMessage]);
 
   const updateMessageStatus = useCallback((id: string, status: ContactMessage['status']) => {
     setMessages(prev => {
