@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
 import { useRouter } from '../context/RouterContext';
@@ -129,7 +129,7 @@ import {
 } from '../data/bloodDonationData';
 import { getAssetUrl, handleImageError } from '../lib/utils/assetHelper';
 import { formatBDT, formatDateDDMMYYYY } from '../lib/utils/formatters';
-import { Toast } from '../components/Toast';
+import { Toast, ToastType } from '../components/Toast';
 import { DonorAvatar } from '../components/DonorAvatar';
 import { MediaPickerModal } from '../components/MediaPickerModal';
 import { CampaignModal } from '../components/CampaignModal';
@@ -292,7 +292,8 @@ export const AdminPage: React.FC = () => {
 
   // UI Navigation
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+  const toastTimerRef = useRef<NodeJS.Timeout | number | null>(null);
   const [searchFilter, setSearchFilter] = useState('');
 
   // Media Picker Modal State
@@ -442,9 +443,25 @@ export const AdminPage: React.FC = () => {
     }
   };
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
+
+  const showToast = (msg: string, type: ToastType = 'success') => {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = null;
+    }
+    setToast({ message: msg, type });
+    const duration = type === 'error' ? 6000 : 3000;
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+      toastTimerRef.current = null;
+    }, duration);
   };
 
   const openMediaPicker = (onSelect: (url: string) => void) => {
@@ -603,10 +620,10 @@ export const AdminPage: React.FC = () => {
   const handleSaveBloodDonor = (donorData: Omit<BloodDonor, 'createdAt' | 'updatedAt'> & { id?: string }, editId?: string) => {
     if (editId) {
       updateBloodDonor(editId, donorData);
-      showToast(isBn ? 'এই পরিবর্তন শুধু আপনার ব্রাউজারে সংরক্ষিত হয়েছে, ডাটাবেজে নয়।' : 'This change was saved in this browser only, not in the database.');
+      showToast(isBn ? 'এই পরিবর্তন শুধু আপনার ব্রাউজারে সংরক্ষিত হয়েছে, ডাটাবেজে নয়।' : 'This change was saved in this browser only, not in the database.', 'info');
     } else {
       addBloodDonor(donorData);
-      showToast(isBn ? 'এই পরিবর্তন শুধু আপনার ব্রাউজারে সংরক্ষিত হয়েছে, ডাটাবেজে নয়।' : 'This change was saved in this browser only, not in the database.');
+      showToast(isBn ? 'এই পরিবর্তন শুধু আপনার ব্রাউজারে সংরক্ষিত হয়েছে, ডাটাবেজে নয়।' : 'This change was saved in this browser only, not in the database.', 'info');
     }
   };
 
@@ -886,10 +903,11 @@ export const AdminPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    setToastMessage(
+                    showToast(
                       isBn
                         ? 'বাল্ক পুশ ডাটাবেজ সুরক্ষার স্বার্থে নিষ্ক্রিয় রাখা হয়েছে।'
-                        : 'Bulk cloud push is disabled to protect live database integrity.'
+                        : 'Bulk cloud push is disabled to protect live database integrity.',
+                      'info'
                     );
                   }}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-400 text-xs font-bold transition-all cursor-not-allowed opacity-60"
@@ -904,13 +922,13 @@ export const AdminPage: React.FC = () => {
                   onClick={async () => {
                     const res = await syncWithSupabase();
                     if (res?.success) {
-                      setToastMessage(isBn ? 'সফলভাবে ক্লাউড ডাটাবেজ থেকে লোড করা হয়েছে।' : 'Pulled latest data from cloud database.');
+                      showToast(isBn ? 'সফলভাবে ক্লাউড ডাটাবেজ থেকে লোড করা হয়েছে।' : 'Pulled latest data from cloud database.', 'success');
                     } else if (res?.partial) {
-                      setToastMessage(isBn
+                      showToast(isBn
                         ? `আংশিক লোড হয়েছে (${res.failedDatasets?.join(', ') || ''} লোড করা যায়নি)`
-                        : `Partially loaded (failed: ${res.failedDatasets?.join(', ') || ''})`);
+                        : `Partially loaded (failed: ${res.failedDatasets?.join(', ') || ''})`, 'info');
                     } else {
-                      setToastMessage(res?.error || (isBn ? 'ক্লাউড ডাটাবেজ থেকে লোড ব্যর্থ হয়েছে।' : 'Failed to pull cloud database.'));
+                      showToast(res?.error || (isBn ? 'ক্লাউড ডাটাবেজ থেকে লোড ব্যর্থ হয়েছে।' : 'Failed to pull cloud database.'), 'error');
                     }
                   }}
                   disabled={isSyncing}
@@ -4289,13 +4307,13 @@ export const AdminPage: React.FC = () => {
                         onClick={async () => {
                           const res = await syncWithSupabase();
                           if (res?.success) {
-                            showToast(isBn ? 'রক্তদাতা ও ডাটাবেজ সফলভাবে রিফ্রেশ হয়েছে!' : 'Database and blood records refreshed!');
+                            showToast(isBn ? 'রক্তদাতা ও ডাটাবেজ সফলভাবে রিফ্রেশ হয়েছে!' : 'Database and blood records refreshed!', 'success');
                           } else if (res?.partial) {
                             showToast(isBn
                               ? `আংশিক রিফ্রেশ হয়েছে (${res.failedDatasets?.join(', ') || ''} লোড করা যায়নি)`
-                              : `Partially refreshed (failed: ${res.failedDatasets?.join(', ') || ''})`);
+                              : `Partially refreshed (failed: ${res.failedDatasets?.join(', ') || ''})`, 'info');
                           } else {
-                            showToast(res?.error || (isBn ? 'রক্তদাতা লোড ব্যর্থ হয়েছে।' : 'Failed to load blood donors.'));
+                            showToast(res?.error || (isBn ? 'রক্তদাতা লোড ব্যর্থ হয়েছে।' : 'Failed to load blood donors.'), 'error');
                           }
                         }}
                         className="px-4 py-2.5 rounded-2xl bg-white border border-[#EAE3D9] hover:bg-[#FAF7F2] text-slate-700 font-bold text-xs shadow-warm-xs transition-all flex items-center gap-1.5 cursor-pointer"
@@ -4452,7 +4470,7 @@ export const AdminPage: React.FC = () => {
                                     if (res.success) {
                                       showToast(isBn ? `${donor.fullName}-এর আবেদন অনুমোদিত হয়েছে!` : `Approved ${donor.fullName}`);
                                     } else {
-                                      showToast(res.error || (isBn ? 'অনুমোদন ব্যর্থ হয়েছে' : 'Approval failed'));
+                                      showToast(res.error || (isBn ? 'অনুমোদন ব্যর্থ হয়েছে' : 'Approval failed'), 'error');
                                     }
                                   }}
                                   className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-2xs"
@@ -4464,9 +4482,14 @@ export const AdminPage: React.FC = () => {
                                   onClick={async () => {
                                     const res = await rejectBloodDonor(donor.id);
                                     if (res.success) {
-                                      showToast(isBn ? `${donor.fullName}-এর আবেদন বাতিল করা হয়েছে` : `Rejected ${donor.fullName}`);
+                                      showToast(
+                                        isBn
+                                          ? `${donor.fullName}-এর আবেদন প্রত্যাখ্যাত হয়েছে (তালিকায় আসবে না)`
+                                          : `${donor.fullName}'s application was rejected (will not appear in the list)`,
+                                        'error'
+                                      );
                                     } else {
-                                      showToast(res.error || (isBn ? 'বাতিলকরণ ব্যর্থ হয়েছে' : 'Rejection failed'));
+                                      showToast(res.error || (isBn ? 'প্রত্যাখ্যান ব্যর্থ হয়েছে' : 'Rejection failed'), 'error');
                                     }
                                   }}
                                   className="px-3.5 py-1.5 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold text-xs cursor-pointer"
@@ -4593,7 +4616,7 @@ export const AdminPage: React.FC = () => {
                                   if (res.success) {
                                     showToast(isBn ? `রক্তদাতা ${donor.fullName}-এর আবেদন অনুমোদিত হয়েছে!` : `Donor ${donor.fullName} approved!`);
                                   } else {
-                                    showToast(res.error || (isBn ? 'অনুমোদন ব্যর্থ হয়েছে' : 'Approval failed'));
+                                    showToast(res.error || (isBn ? 'অনুমোদন ব্যর্থ হয়েছে' : 'Approval failed'), 'error');
                                   }
                                 }}
                                 className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-warm-xs cursor-pointer flex items-center gap-1.5 transition-all"
@@ -4607,9 +4630,14 @@ export const AdminPage: React.FC = () => {
                                 onClick={async () => {
                                   const res = await rejectBloodDonor(donor.id);
                                   if (res.success) {
-                                    showToast(isBn ? `রক্তদাতা ${donor.fullName}-এর আবেদন বাতিল করা হয়েছে` : `Donor ${donor.fullName} rejected`);
+                                    showToast(
+                                      isBn
+                                        ? `${donor.fullName}-এর আবেদন প্রত্যাখ্যাত হয়েছে (তালিকায় আসবে না)`
+                                        : `${donor.fullName}'s application was rejected (will not appear in the list)`,
+                                      'error'
+                                    );
                                   } else {
-                                    showToast(res.error || (isBn ? 'বাতিলকরণ ব্যর্থ হয়েছে' : 'Rejection failed'));
+                                    showToast(res.error || (isBn ? 'প্রত্যাখ্যান ব্যর্থ হয়েছে' : 'Rejection failed'), 'error');
                                   }
                                 }}
                                 className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs cursor-pointer transition-colors"
@@ -4850,7 +4878,7 @@ export const AdminPage: React.FC = () => {
                                                   : `Donor profile/update for ${donor.fullName} approved!`
                                               );
                                             } else {
-                                              showToast(res.error || (isBn ? 'অনুমোদন ব্যর্থ হয়েছে' : 'Approval failed'));
+                                              showToast(res.error || (isBn ? 'অনুমোদন ব্যর্থ হয়েছে' : 'Approval failed'), 'error');
                                             }
                                           }}
                                           className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
@@ -4867,11 +4895,12 @@ export const AdminPage: React.FC = () => {
                                             if (res.success) {
                                               showToast(
                                                 isBn
-                                                  ? `রক্তদাতা ${donor.fullName}-এর আবেদন বাতিল করা হয়েছে।`
-                                                  : `Donor request for ${donor.fullName} rejected.`
+                                                  ? `${donor.fullName}-এর আবেদন প্রত্যাখ্যাত হয়েছে (তালিকায় আসবে না)`
+                                                  : `${donor.fullName}'s application was rejected (will not appear in the list)`,
+                                                'error'
                                               );
                                             } else {
-                                              showToast(res.error || (isBn ? 'বাতিলকরণ ব্যর্থ হয়েছে' : 'Rejection failed'));
+                                              showToast(res.error || (isBn ? 'প্রত্যাখ্যান ব্যর্থ হয়েছে' : 'Rejection failed'), 'error');
                                             }
                                           }}
                                           className="p-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors cursor-pointer border border-rose-200"
@@ -4915,7 +4944,7 @@ export const AdminPage: React.FC = () => {
                                         if (res.success) {
                                           showToast(isBn ? 'ভেরিফিকেশন স্ট্যাটাস আপডেট হয়েছে' : 'Verification status updated');
                                         } else {
-                                          showToast(res.error || (isBn ? 'ভেরিফিকেশন আপডেট ব্যর্থ হয়েছে' : 'Verification update failed'));
+                                          showToast(res.error || (isBn ? 'ভেরিফিকেশন আপডেট ব্যর্থ হয়েছে' : 'Verification update failed'), 'error');
                                         }
                                       }}
                                       className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
@@ -6175,7 +6204,7 @@ export const AdminPage: React.FC = () => {
                       disabled={isSyncing}
                       onClick={async () => {
                         const res = await pushAllToSupabase();
-                        showToast(res.message);
+                        showToast(res.message, res.success ? 'success' : 'info');
                       }}
                       className="px-6 py-3 rounded-2xl bg-[#006A4E] hover:bg-[#00523C] text-white font-extrabold text-xs sm:text-sm shadow-warm-md hover:shadow-warm-lg transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer disabled:opacity-50 transform hover:-translate-y-0.5"
                     >
@@ -6194,13 +6223,13 @@ export const AdminPage: React.FC = () => {
                       onClick={async () => {
                         const res = await syncWithSupabase();
                         if (res?.success) {
-                          showToast(isBn ? 'ক্লাউড ডাটাবেজ থেকে সর্বশেষ তথ্য লোড করা হয়েছে।' : 'Pulled latest cloud data.');
+                          showToast(isBn ? 'ক্লাউড ডাটাবেজ থেকে সর্বশেষ তথ্য লোড করা হয়েছে।' : 'Pulled latest cloud data.', 'success');
                         } else if (res?.partial) {
                           showToast(isBn
                             ? `আংশিক লোড হয়েছে (${res.failedDatasets?.join(', ') || ''} লোড করা যায়নি)`
-                            : `Partially loaded (failed: ${res.failedDatasets?.join(', ') || ''})`);
+                            : `Partially loaded (failed: ${res.failedDatasets?.join(', ') || ''})`, 'info');
                         } else {
-                          showToast(res?.error || (isBn ? 'ক্লাউড ডাটাবেজ থেকে লোড ব্যর্থ হয়েছে।' : 'Failed to pull cloud database.'));
+                          showToast(res?.error || (isBn ? 'ক্লাউড ডাটাবেজ থেকে লোড ব্যর্থ হয়েছে।' : 'Failed to pull cloud database.'), 'error');
                         }
                       }}
                       className="text-[#006A4E] font-bold hover:underline cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
@@ -9011,7 +9040,7 @@ export const AdminPage: React.FC = () => {
         onSave={handleSaveBloodDonor}
         onDelete={(id) => {
           deleteBloodDonor(id);
-          showToast(isBn ? 'এই পরিবর্তন শুধু আপনার ব্রাউজারে সংরক্ষিত হয়েছে, ডাটাবেজে নয়।' : 'This change was saved in this browser only, not in the database.');
+          showToast(isBn ? 'এই পরিবর্তন শুধু আপনার ব্রাউজারে সংরক্ষিত হয়েছে, ডাটাবেজে নয়।' : 'This change was saved in this browser only, not in the database.', 'info');
         }}
       />
 
@@ -9073,7 +9102,7 @@ export const AdminPage: React.FC = () => {
                 onClick={() => {
                   deleteBloodDonor(donorToDelete.id);
                   setDonorToDelete(null);
-                  showToast(isBn ? 'এই পরিবর্তন শুধু আপনার ব্রাউজারে সংরক্ষিত হয়েছে, ডাটাবেজে নয়।' : 'This change was saved in this browser only, not in the database.');
+                  showToast(isBn ? 'এই পরিবর্তন শুধু আপনার ব্রাউজারে সংরক্ষিত হয়েছে, ডাটাবেজে নয়।' : 'This change was saved in this browser only, not in the database.', 'info');
                 }}
                 className="flex-1 px-4 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-warm-sm transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
@@ -9100,7 +9129,7 @@ export const AdminPage: React.FC = () => {
           if (res.success) {
             showToast(isBn ? 'জরুরি অনুরোধের স্ট্যাটাস সফলভাবে আপডেট হয়েছে' : 'Emergency request status updated successfully');
           } else {
-            showToast(res.error || (isBn ? 'স্ট্যাটাস আপডেট ব্যর্থ হয়েছে' : 'Status update failed'));
+            showToast(res.error || (isBn ? 'স্ট্যাটাস আপডেট ব্যর্থ হয়েছে' : 'Status update failed'), 'error');
           }
         }}
       />
@@ -9138,7 +9167,20 @@ export const AdminPage: React.FC = () => {
       )}
 
       {/* Toast Notification */}
-      {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage(null)} />}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          duration={toast.type === 'error' ? 6000 : 3000}
+          onClose={() => {
+            if (toastTimerRef.current) {
+              clearTimeout(toastTimerRef.current);
+              toastTimerRef.current = null;
+            }
+            setToast(null);
+          }}
+        />
+      )}
     </div>
   );
 };

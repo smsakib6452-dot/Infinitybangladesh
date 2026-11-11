@@ -46,7 +46,11 @@ export const Toast: React.FC<ToastProps> = ({
   }[type];
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 max-w-md w-full px-4 animate-in fade-in slide-in-from-bottom-5 duration-300">
+    <div
+      className="fixed bottom-6 right-6 z-50 max-w-md w-full px-4 animate-in fade-in slide-in-from-bottom-5 duration-300"
+      role={type === 'error' ? 'alert' : 'status'}
+      aria-live={type === 'error' ? 'assertive' : 'polite'}
+    >
       <div className={`flex items-center gap-3 p-4 rounded-xl border shadow-2xl backdrop-blur-md ${bgStyles}`}>
         <IconComponent className="w-5 h-5 flex-shrink-0" />
         <p className="text-sm font-medium flex-1 leading-snug">{message}</p>
