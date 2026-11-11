@@ -236,7 +236,7 @@ export const AdminPage: React.FC = () => {
     updateBloodDonationSettings, addDonorCategory, updateDonorCategory, deleteDonorCategory,
     programEvents, getEventsByProgramId, getEventHighlights, getEventMedia, deleteProgramEvent,
     isLiveSupabase, isSyncing, lastSyncedAt, syncWithSupabase, pushAllToSupabase, resetToDefaultData, exportDatabaseJSON, importDatabaseJSON,
-    loadAdminData, isAdminLoaded
+    loadAdminData, isAdminLoaded, clearAdminSessionData
   } = useData();
 
   // Auth State
@@ -261,15 +261,18 @@ export const AdminPage: React.FC = () => {
           setIsAuthenticated(Boolean(session));
           if (!session) {
             sessionStorage.removeItem('infinity_admin_user');
+            clearAdminSessionData();
           }
         }).catch(() => {
           setIsAuthenticated(false);
+          clearAdminSessionData();
         });
 
-        const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
           setIsAuthenticated(Boolean(session));
-          if (!session) {
+          if (event === 'SIGNED_OUT' || !session) {
             sessionStorage.removeItem('infinity_admin_user');
+            clearAdminSessionData();
           }
         });
         unsubscribe = () => subscription.unsubscribe();
@@ -278,7 +281,7 @@ export const AdminPage: React.FC = () => {
         if (unsubscribe) unsubscribe();
       };
     }
-  }, []);
+  }, [clearAdminSessionData]);
 
   // Load complete admin-only datasets on entry only if actively authenticated
   React.useEffect(() => {
@@ -696,6 +699,7 @@ export const AdminPage: React.FC = () => {
     if (isSupabaseConfigured) {
       await signOutAdmin();
     }
+    clearAdminSessionData();
     setIsAuthenticated(false);
     localStorage.removeItem('infinity_bd_admin_auth');
     sessionStorage.removeItem('infinity_admin_user');
@@ -898,8 +902,16 @@ export const AdminPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={async () => {
-                    await syncWithSupabase();
-                    setToastMessage(isBn ? 'সফলভাবে ক্লাউড ডাটাবেস থেকে লোড করা হয়েছে।' : 'Pulled latest data from cloud database.');
+                    const res = await syncWithSupabase();
+                    if (res?.success) {
+                      setToastMessage(isBn ? 'সফলভাবে ক্লাউড ডাটাবেজ থেকে লোড করা হয়েছে।' : 'Pulled latest data from cloud database.');
+                    } else if (res?.partial) {
+                      setToastMessage(isBn
+                        ? `আংশিক লোড হয়েছে (${res.failedDatasets?.join(', ') || ''} লোড করা যায়নি)`
+                        : `Partially loaded (failed: ${res.failedDatasets?.join(', ') || ''})`);
+                    } else {
+                      setToastMessage(res?.error || (isBn ? 'ক্লাউড ডাটাবেজ থেকে লোড ব্যর্থ হয়েছে।' : 'Failed to pull cloud database.'));
+                    }
                   }}
                   disabled={isSyncing}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#006A4E] hover:bg-[#008562] text-xs text-white font-bold transition-all cursor-pointer"
@@ -926,13 +938,13 @@ export const AdminPage: React.FC = () => {
 
       {/* 2. Admin Workspace Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        {/* Branch Demo & Safety Notice Banner */}
+        {/* Browser Demo & Safety Notice Banner */}
         <div className="mb-5 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-start sm:items-center gap-3 text-xs text-amber-900">
           <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
           <p className="leading-relaxed font-medium">
             {isBn
-              ? 'বেশিরভাগ বিষয়বস্তু সম্পাদনা এখন শুধু এই ব্রাঞ্চে ডেমো অবস্থায় (ডাটাবেজে সংরক্ষিত নয়); দাতা অনুমোদন ও জরুরি অনুরোধের স্ট্যাটাস ডাটাবেজে সংরক্ষিত হয়।'
-              : 'Most content edits are in local demo mode on this branch (not saved to database); donor approvals and emergency request status are saved to the database.'}
+              ? 'বেশিরভাগ বিষয়বস্তু সম্পাদনা এখন শুধু এই ব্রাউজারে ডেমো অবস্থায় (ডাটাবেজে সংরক্ষিত নয়); দাতা অনুমোদন ও জরুরি অনুরোধের স্ট্যাটাস ডাটাবেজে সংরক্ষিত হয়।'
+              : 'Most content edits are in local demo mode in this browser (not saved to database); donor approvals and emergency request status are saved to the database.'}
           </p>
         </div>
         {/* Mobile Quick Section Selector */}
@@ -4275,8 +4287,16 @@ export const AdminPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={async () => {
-                          await syncWithSupabase();
-                          showToast(isBn ? 'রক্তদাতা ও ডাটাবেজ সফলভাবে রিফ্রেশ হয়েছে!' : 'Database and blood records refreshed!');
+                          const res = await syncWithSupabase();
+                          if (res?.success) {
+                            showToast(isBn ? 'রক্তদাতা ও ডাটাবেজ সফলভাবে রিফ্রেশ হয়েছে!' : 'Database and blood records refreshed!');
+                          } else if (res?.partial) {
+                            showToast(isBn
+                              ? `আংশিক রিফ্রেশ হয়েছে (${res.failedDatasets?.join(', ') || ''} লোড করা যায়নি)`
+                              : `Partially refreshed (failed: ${res.failedDatasets?.join(', ') || ''})`);
+                          } else {
+                            showToast(res?.error || (isBn ? 'রক্তদাতা লোড ব্যর্থ হয়েছে।' : 'Failed to load blood donors.'));
+                          }
                         }}
                         className="px-4 py-2.5 rounded-2xl bg-white border border-[#EAE3D9] hover:bg-[#FAF7F2] text-slate-700 font-bold text-xs shadow-warm-xs transition-all flex items-center gap-1.5 cursor-pointer"
                         title={isBn ? 'ডাটাবেজের সাথে সিঙ্ক ও রিফ্রেশ করুন' : 'Refresh & Sync from Database'}
@@ -6172,8 +6192,16 @@ export const AdminPage: React.FC = () => {
                       type="button"
                       disabled={isSyncing}
                       onClick={async () => {
-                        await syncWithSupabase();
-                        showToast(isBn ? 'ক্লাউড ডাটাবেজ থেকে সর্বশেষ তথ্য লোড করা হয়েছে।' : 'Pulled latest cloud data.');
+                        const res = await syncWithSupabase();
+                        if (res?.success) {
+                          showToast(isBn ? 'ক্লাউড ডাটাবেজ থেকে সর্বশেষ তথ্য লোড করা হয়েছে।' : 'Pulled latest cloud data.');
+                        } else if (res?.partial) {
+                          showToast(isBn
+                            ? `আংশিক লোড হয়েছে (${res.failedDatasets?.join(', ') || ''} লোড করা যায়নি)`
+                            : `Partially loaded (failed: ${res.failedDatasets?.join(', ') || ''})`);
+                        } else {
+                          showToast(res?.error || (isBn ? 'ক্লাউড ডাটাবেজ থেকে লোড ব্যর্থ হয়েছে।' : 'Failed to pull cloud database.'));
+                        }
                       }}
                       className="text-[#006A4E] font-bold hover:underline cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
                     >

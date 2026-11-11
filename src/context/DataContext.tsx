@@ -99,6 +99,14 @@ import { useGovernanceSlice } from './slices/useGovernanceSlice';
 import { useHumanitarianSlice } from './slices/useHumanitarianSlice';
 import { useSettingsSlice } from './slices/useSettingsSlice';
 
+export interface SyncResult {
+  success: boolean;
+  partial?: boolean;
+  message?: string;
+  failedDatasets?: string[];
+  error?: string;
+}
+
 export interface DataContextType {
   // Entities
   campaigns: Campaign[];
@@ -326,10 +334,11 @@ export interface DataContextType {
 
   // Global System Controls
   setPreviewMode: (enabled: boolean) => void;
-  syncWithSupabase: (forceAdmin?: boolean) => Promise<void>;
+  syncWithSupabase: (forceAdmin?: boolean) => Promise<SyncResult>;
   syncRouteData: (route: string) => Promise<void>;
-  loadAdminData: () => Promise<void>;
+  loadAdminData: () => Promise<SyncResult>;
   isAdminLoaded: boolean;
+  clearAdminSessionData: () => void;
   pushAllToSupabase: () => Promise<{ success: boolean; message: string }>;
   resetToDefaultData: () => void;
   exportDatabaseJSON: () => string;
@@ -358,6 +367,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [previewMode, setPreviewMode] = useState<boolean>(false);
   const isSyncInProgressRef = useRef<boolean>(false);
   const [isAdminLoaded, setIsAdminLoaded] = useState<boolean>(false);
+  const isAdminLoadedRef = useRef<boolean>(false);
 
   // Global audit logs state
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() =>
@@ -445,121 +455,367 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [blood, media, gov, hum, setSlice]);
 
-  // Load Admin Data
-  const loadAdminData = useCallback(async () => {
+  // Clear Admin Session Data from memory and reset admin state
+  const clearAdminSessionData = useCallback(() => {
+    blood.resetBloodDonationMemoryState();
+    hum.setVolunteers([]);
+    hum.setDonations([]);
+    setSlice.setMessages([]);
+    gov.setAdminProfiles([]);
+    setAuditLogs([]);
+    setIsAdminLoaded(false);
+    isAdminLoadedRef.current = false;
+  }, [blood, hum, setSlice, gov]);
+
+  // Root Auth State Change Listener to clear admin session data on sign out across tabs or token invalidation
+  useEffect(() => {
     if (!isSupabaseConfigured) return;
+    let unsubscribe: (() => void) | undefined;
+    getSupabase().then(client => {
+      if (!client) return;
+      const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT' || !session) {
+          clearAdminSessionData();
+        }
+      });
+      unsubscribe = () => subscription.unsubscribe();
+    });
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [clearAdminSessionData]);
+
+  // Load Admin Data
+  const loadAdminData = useCallback(async (): Promise<SyncResult> => {
+    if (!isSupabaseConfigured) return { success: false, error: 'Database not configured' };
     const supabase = await getSupabase();
-    if (!supabase) return;
+    if (!supabase) return { success: false, error: 'Supabase client unavailable' };
+
+    const failedDatasets: string[] = [];
+
     try {
-      const { data: volData } = await supabase.from('volunteer_applications').select('*').order('submitted_at', { ascending: false });
-      if (volData && Array.isArray(volData)) {
-        hum.setVolunteers(volData.map(v => ({
-          id: v.id,
-          fullName: v.full_name,
-          email: v.email,
-          phone: v.phone,
-          district: v.district,
-          institution: v.institution || '',
-          occupation: v.occupation || '',
-          bloodGroup: v.blood_group || '',
-          skills: v.skills || [],
-          preferredAreas: v.preferred_areas || [],
-          availability: v.availability || '',
-          message: v.message || '',
-          agreedCodeOfConduct: v.agreed_code_of_conduct ?? true,
-          status: v.status || 'New',
-          adminNotes: v.admin_notes || '',
-          submittedAt: v.submitted_at
-        })));
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData?.session;
+      const hasAdminSession = Boolean(session?.user?.email);
+
+      // 1. Blood Donors & Emergency Requests (Base Table in Admin Session, View Fallback otherwise)
+      if (hasAdminSession) {
+        try {
+          const { data: bData, error: bError } = await supabase
+            .from('blood_donors')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (bError) {
+            console.warn('Admin blood_donors read error:', bError.message);
+            failedDatasets.push('blood_donors');
+          } else if (bData && Array.isArray(bData)) {
+            const legacyMockIds = new Set(['donor-1', 'donor-2', 'donor-3', 'donor-4', 'donor-5', 'donor-6', 'donor-7', 'donor-8', 'donor-9', 'donor-10']);
+            const remoteDonors: BloodDonor[] = bData
+              .filter(d => !legacyMockIds.has(d.id))
+              .map(d => cleanBloodDonor({
+                id: d.id,
+                fullName: d.full_name,
+                bloodGroup: d.blood_group,
+                gender: d.gender || 'Male',
+                dateOfBirth: d.date_of_birth || d.dob,
+                dob: d.date_of_birth || d.dob,
+                phone: d.phone || '',
+                email: d.email || undefined,
+                photoUrl: getFreshImageUrl(d.photo_url),
+                district: d.district,
+                upazila: d.upazila,
+                area: d.area,
+                orgCategory: (d.org_category === 'Executive Committee' || d.org_category === 'Standing Committee' || d.org_category === 'Infinity Bangladesh Volunteer')
+                  ? 'Infinity Bangladesh Member'
+                  : (d.org_category || 'Open Voluntary Blood Donor'),
+                committeePosition: d.committee_position || ((d.org_category === 'Executive Committee' || d.org_category === 'Standing Committee') ? d.org_category : undefined),
+                availabilityStatus: d.availability_status || 'AVAILABLE_EMERGENCY',
+                lastDonationDate: d.last_donation_date || undefined,
+                totalDonations: Number(d.total_donations) || 0,
+                experienceNotes: d.experience_notes,
+                privacyConsent: d.privacy_consent ?? true,
+                showPhonePublicly: Boolean(d.show_phone_publicly),
+                approvalStatus: d.approval_status || 'PENDING',
+                isVerified: d.is_verified !== undefined && d.is_verified !== null ? Boolean(d.is_verified) : true,
+                donationHistory: Array.isArray(d.blood_donation_history) ? d.blood_donation_history.map((h: any) => ({
+                  id: h.id,
+                  donorId: h.donor_id,
+                  donationDate: h.donation_date,
+                  patientName: h.patient_name,
+                  hospitalName: h.hospital_name,
+                  location: h.location,
+                  notes: h.notes,
+                  recordedAt: h.created_at || h.recorded_at
+                })) : [],
+                createdAt: d.created_at,
+                updatedAt: d.updated_at
+              }));
+
+            blood.setBloodDonors(prevLocal => {
+              const remoteIds = new Set(remoteDonors.map(r => r.id));
+              const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+              const merged = [...remoteDonors, ...localOnly];
+              saveToStorage('bloodDonors', merged);
+              return merged;
+            });
+          }
+        } catch (err) {
+          console.warn('Admin blood_donors exception:', err);
+          failedDatasets.push('blood_donors');
+        }
+
+        try {
+          const { data: emgData, error: emgError } = await supabase
+            .from('emergency_blood_requests')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (emgError) {
+            console.warn('Admin emergency_blood_requests read error:', emgError.message);
+            failedDatasets.push('emergency_blood_requests');
+          } else if (emgData && Array.isArray(emgData)) {
+            const remoteRequests: EmergencyBloodRequest[] = emgData.map(r => cleanEmergencyRequest({
+              id: r.id,
+              requesterName: r.requester_name || 'Coordinator Desk',
+              contactNumber: r.contact_number || r.coordinator_contact || '',
+              patientName: r.patient_name || r.patient_label || 'Emergency Patient',
+              bloodGroup: r.blood_group,
+              unitsNeeded: Number(r.units_needed) || 1,
+              hospitalName: r.hospital_name,
+              district: r.district,
+              upazila: r.upazila,
+              emergencyLevel: r.emergency_level || 'URGENT',
+              requiredDate: r.required_date,
+              additionalNotes: r.additional_notes,
+              status: r.status || 'PENDING',
+              matchedDonorIds: Array.isArray(r.matched_donor_ids) ? r.matched_donor_ids : [],
+              createdAt: r.created_at,
+              updatedAt: r.updated_at
+            }));
+
+            blood.setEmergencyBloodRequests(prevLocal => {
+              const remoteIds = new Set(remoteRequests.map(r => r.id));
+              const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+              const merged = [...remoteRequests, ...localOnly];
+              saveToStorage('emergencyRequests', merged);
+              return merged;
+            });
+          }
+        } catch (err) {
+          console.warn('Admin emergency_blood_requests exception:', err);
+          failedDatasets.push('emergency_blood_requests');
+        }
+      } else {
+        // Fallback: Read public views when no admin session exists
+        try {
+          const { data: bData } = await supabase.from('public_blood_donors').select('*');
+          if (bData && Array.isArray(bData)) {
+            const legacyMockIds = new Set(['donor-1', 'donor-2', 'donor-3', 'donor-4', 'donor-5', 'donor-6', 'donor-7', 'donor-8', 'donor-9', 'donor-10']);
+            const remoteDonors = bData.filter(d => !legacyMockIds.has(d.id)).map(d => cleanBloodDonor({
+              id: d.id,
+              fullName: d.full_name,
+              bloodGroup: d.blood_group,
+              gender: d.gender || 'Male',
+              dateOfBirth: d.date_of_birth || d.dob,
+              dob: d.date_of_birth || d.dob,
+              phone: d.phone || '',
+              email: d.email || undefined,
+              photoUrl: getFreshImageUrl(d.photo_url),
+              district: d.district,
+              upazila: d.upazila,
+              area: d.area,
+              orgCategory: (d.org_category === 'Executive Committee' || d.org_category === 'Standing Committee' || d.org_category === 'Infinity Bangladesh Volunteer')
+                ? 'Infinity Bangladesh Member'
+                : (d.org_category || 'Open Voluntary Blood Donor'),
+              committeePosition: d.committee_position,
+              availabilityStatus: d.availability_status || 'AVAILABLE_EMERGENCY',
+              lastDonationDate: d.last_donation_date || undefined,
+              totalDonations: Number(d.total_donations) || 0,
+              experienceNotes: d.experience_notes,
+              privacyConsent: d.privacy_consent ?? true,
+              showPhonePublicly: Boolean(d.show_phone_publicly),
+              approvalStatus: d.approval_status || 'APPROVED',
+              isVerified: d.is_verified !== undefined && d.is_verified !== null ? Boolean(d.is_verified) : true,
+              createdAt: d.created_at,
+              updatedAt: d.updated_at
+            }));
+            blood.setBloodDonors(prevLocal => {
+              const remoteIds = new Set(remoteDonors.map(r => r.id));
+              const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+              const merged = [...remoteDonors, ...localOnly];
+              saveToStorage('bloodDonors', merged);
+              return merged;
+            });
+          }
+        } catch {}
+        failedDatasets.push('blood_donors (সক্রিয় অ্যাডমিন সেশন নেই)');
       }
 
-      const { data: donData } = await supabase.from('donation_records').select('*').order('donated_at', { ascending: false });
-      if (donData && Array.isArray(donData)) {
-        hum.setDonations(donData.map(d => ({
-          id: d.id,
-          receiptNumber: d.receipt_number || d.id,
-          donorName: d.donor_name,
-          donorEmail: d.donor_email || '',
-          donorPhone: d.donor_phone || '',
-          amountBDT: Number(d.amount_bdt) || 0,
-          campaignSlug: d.campaign_slug || '',
-          campaignTitle: d.campaign_title || '',
-          donationType: d.donation_type || 'one-time',
-          paymentMethod: d.payment_method || 'bKash',
-          transactionId: d.transaction_id || '',
-          status: d.status || 'Successful',
-          isAnonymous: d.is_anonymous ?? false,
-          notes: d.notes || '',
-          date: d.donated_at
-        })));
+      // 2. Volunteers
+      try {
+        const { data: volData, error: volErr } = await supabase.from('volunteer_applications').select('*').order('submitted_at', { ascending: false });
+        if (volErr) {
+          failedDatasets.push('volunteer_applications');
+        } else if (volData && Array.isArray(volData)) {
+          hum.setVolunteers(volData.map(v => ({
+            id: v.id,
+            fullName: v.full_name,
+            email: v.email,
+            phone: v.phone,
+            district: v.district,
+            institution: v.institution || '',
+            occupation: v.occupation || '',
+            bloodGroup: v.blood_group || '',
+            skills: v.skills || [],
+            preferredAreas: v.preferred_areas || [],
+            availability: v.availability || '',
+            message: v.message || '',
+            agreedCodeOfConduct: v.agreed_code_of_conduct ?? true,
+            status: v.status || 'New',
+            adminNotes: v.admin_notes || '',
+            submittedAt: v.submitted_at
+          })));
+        }
+      } catch {
+        failedDatasets.push('volunteer_applications');
       }
 
-      const { data: msgData } = await supabase.from('contact_messages').select('*').order('submitted_at', { ascending: false });
-      if (msgData && Array.isArray(msgData)) {
-        setSlice.setMessages(msgData.map(m => ({
-          id: m.id,
-          name: m.name,
-          email: m.email,
-          phone: m.phone || '',
-          subject: m.subject || '',
-          message: m.message || '',
-          status: m.status || 'Unread',
-          submittedAt: m.submitted_at
-        })));
+      // 3. Donations
+      try {
+        const { data: donData, error: donErr } = await supabase.from('donation_records').select('*').order('donated_at', { ascending: false });
+        if (donErr) {
+          failedDatasets.push('donation_records');
+        } else if (donData && Array.isArray(donData)) {
+          hum.setDonations(donData.map(d => ({
+            id: d.id,
+            receiptNumber: d.receipt_number || d.id,
+            donorName: d.donor_name,
+            donorEmail: d.donor_email || '',
+            donorPhone: d.donor_phone || '',
+            amountBDT: Number(d.amount_bdt) || 0,
+            campaignSlug: d.campaign_slug || '',
+            campaignTitle: d.campaign_title || '',
+            donationType: d.donation_type || 'one-time',
+            paymentMethod: d.payment_method || 'bKash',
+            transactionId: d.transaction_id || '',
+            status: d.status || 'Successful',
+            isAnonymous: d.is_anonymous ?? false,
+            notes: d.notes || '',
+            date: d.donated_at
+          })));
+        }
+      } catch {
+        failedDatasets.push('donation_records');
       }
 
-      const { data: admData } = await supabase.from('admin_profiles').select('*').order('created_at', { ascending: false });
-      if (admData && Array.isArray(admData)) {
-        gov.setAdminProfiles(admData.map(a => ({
-          id: a.id,
-          email: a.email,
-          fullName: a.full_name,
-          role: a.role || 'super_admin',
-          avatarUrl: getFreshImageUrl(a.avatar_url),
-          isActive: a.is_active ?? true,
-          lastLoginAt: a.last_login_at,
-          createdAt: a.created_at
-        })));
-      }
-
-      const { data: logData } = await supabase.from('audit_logs').select('*').order('timestamp', { ascending: false }).limit(100);
-      if (logData && Array.isArray(logData)) {
-        setAuditLogs(logData.map(l => ({
-          id: l.id,
-          user: l.user_email || 'Admin',
-          userEmail: l.user_email,
-          action: l.action,
-          entity: l.entity,
-          entityId: l.entity_id,
-          details: l.details,
-          timestamp: l.timestamp
-        })));
-      }
-
-      const { data: medData } = await supabase.from('media_library').select('*').order('uploaded_at', { ascending: false });
-      if (medData && Array.isArray(medData)) {
-        media.setMediaLibrary(medData
-          .filter(m => !isBlacklistedMedia(m.id, m.url))
-          .map(m => ({
+      // 4. Contact messages
+      try {
+        const { data: msgData, error: msgErr } = await supabase.from('contact_messages').select('*').order('submitted_at', { ascending: false });
+        if (msgErr) {
+          failedDatasets.push('contact_messages');
+        } else if (msgData && Array.isArray(msgData)) {
+          setSlice.setMessages(msgData.map(m => ({
             id: m.id,
-            fileName: m.file_name,
-            url: getFreshImageUrl(m.url),
-            fileSize: m.file_size || '0 KB',
-            mimeType: m.mime_type || 'image/jpeg',
-            category: m.category || 'General',
-            altText: m.alt_text || '',
-            caption: m.caption || '',
-            usageTags: m.usage_tags || [],
-            uploadedAt: m.uploaded_at
-          }))
-        );
+            name: m.name,
+            email: m.email,
+            phone: m.phone || '',
+            subject: m.subject || '',
+            message: m.message || '',
+            status: m.status || 'Unread',
+            submittedAt: m.submitted_at
+          })));
+        }
+      } catch {
+        failedDatasets.push('contact_messages');
+      }
+
+      // 5. Admin profiles
+      try {
+        const { data: admData, error: admErr } = await supabase.from('admin_profiles').select('*').order('created_at', { ascending: false });
+        if (admErr) {
+          failedDatasets.push('admin_profiles');
+        } else if (admData && Array.isArray(admData)) {
+          gov.setAdminProfiles(admData.map(a => ({
+            id: a.id,
+            email: a.email,
+            fullName: a.full_name,
+            role: a.role || 'super_admin',
+            avatarUrl: getFreshImageUrl(a.avatar_url),
+            isActive: a.is_active ?? true,
+            lastLoginAt: a.last_login_at,
+            createdAt: a.created_at
+          })));
+        }
+      } catch {
+        failedDatasets.push('admin_profiles');
+      }
+
+      // 6. Audit logs
+      try {
+        const { data: logData, error: logErr } = await supabase.from('audit_logs').select('*').order('timestamp', { ascending: false }).limit(100);
+        if (logErr) {
+          failedDatasets.push('audit_logs');
+        } else if (logData && Array.isArray(logData)) {
+          setAuditLogs(logData.map(l => ({
+            id: l.id,
+            user: l.user_email || 'Admin',
+            userEmail: l.user_email,
+            action: l.action,
+            entity: l.entity,
+            entityId: l.entity_id,
+            details: l.details,
+            timestamp: l.timestamp
+          })));
+        }
+      } catch {
+        failedDatasets.push('audit_logs');
+      }
+
+      // 7. Media library
+      try {
+        const { data: medData, error: medErr } = await supabase.from('media_library').select('*').order('uploaded_at', { ascending: false });
+        if (medErr) {
+          failedDatasets.push('media_library');
+        } else if (medData && Array.isArray(medData)) {
+          media.setMediaLibrary(medData
+            .filter(m => !isBlacklistedMedia(m.id, m.url))
+            .map(m => ({
+              id: m.id,
+              fileName: m.file_name,
+              url: getFreshImageUrl(m.url),
+              fileSize: m.file_size || '0 KB',
+              mimeType: m.mime_type || 'image/jpeg',
+              category: m.category || 'General',
+              altText: m.alt_text || '',
+              caption: m.caption || '',
+              usageTags: m.usage_tags || [],
+              uploadedAt: m.uploaded_at
+            }))
+          );
+        }
+      } catch {
+        failedDatasets.push('media_library');
       }
 
       setIsAdminLoaded(true);
-    } catch (err) {
+      isAdminLoadedRef.current = true;
+
+      if (failedDatasets.length === 0) {
+        return { success: true, message: 'All admin data loaded successfully.' };
+      } else {
+        return {
+          success: false,
+          partial: failedDatasets.length < 8,
+          failedDatasets,
+          error: `পেন্ডিং দাতা বা কিছু তালিকা লোড করা যায়নি: ${failedDatasets.join(', ')}`
+        };
+      }
+    } catch (err: any) {
       console.warn('Admin dataset sync notice:', err);
+      return { success: false, error: err?.message || 'Admin dataset sync failed' };
     }
-  }, [hum, setSlice, gov, media]);
+  }, [blood, hum, setSlice, gov, media]);
 
   // Shared lightweight deep comparison to avoid unnecessary React re-renders and storage writes
   const isDeepEqual = useCallback((a: any, b: any): boolean => {
@@ -843,6 +1099,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Route-Specific On-Demand REST Syncers (Zero SDK, native fetch + deep compare + local storage)
   const syncBloodData = useCallback(async () => {
     if (!isSupabaseConfigured) return;
+    // Guard: If admin data is active and session is verified, do NOT overwrite admin memory with public view
+    if (isAdminLoadedRef.current) {
+      const supabase = await getSupabase();
+      const { data: sessionData } = await supabase?.auth.getSession() || {};
+      if (sessionData?.session?.user?.email) {
+        return;
+      }
+    }
     try {
       const [donorsRes, requestsRes] = await Promise.allSettled([
         fetchSupabaseRest<any[]>('public_blood_donors', 'select=*'),
@@ -1243,13 +1507,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [syncBloodData, syncGovernanceData, syncGalleryData, syncPartnersData, syncNewsAndEventsData]);
 
   // Supabase Fetch & Sync implementation
-  const syncWithSupabase = useCallback(async () => {
-    if (!isSupabaseConfigured) return;
+  const syncWithSupabase = useCallback(async (_forceAdmin?: boolean): Promise<SyncResult> => {
+    if (!isSupabaseConfigured) return { success: false, error: 'Database not configured' };
     const supabase = await getSupabase();
-    if (!supabase) return;
+    if (!supabase) return { success: false, error: 'Supabase client unavailable' };
 
     try {
       setIsSyncing(true);
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const hasAdminSession = Boolean(sessionData?.session?.user?.email);
 
       // 1. Site Settings
       const { data: siteData } = await supabase.from('site_settings').select('*').single();
@@ -1724,107 +1991,111 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       }
 
-      // 20. Blood Donors
-      try {
-        // In Phase 1.1: Public blood reads must strictly query public_blood_donors view only.
-        const query = supabase.from('public_blood_donors').select('*');
+      // 20. Blood Donors (Public view query only when NOT in admin session)
+      if (!hasAdminSession) {
+        try {
+          // In Phase 1.1: Public blood reads must strictly query public_blood_donors view only.
+          const query = supabase.from('public_blood_donors').select('*');
 
-        const { data: bData, error: bError } = await query;
-        if (bError) {
-          if (import.meta.env.DEV) console.warn('Public blood donors view read notice (fail closed):', bError.message);
-        } else if (bData && Array.isArray(bData)) {
-          const legacyMockIds = new Set(['donor-1', 'donor-2', 'donor-3', 'donor-4', 'donor-5', 'donor-6', 'donor-7', 'donor-8', 'donor-9', 'donor-10']);
-          const remoteDonors: BloodDonor[] = bData
-            .filter(d => !legacyMockIds.has(d.id))
-            .map(d => ({
-              id: d.id,
-              fullName: d.full_name,
-              bloodGroup: d.blood_group,
-              gender: d.gender || 'Male',
-              dateOfBirth: d.date_of_birth || d.dob,
-              dob: d.date_of_birth || d.dob,
-              phone: d.phone || '',
-              email: d.email || undefined,
-              photoUrl: getFreshImageUrl(d.photo_url),
-              district: d.district,
-              upazila: d.upazila,
-              area: d.area,
-              orgCategory: (d.org_category === 'Executive Committee' || d.org_category === 'Standing Committee' || d.org_category === 'Infinity Bangladesh Volunteer')
-                ? 'Infinity Bangladesh Member'
-                : (d.org_category || 'Open Voluntary Blood Donor'),
-              committeePosition: d.committee_position || ((d.org_category === 'Executive Committee' || d.org_category === 'Standing Committee') ? d.org_category : undefined),
-              availabilityStatus: d.availability_status || 'AVAILABLE_EMERGENCY',
-              lastDonationDate: d.last_donation_date || undefined,
-              totalDonations: Number(d.total_donations) || 0,
-              experienceNotes: d.experience_notes,
-              privacyConsent: d.privacy_consent ?? true,
-              showPhonePublicly: Boolean(d.show_phone_publicly),
-              approvalStatus: d.approval_status || 'APPROVED',
-              isVerified: d.is_verified !== undefined && d.is_verified !== null ? Boolean(d.is_verified) : true,
-              donationHistory: Array.isArray(d.blood_donation_history) ? d.blood_donation_history.map((h: any) => ({
-                id: h.id,
-                donorId: h.donor_id,
-                donationDate: h.donation_date,
-                patientName: h.patient_name,
-                hospitalName: h.hospital_name,
-                location: h.location,
-                notes: h.notes,
-                recordedAt: h.created_at || h.recorded_at
-              })) : [],
-              createdAt: d.created_at,
-              updatedAt: d.updated_at
-            }));
+          const { data: bData, error: bError } = await query;
+          if (bError) {
+            if (import.meta.env.DEV) console.warn('Public blood donors view read notice (fail closed):', bError.message);
+          } else if (bData && Array.isArray(bData)) {
+            const legacyMockIds = new Set(['donor-1', 'donor-2', 'donor-3', 'donor-4', 'donor-5', 'donor-6', 'donor-7', 'donor-8', 'donor-9', 'donor-10']);
+            const remoteDonors: BloodDonor[] = bData
+              .filter(d => !legacyMockIds.has(d.id))
+              .map(d => ({
+                id: d.id,
+                fullName: d.full_name,
+                bloodGroup: d.blood_group,
+                gender: d.gender || 'Male',
+                dateOfBirth: d.date_of_birth || d.dob,
+                dob: d.date_of_birth || d.dob,
+                phone: d.phone || '',
+                email: d.email || undefined,
+                photoUrl: getFreshImageUrl(d.photo_url),
+                district: d.district,
+                upazila: d.upazila,
+                area: d.area,
+                orgCategory: (d.org_category === 'Executive Committee' || d.org_category === 'Standing Committee' || d.org_category === 'Infinity Bangladesh Volunteer')
+                  ? 'Infinity Bangladesh Member'
+                  : (d.org_category || 'Open Voluntary Blood Donor'),
+                committeePosition: d.committee_position || ((d.org_category === 'Executive Committee' || d.org_category === 'Standing Committee') ? d.org_category : undefined),
+                availabilityStatus: d.availability_status || 'AVAILABLE_EMERGENCY',
+                lastDonationDate: d.last_donation_date || undefined,
+                totalDonations: Number(d.total_donations) || 0,
+                experienceNotes: d.experience_notes,
+                privacyConsent: d.privacy_consent ?? true,
+                showPhonePublicly: Boolean(d.show_phone_publicly),
+                approvalStatus: d.approval_status || 'APPROVED',
+                isVerified: d.is_verified !== undefined && d.is_verified !== null ? Boolean(d.is_verified) : true,
+                donationHistory: Array.isArray(d.blood_donation_history) ? d.blood_donation_history.map((h: any) => ({
+                  id: h.id,
+                  donorId: h.donor_id,
+                  donationDate: h.donation_date,
+                  patientName: h.patient_name,
+                  hospitalName: h.hospital_name,
+                  location: h.location,
+                  notes: h.notes,
+                  recordedAt: h.created_at || h.recorded_at
+                })) : [],
+                createdAt: d.created_at,
+                updatedAt: d.updated_at
+              }));
 
-          blood.setBloodDonors(prevLocal => {
-            const remoteIds = new Set(remoteDonors.map(r => r.id));
-            const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
-            const merged = [...remoteDonors, ...localOnly];
-            saveToStorage('bloodDonors', merged);
-            return merged;
-          });
+            blood.setBloodDonors(prevLocal => {
+              const remoteIds = new Set(remoteDonors.map(r => r.id));
+              const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+              const merged = [...remoteDonors, ...localOnly];
+              saveToStorage('bloodDonors', merged);
+              return merged;
+            });
+          }
+        } catch (err: any) {
+          if (import.meta.env.DEV) console.warn('Supabase blood_donors sync notice:', err.message);
         }
-      } catch (err: any) {
-        if (import.meta.env.DEV) console.warn('Supabase blood_donors sync notice:', err.message);
       }
 
-      // 21. Emergency Blood Requests
-      try {
-        // In Phase 1.1: Public emergency reads must strictly query public_emergency_requests view only.
-        const query = supabase.from('public_emergency_requests').select('*');
+      // 21. Emergency Blood Requests (Public view query only when NOT in admin session)
+      if (!hasAdminSession) {
+        try {
+          // In Phase 1.1: Public emergency reads must strictly query public_emergency_requests view only.
+          const query = supabase.from('public_emergency_requests').select('*');
 
-        const { data: emgData, error: emgError } = await query;
-        if (emgError) {
-          if (import.meta.env.DEV) console.warn('Public emergency requests view read notice (fail closed):', emgError.message);
-        } else if (emgData && Array.isArray(emgData)) {
-          const remoteRequests: EmergencyBloodRequest[] = emgData.map(r => cleanEmergencyRequest({
-            id: r.id,
-            requesterName: r.requester_name || 'Coordinator Desk',
-            contactNumber: r.coordinator_contact || r.contact_number || '',
-            patientName: r.patient_label || r.patient_name || 'Emergency Patient',
-            bloodGroup: r.blood_group,
-            unitsNeeded: Number(r.units_needed) || 1,
-            hospitalName: r.hospital_name,
-            district: r.district,
-            upazila: r.upazila,
-            emergencyLevel: r.emergency_level || 'URGENT',
-            requiredDate: r.required_date,
-            additionalNotes: r.additional_notes,
-            status: r.status || 'PENDING',
-            matchedDonorIds: Array.isArray(r.matched_donor_ids) ? r.matched_donor_ids : [],
-            createdAt: r.created_at,
-            updatedAt: r.updated_at
-          }));
+          const { data: emgData, error: emgError } = await query;
+          if (emgError) {
+            if (import.meta.env.DEV) console.warn('Public emergency requests view read notice (fail closed):', emgError.message);
+          } else if (emgData && Array.isArray(emgData)) {
+            const remoteRequests: EmergencyBloodRequest[] = emgData.map(r => cleanEmergencyRequest({
+              id: r.id,
+              requesterName: r.requester_name || 'Coordinator Desk',
+              contactNumber: r.coordinator_contact || r.contact_number || '',
+              patientName: r.patient_label || r.patient_name || 'Emergency Patient',
+              bloodGroup: r.blood_group,
+              unitsNeeded: Number(r.units_needed) || 1,
+              hospitalName: r.hospital_name,
+              district: r.district,
+              upazila: r.upazila,
+              emergencyLevel: r.emergency_level || 'URGENT',
+              requiredDate: r.required_date,
+              additionalNotes: r.additional_notes,
+              status: r.status || 'PENDING',
+              matchedDonorIds: Array.isArray(r.matched_donor_ids) ? r.matched_donor_ids : [],
+              createdAt: r.created_at,
+              updatedAt: r.updated_at
+            }));
 
-          blood.setEmergencyBloodRequests(prevLocal => {
-            const remoteIds = new Set(remoteRequests.map(r => r.id));
-            const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
-            const merged = [...remoteRequests, ...localOnly];
-            saveToStorage('emergencyRequests', merged);
-            return merged;
-          });
+            blood.setEmergencyBloodRequests(prevLocal => {
+              const remoteIds = new Set(remoteRequests.map(r => r.id));
+              const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
+              const merged = [...remoteRequests, ...localOnly];
+              saveToStorage('emergencyRequests', merged);
+              return merged;
+            });
+          }
+        } catch (err: any) {
+          if (import.meta.env.DEV) console.warn('Supabase emergency requests sync notice:', err.message);
         }
-      } catch (err: any) {
-        if (import.meta.env.DEV) console.warn('Supabase emergency requests sync notice:', err.message);
       }
 
       // 22. Blood Donation Settings
@@ -1876,14 +2147,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setLastSyncedAt(new Date());
 
-      const isAdminContext = typeof window !== 'undefined' && (
-        localStorage.getItem('infinity_bd_admin_auth') === 'true'
-      );
-      if (isAdminContext) {
-        loadAdminData();
+      let syncResult: SyncResult = { success: true, message: 'All datasets synchronized successfully.' };
+      if (hasAdminSession) {
+        syncResult = await loadAdminData();
       }
-    } catch (err) {
+      return syncResult;
+    } catch (err: any) {
       console.error('Supabase sync exception:', err);
+      return { success: false, error: err?.message || 'Sync failed' };
     } finally {
       setIsSyncing(false);
     }
@@ -2317,6 +2588,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     syncRouteData,
     loadAdminData,
     isAdminLoaded,
+    clearAdminSessionData,
     pushAllToSupabase,
     resetToDefaultData,
     exportDatabaseJSON,
