@@ -25,6 +25,135 @@ export type AdminMutationTable =
   | 'blood_donors'
   | 'emergency_blood_requests';
 
+export type CmsAllowedTable =
+  | 'site_settings'
+  | 'homepage_config'
+  | 'programs'
+  | 'campaigns';
+
+export const ADMIN_CMS_MUTATION_GATES: Record<CmsAllowedTable, 'ACTIVE' | 'BLOCKED'> = Object.freeze({
+  site_settings: 'ACTIVE',
+  homepage_config: 'ACTIVE',
+  programs: 'ACTIVE',
+  campaigns: 'ACTIVE'
+});
+
+export const CMS_FORBIDDEN_TABLES = Object.freeze(new Set([
+  'blood_donors',
+  'emergency_blood_requests',
+  'volunteer_applications',
+  'contact_messages',
+  'donation_records',
+  'admin_profiles',
+  'audit_logs'
+]));
+
+/**
+ * Live Database information_schema Column Allowlists for Phase 1 CMS tables
+ * Strictly matches verified PostgreSQL table columns.
+ */
+export const CMS_TABLE_ALLOWLISTS: Record<CmsAllowedTable, readonly string[]> = Object.freeze({
+  site_settings: Object.freeze([
+    'id',
+    'organization_name',
+    'team_identity',
+    'tagline',
+    'country',
+    'official_address',
+    'official_phone',
+    'official_email',
+    'established_year',
+    'logo_url',
+    'favicon_url',
+    'bkash_number',
+    'nagad_number',
+    'bank_details',
+    'banner_announcement',
+    'show_announcement_banner',
+    'maintenance_mode',
+    'default_language',
+    'registration_info',
+    'created_at',
+    'updated_at'
+  ]),
+  homepage_config: Object.freeze([
+    'id',
+    'hero',
+    'about_preview',
+    'volunteer_banner',
+    'support_banner',
+    'section_order',
+    'section_visibility',
+    'updated_at'
+  ]),
+  programs: Object.freeze([
+    'id',
+    'slug',
+    'title',
+    'category',
+    'short_description',
+    'full_details',
+    'impact_highlights',
+    'image_url',
+    'icon_name',
+    'status',
+    'display_order',
+    'created_at',
+    'updated_at'
+  ]),
+  campaigns: Object.freeze([
+    'id',
+    'slug',
+    'title',
+    'date',
+    'end_date',
+    'location',
+    'category',
+    'description',
+    'details',
+    'objectives',
+    'activities',
+    'beneficiaries',
+    'beneficiaries_count',
+    'volunteers_count',
+    'impact',
+    'status',
+    'is_featured',
+    'target_amount_bdt',
+    'raised_amount_bdt',
+    'image_url',
+    'gallery_images',
+    'video_url',
+    'report_url',
+    'display_order',
+    'created_at',
+    'updated_at'
+  ])
+});
+
+/**
+ * Sensitive financial & official contact fields requiring explicit admin confirmation
+ */
+export const CMS_SENSITIVE_FIELDS: Record<string, readonly string[]> = Object.freeze({
+  site_settings: Object.freeze([
+    'bkash_number',
+    'nagad_number',
+    'bank_details',
+    'official_phone',
+    'official_email'
+  ])
+});
+
+export type AdminCmsMutationResult<T = { id: string }> =
+  | { success: true; status: 'SUCCESS'; id: string; data?: T; count: number; changedSensitiveFields?: string[] }
+  | { success: false; status: 'AUTH_REQUIRED'; error: string; code?: string }
+  | { success: false; status: 'FEATURE_DISABLED'; error: string; code?: string }
+  | { success: false; status: 'VALIDATION_FAILED'; error: string; code?: string }
+  | { success: false; status: 'CONFLICT'; error: string; code: 'CONFLICT'; currentUpdatedAt?: string }
+  | { success: false; status: 'PERMISSION_DENIED_OR_NOT_FOUND'; error: string; code: 'PERMISSION_DENIED_OR_NOT_FOUND' }
+  | { success: false; status: 'DATABASE_ERROR'; error: string; code?: string }
+  | { success: false; status: 'ONLINE_REQUIRED'; error: string; code?: string };
+
 export type AdminUpdateResult<T = { id: string }> =
   | { success: true; status: 'SUCCESS'; id: string; data?: T; count: number; error?: string }
   | { success: false; status: 'AUTH_REQUIRED'; error: string; count?: number }
@@ -515,7 +644,511 @@ export async function safeDbAdminUpdate(
 }
 
 /**
- * 8. Existing Authenticated Admin Operations (safeDbUpsert & safeDbDelete)
+ * 8. Guarded Authenticated Admin CMS Primitives (Phase 1)
+ * Enforces ADMIN_CMS_MUTATION_GATES, live schema allowlists, session verification,
+ * secret scanning, 1-row verification, and atomic conditional concurrency protection.
+ */
+
+/**
+ * Creates a new CMS record (strictly for programs and campaigns; forbidden on single-row tables)
+ */
+export async function safeDbAdminCreate<T = { id: string }>(
+  tableName: CmsAllowedTable | string,
+  payload: Record<string, any>
+): Promise<AdminCmsMutationResult<T>> {
+  // 1. Forbidden & unwhitelisted table check
+  if (CMS_FORBIDDEN_TABLES.has(tableName)) {
+    return {
+      success: false,
+      status: 'FEATURE_DISABLED',
+      error: `Table '${tableName}' is strictly forbidden from CMS mutations.`
+    };
+  }
+
+  const gateStatus = (ADMIN_CMS_MUTATION_GATES as Record<string, string>)[tableName];
+  if (gateStatus !== 'ACTIVE') {
+    return {
+      success: false,
+      status: 'FEATURE_DISABLED',
+      error: `Admin CMS mutation is locked or unwhitelisted for table '${tableName}'.`
+    };
+  }
+
+  // 2. Single-row table check: site_settings and homepage_config are single-row (id='default')
+  if (tableName === 'site_settings' || tableName === 'homepage_config') {
+    return {
+      success: false,
+      status: 'FEATURE_DISABLED',
+      error: `Creating new rows is forbidden on single-row configuration table '${tableName}'.`
+    };
+  }
+
+  if (!payload || typeof payload !== 'object') {
+    return {
+      success: false,
+      status: 'VALIDATION_FAILED',
+      error: 'Invalid payload provided for creation.'
+    };
+  }
+
+  // 3. Connectivity check
+  if (!_testClientOverride && !isSupabaseConfigured) {
+    return {
+      success: false,
+      status: 'ONLINE_REQUIRED',
+      error: 'Supabase credentials are not configured in environment.'
+    };
+  }
+
+  const client = _testClientOverride || (await getSupabase());
+  if (!client) {
+    return {
+      success: false,
+      status: 'DATABASE_ERROR',
+      error: 'Database client failed to initialize.'
+    };
+  }
+
+  // 4. Session check
+  try {
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session?.user?.email) {
+      return {
+        success: false,
+        status: 'AUTH_REQUIRED',
+        error: 'আপনার সক্রিয় অ্যাডমিন লগইন সেশন নেই, আবার সাইন ইন করুন / No active admin session. Please sign in again.'
+      };
+    }
+  } catch {
+    return {
+      success: false,
+      status: 'AUTH_REQUIRED',
+      error: 'আপনার সক্রিয় অ্যাডমিন লগইন সেশন নেই, আবার সাইন ইন করুন / No active admin session. Please sign in again.'
+    };
+  }
+
+  // 5. Secret scan
+  const secretScan = scanPayloadSecrets(payload);
+  if (!secretScan.safe) {
+    return {
+      success: false,
+      status: 'VALIDATION_FAILED',
+      error: secretScan.error || 'Unauthorized secrets detected in payload.'
+    };
+  }
+
+  // 6. Whitelist filtering
+  const allowlist = CMS_TABLE_ALLOWLISTS[tableName as CmsAllowedTable];
+  const sanitized: Record<string, any> = {};
+  for (const col of allowlist) {
+    if (col in payload && payload[col] !== undefined) {
+      sanitized[col] = payload[col];
+    }
+  }
+
+  if (!sanitized.id || typeof sanitized.id !== 'string' || !sanitized.id.trim()) {
+    sanitized.id = generateSecureId(tableName);
+  } else {
+    sanitized.id = sanitized.id.trim();
+  }
+
+  const now = new Date().toISOString();
+  if (allowlist.includes('created_at') && !sanitized.created_at) {
+    sanitized.created_at = now;
+  }
+  if (allowlist.includes('updated_at') && !sanitized.updated_at) {
+    sanitized.updated_at = now;
+  }
+
+  // 7. Insert with .select('id')
+  try {
+    const { data, error } = await client
+      .from(tableName)
+      .insert(sanitized)
+      .select('id');
+
+    if (error) {
+      if (import.meta.env?.DEV) console.warn(`Admin CMS insert error on ${tableName}:`, error.message);
+      return {
+        success: false,
+        status: 'DATABASE_ERROR',
+        error: error.message || 'Database error occurred during CMS insert.'
+      };
+    }
+
+    if (!data || data.length !== 1) {
+      return {
+        success: false,
+        status: 'PERMISSION_DENIED_OR_NOT_FOUND',
+        code: 'PERMISSION_DENIED_OR_NOT_FOUND',
+        error: 'রেকর্ড সন্নিবেশে কোনো সারি নিশ্চিত করা যায়নি / Failed to confirm inserted row.'
+      };
+    }
+
+    return {
+      success: true,
+      status: 'SUCCESS',
+      id: data[0].id,
+      data: data[0] as T,
+      count: data.length
+    };
+  } catch (networkErr: any) {
+    if (import.meta.env?.DEV) console.warn(`Network error during admin CMS insert on ${tableName}:`, networkErr.message);
+    return {
+      success: false,
+      status: 'DATABASE_ERROR',
+      error: networkErr.message || 'Network communication failure occurred while connecting to database.'
+    };
+  }
+}
+
+/**
+ * Updates a CMS record (site_settings, homepage_config, programs, campaigns)
+ * Enforces single-row constraint for config tables, strips id and created_at,
+ * tracks sensitive fields, and performs single-request atomic conditional concurrency check.
+ */
+export async function safeDbAdminCmsUpdate<T = { id: string }>(
+  tableName: CmsAllowedTable | string,
+  id: string,
+  updates: Record<string, any>,
+  expectedUpdatedAt?: string | null
+): Promise<AdminCmsMutationResult<T>> {
+  const cleanId = id?.trim();
+  if (!cleanId) {
+    return {
+      success: false,
+      status: 'VALIDATION_FAILED',
+      error: 'Invalid or missing record identifier.'
+    };
+  }
+
+  // 1. Forbidden & unwhitelisted table check
+  if (CMS_FORBIDDEN_TABLES.has(tableName)) {
+    return {
+      success: false,
+      status: 'FEATURE_DISABLED',
+      error: `Table '${tableName}' is strictly forbidden from CMS mutations.`
+    };
+  }
+
+  const gateStatus = (ADMIN_CMS_MUTATION_GATES as Record<string, string>)[tableName];
+  if (gateStatus !== 'ACTIVE') {
+    return {
+      success: false,
+      status: 'FEATURE_DISABLED',
+      error: `Admin CMS mutation is locked or unwhitelisted for table '${tableName}'.`
+    };
+  }
+
+  // 2. Single-row table check: site_settings and homepage_config only permit id='default'
+  if ((tableName === 'site_settings' || tableName === 'homepage_config') && cleanId !== 'default') {
+    return {
+      success: false,
+      status: 'VALIDATION_FAILED',
+      error: `Single-row configuration table '${tableName}' only permits updating id 'default'.`
+    };
+  }
+
+  if (!updates || typeof updates !== 'object') {
+    return {
+      success: false,
+      status: 'VALIDATION_FAILED',
+      error: 'Invalid updates payload provided.'
+    };
+  }
+
+  // 3. Connectivity check
+  if (!_testClientOverride && !isSupabaseConfigured) {
+    return {
+      success: false,
+      status: 'ONLINE_REQUIRED',
+      error: 'Supabase credentials are not configured in environment.'
+    };
+  }
+
+  const client = _testClientOverride || (await getSupabase());
+  if (!client) {
+    return {
+      success: false,
+      status: 'DATABASE_ERROR',
+      error: 'Database client failed to initialize.'
+    };
+  }
+
+  // 4. Session check
+  try {
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session?.user?.email) {
+      return {
+        success: false,
+        status: 'AUTH_REQUIRED',
+        error: 'আপনার সক্রিয় অ্যাডমিন লগইন সেশন নেই, আবার সাইন ইন করুন / No active admin session. Please sign in again.'
+      };
+    }
+  } catch {
+    return {
+      success: false,
+      status: 'AUTH_REQUIRED',
+      error: 'আপনার সক্রিয় অ্যাডমিন লগইন সেশন নেই, আবার সাইন ইন করুন / No active admin session. Please sign in again.'
+    };
+  }
+
+  // 5. Secret scan
+  const secretScan = scanPayloadSecrets(updates);
+  if (!secretScan.safe) {
+    return {
+      success: false,
+      status: 'VALIDATION_FAILED',
+      error: secretScan.error || 'Unauthorized secrets detected in payload.'
+    };
+  }
+
+  // 6. Whitelist filtering (never allow id or created_at in update payload)
+  const allowlist = CMS_TABLE_ALLOWLISTS[tableName as CmsAllowedTable];
+  const sanitized: Record<string, any> = {};
+  for (const col of allowlist) {
+    if (col === 'id' || col === 'created_at') continue; // strictly stripped from update
+    if (col in updates && updates[col] !== undefined) {
+      sanitized[col] = updates[col];
+    }
+  }
+
+  if (allowlist.includes('updated_at')) {
+    sanitized.updated_at = new Date().toISOString();
+  }
+
+  const sanitizedKeys = Object.keys(sanitized);
+  if (sanitizedKeys.length === 0 || (sanitizedKeys.length === 1 && sanitizedKeys[0] === 'updated_at')) {
+    return {
+      success: false,
+      status: 'VALIDATION_FAILED',
+      error: 'No allowable update fields provided for this admin operation.'
+    };
+  }
+
+  // 7. Track sensitive fields
+  const sensitiveList = CMS_SENSITIVE_FIELDS[tableName] || [];
+  const changedSensitiveFields: string[] = [];
+  for (const field of sensitiveList) {
+    if (field in sanitized) {
+      changedSensitiveFields.push(field);
+    }
+  }
+
+  // 8. Atomic conditional update
+  try {
+    let query = client.from(tableName).update(sanitized).eq('id', cleanId);
+    if (expectedUpdatedAt) {
+      query = query.eq('updated_at', expectedUpdatedAt);
+    }
+    const { data, error } = await query.select('id');
+
+    if (error) {
+      if (import.meta.env?.DEV) console.warn(`Admin CMS update error on ${tableName}:`, error.message);
+      return {
+        success: false,
+        status: 'DATABASE_ERROR',
+        error: error.message || 'Database error occurred during CMS update.'
+      };
+    }
+
+    if (!data || data.length === 0) {
+      if (expectedUpdatedAt) {
+        try {
+          const { data: existing, error: checkError } = await client
+            .from(tableName)
+            .select('id, updated_at')
+            .eq('id', cleanId)
+            .maybeSingle();
+
+          if (!checkError && existing) {
+            return {
+              success: false,
+              status: 'CONFLICT',
+              code: 'CONFLICT',
+              currentUpdatedAt: existing.updated_at,
+              error: 'ডাটাবেজে তথ্য ইতিমধ্যে অন্য সেশন থেকে পরিবর্তিত হয়েছে (Conflict: row updated_at mismatch).'
+            };
+          }
+        } catch {
+          // ignore counter-read failure
+        }
+      }
+
+      return {
+        success: false,
+        status: 'PERMISSION_DENIED_OR_NOT_FOUND',
+        code: 'PERMISSION_DENIED_OR_NOT_FOUND',
+        error: 'কোনো সারি পাওয়া যায়নি বা অনুমতির সীমাবদ্ধতা রয়েছে / Record not found or permission denied.'
+      };
+    }
+
+    return {
+      success: true,
+      status: 'SUCCESS',
+      id: cleanId,
+      data: data[0] as T,
+      count: data.length,
+      changedSensitiveFields: changedSensitiveFields.length > 0 ? changedSensitiveFields : undefined
+    };
+  } catch (networkErr: any) {
+    if (import.meta.env?.DEV) console.warn(`Network error during admin CMS update on ${tableName}:`, networkErr.message);
+    return {
+      success: false,
+      status: 'DATABASE_ERROR',
+      error: networkErr.message || 'Network communication failure occurred while connecting to database.'
+    };
+  }
+}
+
+/**
+ * Deletes a CMS record (strictly for programs and campaigns; forbidden on single-row tables)
+ * Supports atomic conditional deletion via expectedUpdatedAt.
+ */
+export async function safeDbAdminCmsDelete<T = { id: string }>(
+  tableName: CmsAllowedTable | string,
+  id: string,
+  expectedUpdatedAt?: string | null
+): Promise<AdminCmsMutationResult<T>> {
+  const cleanId = id?.trim();
+  if (!cleanId) {
+    return {
+      success: false,
+      status: 'VALIDATION_FAILED',
+      error: 'Invalid or missing record identifier.'
+    };
+  }
+
+  // 1. Forbidden & unwhitelisted table check
+  if (CMS_FORBIDDEN_TABLES.has(tableName)) {
+    return {
+      success: false,
+      status: 'FEATURE_DISABLED',
+      error: `Table '${tableName}' is strictly forbidden from CMS mutations.`
+    };
+  }
+
+  const gateStatus = (ADMIN_CMS_MUTATION_GATES as Record<string, string>)[tableName];
+  if (gateStatus !== 'ACTIVE') {
+    return {
+      success: false,
+      status: 'FEATURE_DISABLED',
+      error: `Admin CMS mutation is locked or unwhitelisted for table '${tableName}'.`
+    };
+  }
+
+  // 2. Single-row table check: site_settings and homepage_config can NEVER be deleted
+  if (tableName === 'site_settings' || tableName === 'homepage_config') {
+    return {
+      success: false,
+      status: 'FEATURE_DISABLED',
+      error: `Deleting rows is forbidden on single-row configuration table '${tableName}'.`
+    };
+  }
+
+  // 3. Connectivity check
+  if (!_testClientOverride && !isSupabaseConfigured) {
+    return {
+      success: false,
+      status: 'ONLINE_REQUIRED',
+      error: 'Supabase credentials are not configured in environment.'
+    };
+  }
+
+  const client = _testClientOverride || (await getSupabase());
+  if (!client) {
+    return {
+      success: false,
+      status: 'DATABASE_ERROR',
+      error: 'Database client failed to initialize.'
+    };
+  }
+
+  // 4. Session check
+  try {
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session?.user?.email) {
+      return {
+        success: false,
+        status: 'AUTH_REQUIRED',
+        error: 'আপনার সক্রিয় অ্যাডমিন লগইন সেশন নেই, আবার সাইন ইন করুন / No active admin session. Please sign in again.'
+      };
+    }
+  } catch {
+    return {
+      success: false,
+      status: 'AUTH_REQUIRED',
+      error: 'আপনার সক্রিয় অ্যাডমিন লগইন সেশন নেই, আবার সাইন ইন করুন / No active admin session. Please sign in again.'
+    };
+  }
+
+  // 5. Atomic conditional delete
+  try {
+    let query = client.from(tableName).delete().eq('id', cleanId);
+    if (expectedUpdatedAt) {
+      query = query.eq('updated_at', expectedUpdatedAt);
+    }
+    const { data, error } = await query.select('id');
+
+    if (error) {
+      if (import.meta.env?.DEV) console.warn(`Admin CMS delete error on ${tableName}:`, error.message);
+      return {
+        success: false,
+        status: 'DATABASE_ERROR',
+        error: error.message || 'Database error occurred during CMS delete.'
+      };
+    }
+
+    if (!data || data.length === 0) {
+      if (expectedUpdatedAt) {
+        try {
+          const { data: existing, error: checkError } = await client
+            .from(tableName)
+            .select('id, updated_at')
+            .eq('id', cleanId)
+            .maybeSingle();
+
+          if (!checkError && existing) {
+            return {
+              success: false,
+              status: 'CONFLICT',
+              code: 'CONFLICT',
+              currentUpdatedAt: existing.updated_at,
+              error: 'ডাটাবেজে তথ্য ইতিমধ্যে অন্য সেশন থেকে পরিবর্তিত হয়েছে (Conflict: row updated_at mismatch).'
+            };
+          }
+        } catch {
+          // ignore counter-read failure
+        }
+      }
+
+      return {
+        success: false,
+        status: 'PERMISSION_DENIED_OR_NOT_FOUND',
+        code: 'PERMISSION_DENIED_OR_NOT_FOUND',
+        error: 'কোনো সারি মুছে ফেলা যায়নি বা অনুমতির সীমাবদ্ধতা রয়েছে / Record not found or permission denied.'
+      };
+    }
+
+    return {
+      success: true,
+      status: 'SUCCESS',
+      id: cleanId,
+      data: data[0] as T,
+      count: data.length
+    };
+  } catch (networkErr: any) {
+    if (import.meta.env?.DEV) console.warn(`Network error during admin CMS delete on ${tableName}:`, networkErr.message);
+    return {
+      success: false,
+      status: 'DATABASE_ERROR',
+      error: networkErr.message || 'Network communication failure occurred while connecting to database.'
+    };
+  }
+}
+
+/**
+ * 9. Existing Authenticated Admin Operations (safeDbUpsert & safeDbDelete)
  * Preserved strictly for authenticated Admin CMS operations.
  */
 export async function safeDbUpsert(tableName: string, data: any): Promise<void> {
