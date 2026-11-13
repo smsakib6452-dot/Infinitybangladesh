@@ -43,25 +43,22 @@ if (typeof window !== 'undefined' && 'IntersectionObserver' in window) {
       const pendingRemovedNodes: Element[] = [];
 
       const processPendingNodes = () => {
-        const t0 = performance.now();
         rafId = null;
-        for (let i = 0; i < pendingAddedNodes.length; i++) {
-          const el = pendingAddedNodes[i];
-          if (el.matches?.(ANIM_SELECTOR)) animObserver.observe(el);
-          el.querySelectorAll?.(ANIM_SELECTOR).forEach((child) => animObserver.observe(child));
-        }
         for (let i = 0; i < pendingRemovedNodes.length; i++) {
           const el = pendingRemovedNodes[i];
-          if (el.matches?.(ANIM_SELECTOR)) animObserver.unobserve(el);
-          el.querySelectorAll?.(ANIM_SELECTOR).forEach((child) => animObserver.unobserve(child));
+          if (!el.isConnected) {
+            if (el.matches?.(ANIM_SELECTOR)) animObserver.unobserve(el);
+            el.querySelectorAll?.(ANIM_SELECTOR).forEach((child) => {
+              if (!child.isConnected) animObserver.unobserve(child);
+            });
+          }
         }
-        const duration = performance.now() - t0;
-        if (typeof window !== 'undefined') {
-          (window as any).__animObserverCalls = (window as any).__animObserverCalls || [];
-          (window as any).__animObserverCalls.push({
-            added: pendingAddedNodes.length,
-            removed: pendingRemovedNodes.length,
-            durationMs: duration
+        for (let i = 0; i < pendingAddedNodes.length; i++) {
+          const el = pendingAddedNodes[i];
+          if (!el.isConnected) continue;
+          if (el.matches?.(ANIM_SELECTOR)) animObserver.observe(el);
+          el.querySelectorAll?.(ANIM_SELECTOR).forEach((child) => {
+            if (child.isConnected) animObserver.observe(child);
           });
         }
         pendingAddedNodes.length = 0;
