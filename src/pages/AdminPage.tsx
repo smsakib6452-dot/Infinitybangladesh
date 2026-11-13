@@ -236,7 +236,8 @@ export const AdminPage: React.FC = () => {
     updateBloodDonationSettings, addDonorCategory, updateDonorCategory, deleteDonorCategory,
     programEvents, getEventsByProgramId, getEventHighlights, getEventMedia, deleteProgramEvent,
     isLiveSupabase, isSyncing, lastSyncedAt, syncWithSupabase, pushAllToSupabase, resetToDefaultData, exportDatabaseJSON, importDatabaseJSON,
-    loadAdminData, isAdminLoaded, clearAdminSessionData
+    loadAdminData, isAdminLoaded, clearAdminSessionData,
+    cmsDraftCount
   } = useData();
 
   // Auth State
@@ -897,6 +898,32 @@ export const AdminPage: React.FC = () => {
               <Eye className="w-3.5 h-3.5" />
               <span>{isBn ? 'ওয়েবসাইট দেখুন' : 'Live Website'}</span>
             </button>
+
+            {/* CMS Drafts Badge (Phase 2) */}
+            <div
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all select-none ${
+                cmsDraftCount > 0
+                  ? 'bg-amber-400/20 border border-amber-400/40 text-amber-300 shadow-sm'
+                  : 'bg-white/10 border border-white/10 text-slate-300 font-medium'
+              }`}
+              title={
+                cmsDraftCount > 0
+                  ? (isBn ? `${cmsDraftCount} টি পরিবর্তন অপ্রকাশিত খসড়া হিসেবে সংরক্ষিত রয়েছে` : `${cmsDraftCount} changes saved as unpublished drafts`)
+                  : (isBn ? 'কোনো অপ্রকাশিত খসড়া নেই' : 'No unpublished drafts')
+              }
+              aria-label={
+                cmsDraftCount > 0
+                  ? (isBn ? `${cmsDraftCount} টি অপ্রকাশিত খসড়া` : `${cmsDraftCount} unpublished drafts`)
+                  : (isBn ? 'কোনো খসড়া নেই' : 'No drafts')
+              }
+            >
+              <FileText className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                {cmsDraftCount > 0
+                  ? (isBn ? `${cmsDraftCount} টি অপ্রকাশিত খসড়া` : `${cmsDraftCount} unpublished draft${cmsDraftCount > 1 ? 's' : ''}`)
+                  : (isBn ? 'কোনো খসড়া নেই' : 'No drafts')}
+              </span>
+            </div>
 
             {isLiveSupabase && (
               <>

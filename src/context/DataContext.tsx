@@ -93,6 +93,15 @@ import { getFreshImageUrl } from '../lib/cloudinary';
 import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL, isBlacklistedMedia } from '../lib/utils/mediaHelper';
 import { STORAGE_PREFIX, DATA_VERSION_KEY, CURRENT_DATA_VERSION, getStoredOrDefault, saveToStorage } from './dataStorage';
 import { safeDbUpsert, safeDbDelete, createAuditLog, REMOTE_CMS_MUTATIONS_LOCKED, InsertResult, AdminUpdateResult } from './dbAdapter';
+import {
+  CmsDraftItem,
+  getCmsDrafts,
+  recordCmsDraft,
+  saveCmsRemoteVersionsBatch,
+  applyCmsDraftsOverlay,
+  applyCmsSingleRowOverlay,
+  CMS_DRAFTS_STORAGE_KEY
+} from './cmsDraftStore';
 import { useBloodDonationSlice } from './slices/useBloodDonationSlice';
 import { useMediaSlice } from './slices/useMediaSlice';
 import { useGovernanceSlice } from './slices/useGovernanceSlice';
@@ -339,6 +348,8 @@ export interface DataContextType {
   loadAdminData: () => Promise<SyncResult>;
   isAdminLoaded: boolean;
   clearAdminSessionData: () => void;
+  cmsDrafts: CmsDraftItem[];
+  cmsDraftCount: number;
   pushAllToSupabase: () => Promise<{ success: boolean; message: string }>;
   resetToDefaultData: () => void;
   exportDatabaseJSON: () => string;
@@ -368,6 +379,29 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isSyncInProgressRef = useRef<boolean>(false);
   const [isAdminLoaded, setIsAdminLoaded] = useState<boolean>(false);
   const isAdminLoadedRef = useRef<boolean>(false);
+
+  // Guarded CMS Drafts Queue state (Phase 2)
+  const [cmsDrafts, setCmsDrafts] = useState<CmsDraftItem[]>(() => getCmsDrafts());
+  const cmsDraftCount = cmsDrafts.length;
+
+  useEffect(() => {
+    const handleDraftsChange = () => {
+      setCmsDrafts(getCmsDrafts());
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('infinity_cms_drafts_changed', handleDraftsChange);
+      const handleStorage = (e: StorageEvent) => {
+        if (e.key === CMS_DRAFTS_STORAGE_KEY) {
+          handleDraftsChange();
+        }
+      };
+      window.addEventListener('storage', handleStorage);
+      return () => {
+        window.removeEventListener('infinity_cms_drafts_changed', handleDraftsChange);
+        window.removeEventListener('storage', handleStorage);
+      };
+    }
+  }, []);
 
   // Global audit logs state
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() =>
@@ -860,21 +894,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const siteData = siteRows?.[0];
       if (siteData) {
+        saveCmsRemoteVersionsBatch([{ table: 'site_settings', id: 'default', updatedAt: siteData.updated_at }]);
+        const overlaidSite = applyCmsSingleRowOverlay('site_settings', siteData);
         setSlice.setSettings(prev => {
           const next = {
             ...prev,
-            organizationName: prev.organizationName || siteData.organization_name,
-            teamIdentity: prev.teamIdentity || siteData.team_identity,
-            tagline: prev.tagline || siteData.tagline,
-            officialAddress: siteData.official_address || prev.officialAddress,
-            officialPhone: siteData.official_phone || prev.officialPhone,
-            officialEmail: (siteData.official_email && !siteData.official_email.includes('infinitybangladesh.org'))
-              ? siteData.official_email
+            organizationName: prev.organizationName || overlaidSite.organization_name,
+            teamIdentity: prev.teamIdentity || overlaidSite.team_identity,
+            tagline: prev.tagline || overlaidSite.tagline,
+            officialAddress: overlaidSite.official_address || prev.officialAddress,
+            officialPhone: overlaidSite.official_phone || prev.officialPhone,
+            officialEmail: (overlaidSite.official_email && !overlaidSite.official_email.includes('infinitybangladesh.org'))
+              ? overlaidSite.official_email
               : (prev.officialEmail && !prev.officialEmail.includes('infinitybangladesh.org') ? prev.officialEmail : 'smsakib6452@gmail.com'),
-            establishedYear: siteData.established_year || prev.establishedYear,
-            logoUrl: getFreshImageUrl(prev.logoUrl || siteData.logo_url),
-            faviconUrl: getFreshImageUrl(prev.faviconUrl || siteData.favicon_url),
-            country: prev.country || siteData.country
+            establishedYear: overlaidSite.established_year || prev.establishedYear,
+            logoUrl: getFreshImageUrl(prev.logoUrl || overlaidSite.logo_url),
+            faviconUrl: getFreshImageUrl(prev.faviconUrl || overlaidSite.favicon_url),
+            country: prev.country || overlaidSite.country
           };
           return isDeepEqual(prev, next) ? prev : next;
         });
@@ -882,36 +918,38 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const homeData = homeRows?.[0];
       if (homeData) {
+        saveCmsRemoteVersionsBatch([{ table: 'homepage_config', id: 'default', updatedAt: homeData.updated_at }]);
+        const overlaidHome = applyCmsSingleRowOverlay('homepage_config', homeData);
         setSlice.setHomepageConfig(prev => {
           let syncedHero = {
             ...prev.hero,
-            headlineMain: prev.hero?.headlineMain?.bn ? prev.hero.headlineMain : (homeData.hero?.headlineMain || prev.hero.headlineMain),
-            headlineHighlight: prev.hero?.headlineHighlight?.bn ? prev.hero.headlineHighlight : (homeData.hero?.headlineHighlight || prev.hero.headlineHighlight),
-            description: prev.hero?.description?.bn ? prev.hero.description : (homeData.hero?.description || prev.hero.description),
-            heroImageUrl: getFreshImageUrl(prev.hero?.heroImageUrl || homeData.hero?.heroImageUrl)
+            headlineMain: prev.hero?.headlineMain?.bn ? prev.hero.headlineMain : (overlaidHome.hero?.headlineMain || prev.hero.headlineMain),
+            headlineHighlight: prev.hero?.headlineHighlight?.bn ? prev.hero.headlineHighlight : (overlaidHome.hero?.headlineHighlight || prev.hero.headlineHighlight),
+            description: prev.hero?.description?.bn ? prev.hero.description : (overlaidHome.hero?.description || prev.hero.description),
+            heroImageUrl: getFreshImageUrl(prev.hero?.heroImageUrl || overlaidHome.hero?.heroImageUrl)
           };
-          const secHeaders = (homeData.volunteer_banner as any)?.section_headers || (homeData.hero as any)?.section_headers || {};
+          const secHeaders = (overlaidHome.volunteer_banner as any)?.section_headers || (overlaidHome.hero as any)?.section_headers || {};
           const next = {
             ...prev,
             hero: syncedHero,
             aboutPreview: {
               ...prev.aboutPreview,
-              titleMain: prev.aboutPreview?.titleMain?.bn ? prev.aboutPreview.titleMain : (homeData.about_preview?.titleMain || prev.aboutPreview.titleMain),
-              description: prev.aboutPreview?.description?.bn ? prev.aboutPreview.description : (homeData.about_preview?.description || prev.aboutPreview.description),
-              imageUrl: getFreshImageUrl(prev.aboutPreview?.imageUrl || homeData.about_preview?.imageUrl)
+              titleMain: prev.aboutPreview?.titleMain?.bn ? prev.aboutPreview.titleMain : (overlaidHome.about_preview?.titleMain || prev.aboutPreview.titleMain),
+              description: prev.aboutPreview?.description?.bn ? prev.aboutPreview.description : (overlaidHome.about_preview?.description || prev.aboutPreview.description),
+              imageUrl: getFreshImageUrl(prev.aboutPreview?.imageUrl || overlaidHome.about_preview?.imageUrl)
             },
-            volunteerBanner: { ...(homeData.volunteer_banner || {}), ...prev.volunteerBanner },
-            supportBanner: { ...(homeData.support_banner || {}), ...prev.supportBanner },
-            impactSection: secHeaders.impact || (homeData as any).impact_section || prev.impactSection,
-            programsSection: secHeaders.programs || (homeData as any).programs_section || prev.programsSection,
-            campaignsSection: secHeaders.campaigns || (homeData as any).campaigns_section || prev.campaignsSection,
-            storiesSection: secHeaders.stories || (homeData as any).stories_section || prev.storiesSection,
-            lifelineSection: secHeaders.lifeline || (homeData as any).lifeline_section || prev.lifelineSection,
-            gallerySection: secHeaders.gallery || (homeData as any).gallery_section || prev.gallerySection,
-            pressSection: secHeaders.press || (homeData as any).press_section || prev.pressSection,
-            transparencySection: secHeaders.transparency || (homeData as any).transparency_section || prev.transparencySection,
-            sectionOrder: prev.sectionOrder && prev.sectionOrder.length > 0 ? prev.sectionOrder : (homeData.section_order || prev.sectionOrder),
-            sectionVisibility: { ...(homeData.section_visibility || {}), ...prev.sectionVisibility }
+            volunteerBanner: { ...(overlaidHome.volunteer_banner || {}), ...prev.volunteerBanner },
+            supportBanner: { ...(overlaidHome.support_banner || {}), ...prev.supportBanner },
+            impactSection: secHeaders.impact || (overlaidHome as any).impact_section || prev.impactSection,
+            programsSection: secHeaders.programs || (overlaidHome as any).programs_section || prev.programsSection,
+            campaignsSection: secHeaders.campaigns || (overlaidHome as any).campaigns_section || prev.campaignsSection,
+            storiesSection: secHeaders.stories || (overlaidHome as any).stories_section || prev.storiesSection,
+            lifelineSection: secHeaders.lifeline || (overlaidHome as any).lifeline_section || prev.lifelineSection,
+            gallerySection: secHeaders.gallery || (overlaidHome as any).gallery_section || prev.gallerySection,
+            pressSection: secHeaders.press || (overlaidHome as any).press_section || prev.pressSection,
+            transparencySection: secHeaders.transparency || (overlaidHome as any).transparency_section || prev.transparencySection,
+            sectionOrder: prev.sectionOrder && prev.sectionOrder.length > 0 ? prev.sectionOrder : (overlaidHome.section_order || prev.sectionOrder),
+            sectionVisibility: { ...(overlaidHome.section_visibility || {}), ...prev.sectionVisibility }
           };
           return isDeepEqual(prev, next) ? prev : next;
         });
@@ -981,6 +1019,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (progData && progData.length > 0) {
+        saveCmsRemoteVersionsBatch(progData.map(p => ({ table: 'programs', id: p.id, updatedAt: p.updated_at })));
         const remotePrograms: Program[] = progData.map(p => ({
           id: p.id,
           slug: p.slug,
@@ -997,12 +1036,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         hum.setPrograms(prevLocal => {
           const remoteIds = new Set(remotePrograms.map(r => r.id));
           const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
-          const next = localOnly.length > 0 ? [...localOnly, ...remotePrograms] : remotePrograms;
+          const base = localOnly.length > 0 ? [...localOnly, ...remotePrograms] : remotePrograms;
+          const next = applyCmsDraftsOverlay('programs', base);
           return isDeepEqual(prevLocal, next) ? prevLocal : next;
         });
       }
 
       if (campData && campData.length > 0) {
+        saveCmsRemoteVersionsBatch(campData.map(c => ({ table: 'campaigns', id: c.id, updatedAt: c.updated_at })));
         const remoteCampaigns: Campaign[] = campData.map(c => ({
           id: c.id,
           slug: c.slug,
@@ -1031,7 +1072,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         hum.setCampaigns(prevLocal => {
           const remoteIds = new Set(remoteCampaigns.map(r => r.id));
           const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
-          const next = localOnly.length > 0 ? [...localOnly, ...remoteCampaigns] : remoteCampaigns;
+          const base = localOnly.length > 0 ? [...localOnly, ...remoteCampaigns] : remoteCampaigns;
+          const next = applyCmsDraftsOverlay('campaigns', base);
           return isDeepEqual(prevLocal, next) ? prevLocal : next;
         });
       }
@@ -1585,56 +1627,60 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 1. Site Settings
       const { data: siteData } = await supabase.from('site_settings').select('*').single();
       if (siteData) {
+        saveCmsRemoteVersionsBatch([{ table: 'site_settings', id: 'default', updatedAt: siteData.updated_at }]);
+        const overlaidSite = applyCmsSingleRowOverlay('site_settings', siteData);
         setSlice.setSettings(prev => ({
           ...prev,
-          organizationName: prev.organizationName || siteData.organization_name,
-          teamIdentity: prev.teamIdentity || siteData.team_identity,
-          tagline: prev.tagline || siteData.tagline,
-          officialAddress: siteData.official_address || prev.officialAddress,
-          officialPhone: siteData.official_phone || prev.officialPhone,
-          officialEmail: (siteData.official_email && !siteData.official_email.includes('infinitybangladesh.org'))
-            ? siteData.official_email
+          organizationName: prev.organizationName || overlaidSite.organization_name,
+          teamIdentity: prev.teamIdentity || overlaidSite.team_identity,
+          tagline: prev.tagline || overlaidSite.tagline,
+          officialAddress: overlaidSite.official_address || prev.officialAddress,
+          officialPhone: overlaidSite.official_phone || prev.officialPhone,
+          officialEmail: (overlaidSite.official_email && !overlaidSite.official_email.includes('infinitybangladesh.org'))
+            ? overlaidSite.official_email
             : (prev.officialEmail && !prev.officialEmail.includes('infinitybangladesh.org') ? prev.officialEmail : 'smsakib6452@gmail.com'),
-          establishedYear: siteData.established_year || prev.establishedYear,
-          logoUrl: getFreshImageUrl(prev.logoUrl || siteData.logo_url),
-          faviconUrl: getFreshImageUrl(prev.faviconUrl || siteData.favicon_url),
-          country: prev.country || siteData.country
+          establishedYear: overlaidSite.established_year || prev.establishedYear,
+          logoUrl: getFreshImageUrl(prev.logoUrl || overlaidSite.logo_url),
+          faviconUrl: getFreshImageUrl(prev.faviconUrl || overlaidSite.favicon_url),
+          country: prev.country || overlaidSite.country
         }));
       }
 
       // 2. Homepage Config
       const { data: homeData } = await supabase.from('homepage_config').select('*').single();
       if (homeData) {
+        saveCmsRemoteVersionsBatch([{ table: 'homepage_config', id: 'default', updatedAt: homeData.updated_at }]);
+        const overlaidHome = applyCmsSingleRowOverlay('homepage_config', homeData);
         setSlice.setHomepageConfig(prev => {
           let syncedHero = {
             ...prev.hero,
-            headlineMain: prev.hero?.headlineMain?.bn ? prev.hero.headlineMain : (homeData.hero?.headlineMain || prev.hero.headlineMain),
-            headlineHighlight: prev.hero?.headlineHighlight?.bn ? prev.hero.headlineHighlight : (homeData.hero?.headlineHighlight || prev.hero.headlineHighlight),
-            description: prev.hero?.description?.bn ? prev.hero.description : (homeData.hero?.description || prev.hero.description),
-            heroImageUrl: getFreshImageUrl(prev.hero?.heroImageUrl || homeData.hero?.heroImageUrl)
+            headlineMain: prev.hero?.headlineMain?.bn ? prev.hero.headlineMain : (overlaidHome.hero?.headlineMain || prev.hero.headlineMain),
+            headlineHighlight: prev.hero?.headlineHighlight?.bn ? prev.hero.headlineHighlight : (overlaidHome.hero?.headlineHighlight || prev.hero.headlineHighlight),
+            description: prev.hero?.description?.bn ? prev.hero.description : (overlaidHome.hero?.description || prev.hero.description),
+            heroImageUrl: getFreshImageUrl(prev.hero?.heroImageUrl || overlaidHome.hero?.heroImageUrl)
           };
-          const secHeaders = (homeData.volunteer_banner as any)?.section_headers || (homeData.hero as any)?.section_headers || {};
+          const secHeaders = (overlaidHome.volunteer_banner as any)?.section_headers || (overlaidHome.hero as any)?.section_headers || {};
           return {
             ...prev,
             hero: syncedHero,
             aboutPreview: {
               ...prev.aboutPreview,
-              titleMain: prev.aboutPreview?.titleMain?.bn ? prev.aboutPreview.titleMain : (homeData.about_preview?.titleMain || prev.aboutPreview.titleMain),
-              description: prev.aboutPreview?.description?.bn ? prev.aboutPreview.description : (homeData.about_preview?.description || prev.aboutPreview.description),
-              imageUrl: getFreshImageUrl(prev.aboutPreview?.imageUrl || homeData.about_preview?.imageUrl)
+              titleMain: prev.aboutPreview?.titleMain?.bn ? prev.aboutPreview.titleMain : (overlaidHome.about_preview?.titleMain || prev.aboutPreview.titleMain),
+              description: prev.aboutPreview?.description?.bn ? prev.aboutPreview.description : (overlaidHome.about_preview?.description || prev.aboutPreview.description),
+              imageUrl: getFreshImageUrl(prev.aboutPreview?.imageUrl || overlaidHome.about_preview?.imageUrl)
             },
-            volunteerBanner: { ...(homeData.volunteer_banner || {}), ...prev.volunteerBanner },
-            supportBanner: { ...(homeData.support_banner || {}), ...prev.supportBanner },
-            impactSection: secHeaders.impact || (homeData as any).impact_section || prev.impactSection,
-            programsSection: secHeaders.programs || (homeData as any).programs_section || prev.programsSection,
-            campaignsSection: secHeaders.campaigns || (homeData as any).campaigns_section || prev.campaignsSection,
-            storiesSection: secHeaders.stories || (homeData as any).stories_section || prev.storiesSection,
-            lifelineSection: secHeaders.lifeline || (homeData as any).lifeline_section || prev.lifelineSection,
-            gallerySection: secHeaders.gallery || (homeData as any).gallery_section || prev.gallerySection,
-            pressSection: secHeaders.press || (homeData as any).press_section || prev.pressSection,
-            transparencySection: secHeaders.transparency || (homeData as any).transparency_section || prev.transparencySection,
-            sectionOrder: prev.sectionOrder && prev.sectionOrder.length > 0 ? prev.sectionOrder : (homeData.section_order || prev.sectionOrder),
-            sectionVisibility: { ...(homeData.section_visibility || {}), ...prev.sectionVisibility }
+            volunteerBanner: { ...(overlaidHome.volunteer_banner || {}), ...prev.volunteerBanner },
+            supportBanner: { ...(overlaidHome.support_banner || {}), ...prev.supportBanner },
+            impactSection: secHeaders.impact || (overlaidHome as any).impact_section || prev.impactSection,
+            programsSection: secHeaders.programs || (overlaidHome as any).programs_section || prev.programsSection,
+            campaignsSection: secHeaders.campaigns || (overlaidHome as any).campaigns_section || prev.campaignsSection,
+            storiesSection: secHeaders.stories || (overlaidHome as any).stories_section || prev.storiesSection,
+            lifelineSection: secHeaders.lifeline || (overlaidHome as any).lifeline_section || prev.lifelineSection,
+            gallerySection: secHeaders.gallery || (overlaidHome as any).gallery_section || prev.gallerySection,
+            pressSection: secHeaders.press || (overlaidHome as any).press_section || prev.pressSection,
+            transparencySection: secHeaders.transparency || (overlaidHome as any).transparency_section || prev.transparencySection,
+            sectionOrder: prev.sectionOrder && prev.sectionOrder.length > 0 ? prev.sectionOrder : (overlaidHome.section_order || prev.sectionOrder),
+            sectionVisibility: { ...(overlaidHome.section_visibility || {}), ...prev.sectionVisibility }
           };
         });
       }
@@ -1699,6 +1745,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 6. Programs
       const { data: progData } = await supabase.from('programs').select('*').order('display_order', { ascending: true });
       if (progData && progData.length > 0) {
+        saveCmsRemoteVersionsBatch(progData.map(p => ({ table: 'programs', id: p.id, updatedAt: p.updated_at })));
         const remotePrograms: Program[] = progData.map(p => ({
           id: p.id,
           slug: p.slug,
@@ -1715,13 +1762,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         hum.setPrograms(prevLocal => {
           const remoteIds = new Set(remotePrograms.map(r => r.id));
           const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
-          return localOnly.length > 0 ? [...localOnly, ...remotePrograms] : remotePrograms;
+          const base = localOnly.length > 0 ? [...localOnly, ...remotePrograms] : remotePrograms;
+          return applyCmsDraftsOverlay('programs', base);
         });
       }
 
       // 7. Campaigns
       const { data: campData } = await supabase.from('campaigns').select('*').order('created_at', { ascending: false });
       if (campData && campData.length > 0) {
+        saveCmsRemoteVersionsBatch(campData.map(c => ({ table: 'campaigns', id: c.id, updatedAt: c.updated_at })));
         const remoteCampaigns: Campaign[] = campData.map(c => ({
           id: c.id,
           slug: c.slug,
@@ -1750,7 +1799,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         hum.setCampaigns(prevLocal => {
           const remoteIds = new Set(remoteCampaigns.map(r => r.id));
           const localOnly = prevLocal.filter(l => !remoteIds.has(l.id));
-          return localOnly.length > 0 ? [...localOnly, ...remoteCampaigns] : remoteCampaigns;
+          const base = localOnly.length > 0 ? [...localOnly, ...remoteCampaigns] : remoteCampaigns;
+          return applyCmsDraftsOverlay('campaigns', base);
         });
       }
 
@@ -2286,157 +2336,189 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // Push ALL local state to Supabase
+  // Push ALL local state to Supabase (Permanently disabled & disarmed in Phase 2)
   const pushAllToSupabase = useCallback(async (): Promise<{ success: boolean; message: string }> => {
-    if (REMOTE_CMS_MUTATIONS_LOCKED) {
-      if (import.meta.env?.DEV) {
-        console.warn('[SECURITY] Remote synchronization is locked during Phase 1.1 security baseline.');
-      }
-      return {
-        success: false,
-        message: 'Remote database synchronization is locked during Phase 1.1 security baseline. All modifications are safely preserved in local demonstration state only.'
-      };
-    }
+    return {
+      success: false,
+      message: 'ডাটাবেজে সরাসরি পুশ বন্ধ করা হয়েছে। আপনার পরিবর্তনগুলো ব্রাউজারে খসড়া হিসেবে সংরক্ষিত রয়েছে (শীঘ্রই সুরক্ষিত প্রকাশনা ফিচার চালু হচ্ছে)। / Direct cloud push has been permanently disabled. Your changes are saved as local drafts (secure publish feature coming soon).'
+    };
+  }, []);
 
-    if (!isSupabaseConfigured) {
-      return { success: false, message: 'Supabase credentials are not configured in .env' };
-    }
+  // -------------------------------------------------------------
+  // Phase 2: Guarded CMS Mutation Wrappers for P1 Tables
+  // Automatically records local drafts with allowlist filtering and secret scanning.
+  // -------------------------------------------------------------
+  const addCampaignWithDraft = useCallback((campaign: Omit<Campaign, 'id'>) => {
+    const created = hum.addCampaign(campaign);
+    recordCmsDraft(
+      'campaigns',
+      created.id,
+      'CREATE',
+      {
+        slug: created.slug,
+        title: created.title,
+        date: created.date,
+        end_date: created.endDate,
+        location: created.location,
+        category: created.category,
+        description: created.description,
+        details: created.details,
+        objectives: created.objectives,
+        activities: created.activities,
+        beneficiaries: created.beneficiaries,
+        beneficiaries_count: created.beneficiariesCount,
+        volunteers_count: created.volunteersCount,
+        impact: created.impact,
+        status: created.status,
+        is_featured: created.isFeatured,
+        target_amount_bdt: created.targetAmountBDT,
+        raised_amount_bdt: created.raisedAmountBDT,
+        image_url: created.imageUrl,
+        gallery_images: created.galleryImages,
+        video_url: created.videoUrl,
+        report_url: created.reportUrl,
+        display_order: created.displayOrder
+      },
+      typeof created.title === 'object' ? (created.title.bn || created.title.en) : String(created.title || 'ক্যাম্পেইন')
+    );
+    return created;
+  }, [hum]);
 
-    const supabase = await getSupabase();
-    if (!supabase) {
-      return { success: false, message: 'Supabase client failed to initialize' };
-    }
+  const updateCampaignWithDraft = useCallback((id: string, updates: Partial<Campaign>) => {
+    hum.updateCampaign(id, updates);
+    const existing = hum.campaigns.find(c => c.id === id);
+    const summary = updates.title
+      ? (typeof updates.title === 'object' ? (updates.title.bn || updates.title.en) : String(updates.title))
+      : (existing?.title ? (typeof existing.title === 'object' ? (existing.title.bn || existing.title.en) : String(existing.title)) : 'ক্যাম্পেইন আপডেট');
 
-    if (isSyncInProgressRef.current) {
-      return { success: false, message: 'A synchronization operation is already in progress.' };
-    }
+    const dbPayload: Record<string, any> = {};
+    if ('slug' in updates) dbPayload.slug = updates.slug;
+    if ('title' in updates) dbPayload.title = updates.title;
+    if ('date' in updates) dbPayload.date = updates.date;
+    if ('endDate' in updates) dbPayload.end_date = updates.endDate;
+    if ('location' in updates) dbPayload.location = updates.location;
+    if ('category' in updates) dbPayload.category = updates.category;
+    if ('description' in updates) dbPayload.description = updates.description;
+    if ('details' in updates) dbPayload.details = updates.details;
+    if ('objectives' in updates) dbPayload.objectives = updates.objectives;
+    if ('activities' in updates) dbPayload.activities = updates.activities;
+    if ('beneficiaries' in updates) dbPayload.beneficiaries = updates.beneficiaries;
+    if ('beneficiariesCount' in updates) dbPayload.beneficiaries_count = updates.beneficiariesCount;
+    if ('volunteersCount' in updates) dbPayload.volunteers_count = updates.volunteersCount;
+    if ('impact' in updates) dbPayload.impact = updates.impact;
+    if ('status' in updates) dbPayload.status = updates.status;
+    if ('isFeatured' in updates) dbPayload.is_featured = updates.isFeatured;
+    if ('targetAmountBDT' in updates) dbPayload.target_amount_bdt = updates.targetAmountBDT;
+    if ('raisedAmountBDT' in updates) dbPayload.raised_amount_bdt = updates.raisedAmountBDT;
+    if ('imageUrl' in updates) dbPayload.image_url = updates.imageUrl;
+    if ('galleryImages' in updates) dbPayload.gallery_images = updates.galleryImages;
+    if ('videoUrl' in updates) dbPayload.video_url = updates.videoUrl;
+    if ('reportUrl' in updates) dbPayload.report_url = updates.reportUrl;
+    if ('displayOrder' in updates) dbPayload.display_order = updates.displayOrder;
 
-    isSyncInProgressRef.current = true;
-    try {
-      setIsSyncing(true);
+    recordCmsDraft('campaigns', id, 'UPDATE', dbPayload, summary);
+  }, [hum]);
 
-      // Site settings
-      try {
-        const { error } = await supabase.from('site_settings').upsert({
-          id: 'default',
-          organization_name: setSlice.settings.organizationName,
-          team_identity: setSlice.settings.teamIdentity,
-          tagline: setSlice.settings.tagline,
-          country: setSlice.settings.country,
-          official_address: setSlice.settings.officialAddress,
-          official_phone: setSlice.settings.officialPhone,
-          official_email: setSlice.settings.officialEmail,
-          established_year: setSlice.settings.establishedYear || '2015',
-          logo_url: setSlice.settings.logoUrl || '',
-          favicon_url: setSlice.settings.faviconUrl || '',
-          updated_at: new Date().toISOString()
-        });
-        if (error) console.warn('site_settings push notice:', error.message);
-      } catch (e: any) {
-        console.warn('site_settings push exception:', e.message);
-      }
+  const deleteCampaignWithDraft = useCallback((id: string) => {
+    const existing = hum.campaigns.find(c => c.id === id);
+    const summary = existing?.title
+      ? (typeof existing.title === 'object' ? (existing.title.bn || existing.title.en) : String(existing.title))
+      : 'ক্যাম্পেইন ডিলিট';
+    hum.deleteCampaign(id);
+    recordCmsDraft('campaigns', id, 'DELETE', {}, summary);
+  }, [hum]);
 
-      // Homepage config
-      try {
-        const safeVolBannerForPush = {
-          ...(setSlice.homepageConfig.volunteerBanner || {}),
-          section_headers: {
-            impact: setSlice.homepageConfig.impactSection,
-            programs: setSlice.homepageConfig.programsSection,
-            campaigns: setSlice.homepageConfig.campaignsSection,
-            stories: setSlice.homepageConfig.storiesSection,
-            lifeline: setSlice.homepageConfig.lifelineSection,
-            gallery: setSlice.homepageConfig.gallerySection,
-            press: setSlice.homepageConfig.pressSection,
-            transparency: setSlice.homepageConfig.transparencySection
-          }
-        };
+  const addProgramWithDraft = useCallback((program: Omit<Program, 'id'>) => {
+    const created = hum.addProgram(program);
+    recordCmsDraft(
+      'programs',
+      created.id,
+      'CREATE',
+      {
+        slug: created.slug,
+        title: created.title,
+        category: created.category,
+        short_description: created.shortDescription,
+        full_details: created.fullDetails,
+        impact_highlights: created.impactHighlights,
+        image_url: created.imageUrl,
+        icon_name: created.iconName,
+        status: created.status,
+        display_order: created.displayOrder
+      },
+      typeof created.title === 'object' ? (created.title.bn || created.title.en) : String(created.title || 'প্রোগ্রাম')
+    );
+    return created;
+  }, [hum]);
 
-        const { error } = await supabase.from('homepage_config').upsert({
-          id: 'default',
-          hero: setSlice.homepageConfig.hero,
-          about_preview: setSlice.homepageConfig.aboutPreview,
-          volunteer_banner: safeVolBannerForPush,
-          support_banner: setSlice.homepageConfig.supportBanner,
-          section_order: setSlice.homepageConfig.sectionOrder,
-          section_visibility: setSlice.homepageConfig.sectionVisibility,
-          updated_at: new Date().toISOString()
-        });
-        if (error) console.warn('homepage_config push notice:', error.message);
-      } catch (e: any) {
-        console.warn('homepage_config push exception:', e.message);
-      }
+  const updateProgramWithDraft = useCallback((id: string, updates: Partial<Program>) => {
+    hum.updateProgram(id, updates);
+    const existing = hum.programs.find(p => p.id === id);
+    const summary = updates.title
+      ? (typeof updates.title === 'object' ? (updates.title.bn || updates.title.en) : String(updates.title))
+      : (existing?.title ? (typeof existing.title === 'object' ? (existing.title.bn || existing.title.en) : String(existing.title)) : 'প্রোগ্রাম আপডেট');
 
-      // Programs
-      for (const p of hum.programs) {
-        try {
-          const { error } = await supabase.from('programs').upsert({
-            id: p.id,
-            slug: p.slug,
-            title: p.title,
-            category: p.category,
-            short_description: p.shortDescription,
-            full_details: p.fullDetails,
-            impact_highlights: p.impactHighlights,
-            image_url: p.imageUrl,
-            icon_name: p.iconName,
-            status: p.status,
-            display_order: p.displayOrder || 0,
-            updated_at: new Date().toISOString()
-          });
-          if (error) console.warn('programs push notice:', error.message);
-        } catch (e: any) {
-          console.warn('programs push exception:', e.message);
-        }
-      }
+    const dbPayload: Record<string, any> = {};
+    if ('slug' in updates) dbPayload.slug = updates.slug;
+    if ('title' in updates) dbPayload.title = updates.title;
+    if ('category' in updates) dbPayload.category = updates.category;
+    if ('shortDescription' in updates) dbPayload.short_description = updates.shortDescription;
+    if ('fullDetails' in updates) dbPayload.full_details = updates.fullDetails;
+    if ('impactHighlights' in updates) dbPayload.impact_highlights = updates.impactHighlights;
+    if ('imageUrl' in updates) dbPayload.image_url = updates.imageUrl;
+    if ('iconName' in updates) dbPayload.icon_name = updates.iconName;
+    if ('status' in updates) dbPayload.status = updates.status;
+    if ('displayOrder' in updates) dbPayload.display_order = updates.displayOrder;
 
-      // Campaigns
-      for (const c of hum.campaigns) {
-        try {
-          const { error } = await supabase.from('campaigns').upsert({
-            id: c.id,
-            slug: c.slug,
-            title: c.title,
-            date: c.date,
-            end_date: c.endDate || '',
-            location: c.location,
-            category: c.category,
-            description: c.description,
-            details: c.details,
-            objectives: c.objectives,
-            activities: c.activities,
-            beneficiaries: c.beneficiaries,
-            beneficiaries_count: c.beneficiariesCount,
-            volunteers_count: c.volunteersCount,
-            impact: c.impact,
-            status: c.status,
-            is_featured: c.isFeatured,
-            target_amount_bdt: c.targetAmountBDT || '',
-            raised_amount_bdt: c.raisedAmountBDT || '',
-            image_url: c.imageUrl,
-            gallery_images: c.galleryImages,
-            video_url: c.videoUrl || '',
-            report_url: c.reportUrl || '',
-            display_order: c.displayOrder || 0,
-            updated_at: new Date().toISOString()
-          });
-          if (error) console.warn('campaigns push notice:', error.message);
-        } catch (e: any) {
-          console.warn('campaigns push exception:', e.message);
-        }
-      }
+    recordCmsDraft('programs', id, 'UPDATE', dbPayload, summary);
+  }, [hum]);
 
-      setLastSyncedAt(new Date());
-      logAudit('SYNC', 'Database', 'full_push', 'Pushed all local CMS entities to Supabase Cloud Database');
-      return { success: true, message: 'Successfully synchronized all CMS data and cloud image URLs to Supabase!' };
-    } catch (err: any) {
-      console.error('Push to Supabase failed:', err);
-      return { success: false, message: err.message || 'Failed to push data to Supabase.' };
-    } finally {
-      isSyncInProgressRef.current = false;
-      setIsSyncing(false);
-    }
-  }, [setSlice, hum, blood, logAudit]);
+  const deleteProgramWithDraft = useCallback((id: string) => {
+    const existing = hum.programs.find(p => p.id === id);
+    const summary = existing?.title
+      ? (typeof existing.title === 'object' ? (existing.title.bn || existing.title.en) : String(existing.title))
+      : 'প্রোগ্রাম ডিলিট';
+    hum.deleteProgram(id);
+    recordCmsDraft('programs', id, 'DELETE', {}, summary);
+  }, [hum]);
+
+  const updateSettingsWithDraft = useCallback((newSettings: Partial<SiteSettings>) => {
+    setSlice.updateSettings(newSettings);
+    const dbPayload: Record<string, any> = {};
+    if ('organizationName' in newSettings) dbPayload.organization_name = newSettings.organizationName;
+    if ('teamIdentity' in newSettings) dbPayload.team_identity = newSettings.teamIdentity;
+    if ('tagline' in newSettings) dbPayload.tagline = newSettings.tagline;
+    if ('country' in newSettings) dbPayload.country = newSettings.country;
+    if ('officialAddress' in newSettings) dbPayload.official_address = newSettings.officialAddress;
+    if ('officialPhone' in newSettings) dbPayload.official_phone = newSettings.officialPhone;
+    if ('officialEmail' in newSettings) dbPayload.official_email = newSettings.officialEmail;
+    if ('establishedYear' in newSettings) dbPayload.established_year = newSettings.establishedYear;
+    if ('logoUrl' in newSettings) dbPayload.logo_url = newSettings.logoUrl;
+    if ('faviconUrl' in newSettings) dbPayload.favicon_url = newSettings.faviconUrl;
+    if ('bkashNumber' in newSettings) dbPayload.bkash_number = newSettings.bkashNumber;
+    if ('nagadNumber' in newSettings) dbPayload.nagad_number = newSettings.nagadNumber;
+    if ('bankDetails' in newSettings) dbPayload.bank_details = newSettings.bankDetails;
+    if ('bannerAnnouncement' in newSettings) dbPayload.banner_announcement = newSettings.bannerAnnouncement;
+    if ('showAnnouncementBanner' in newSettings) dbPayload.show_announcement_banner = newSettings.showAnnouncementBanner;
+    if ('maintenanceMode' in newSettings) dbPayload.maintenance_mode = newSettings.maintenanceMode;
+    if ('defaultLanguage' in newSettings) dbPayload.default_language = newSettings.defaultLanguage;
+    if ('registrationInfo' in newSettings) dbPayload.registration_info = newSettings.registrationInfo;
+
+    recordCmsDraft('site_settings', 'default', 'UPDATE', dbPayload, 'Site Settings');
+  }, [setSlice]);
+
+  const updateHomepageConfigWithDraft = useCallback((newConfig: Partial<HomepageConfig>) => {
+    setSlice.updateHomepageConfig(newConfig);
+    const dbPayload: Record<string, any> = {};
+    if ('hero' in newConfig) dbPayload.hero = newConfig.hero;
+    if ('aboutPreview' in newConfig) dbPayload.about_preview = newConfig.aboutPreview;
+    if ('volunteerBanner' in newConfig) dbPayload.volunteer_banner = newConfig.volunteerBanner;
+    if ('supportBanner' in newConfig) dbPayload.support_banner = newConfig.supportBanner;
+    if ('sectionOrder' in newConfig) dbPayload.section_order = newConfig.sectionOrder;
+    if ('sectionVisibility' in newConfig) dbPayload.section_visibility = newConfig.sectionVisibility;
+
+    recordCmsDraft('homepage_config', 'default', 'UPDATE', dbPayload, 'Homepage Config');
+  }, [setSlice]);
 
   // Backup, Export & Import
   const exportDatabaseJSON = useCallback(() => {
@@ -2653,13 +2735,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadAdminData,
     isAdminLoaded,
     clearAdminSessionData,
+    cmsDrafts,
+    cmsDraftCount,
     pushAllToSupabase,
     resetToDefaultData,
     exportDatabaseJSON,
     importDatabaseJSON,
 
     // Settings Mutations
-    updateHomepageConfig: setSlice.updateHomepageConfig,
+    updateHomepageConfig: updateHomepageConfigWithDraft,
     updateAboutSettings: setSlice.updateAboutSettings,
     updateHeaderSettings: setSlice.updateHeaderSettings,
     updateFooterSettings: setSlice.updateFooterSettings,
@@ -2667,7 +2751,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateSupportSettings: setSlice.updateSupportSettings,
     updateContactSettings: setSlice.updateContactSettings,
     updateSEOSettings: setSlice.updateSEOSettings,
-    updateSettings: setSlice.updateSettings,
+    updateSettings: updateSettingsWithDraft,
     addFAQ: setSlice.addFAQ,
     updateFAQ: setSlice.updateFAQ,
     deleteFAQ: setSlice.deleteFAQ,
@@ -2708,12 +2792,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setFeaturedJourneyVideo: media.setFeaturedJourneyVideo,
 
     // Humanitarian Mutations
-    addCampaign: hum.addCampaign,
-    updateCampaign: hum.updateCampaign,
-    deleteCampaign: hum.deleteCampaign,
-    addProgram: hum.addProgram,
-    updateProgram: hum.updateProgram,
-    deleteProgram: hum.deleteProgram,
+    addCampaign: addCampaignWithDraft,
+    updateCampaign: updateCampaignWithDraft,
+    deleteCampaign: deleteCampaignWithDraft,
+    addProgram: addProgramWithDraft,
+    updateProgram: updateProgramWithDraft,
+    deleteProgram: deleteProgramWithDraft,
     addProgramEvent: hum.addProgramEvent,
     updateProgramEvent: hum.updateProgramEvent,
     deleteProgramEvent: hum.deleteProgramEvent,
