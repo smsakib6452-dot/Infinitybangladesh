@@ -332,7 +332,10 @@ export function scanPayloadSecrets(payload: any, visited = new Set<object>()): {
     'auth_pin',
     'auth_token',
     'secret',
-    'access_token'
+    'access_token',
+    'api_key',
+    'apikey',
+    'service_role'
   ]);
 
   if (Array.isArray(payload)) {
