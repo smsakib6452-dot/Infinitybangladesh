@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   Campaign,
   Program,
@@ -345,7 +345,7 @@ export interface DataContextType {
   setPreviewMode: (enabled: boolean) => void;
   syncWithSupabase: (forceAdmin?: boolean) => Promise<SyncResult>;
   syncRouteData: (route: string) => Promise<void>;
-  loadAdminData: () => Promise<SyncResult>;
+  loadAdminData: (isManualRetry?: boolean) => Promise<SyncResult>;
   isAdminLoaded: boolean;
   clearAdminSessionData: () => void;
   cmsDrafts: CmsDraftItem[];
@@ -379,6 +379,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isSyncInProgressRef = useRef<boolean>(false);
   const [isAdminLoaded, setIsAdminLoaded] = useState<boolean>(false);
   const isAdminLoadedRef = useRef<boolean>(false);
+  const isLoadingAdminDataRef = useRef<boolean>(false);
+  const adminLoadAttemptsRef = useRef<number>(0);
+  const MAX_ADMIN_LOAD_ATTEMPTS = 2;
 
   // Guarded CMS Drafts Queue state (Phase 2)
   const [cmsDrafts, setCmsDrafts] = useState<CmsDraftItem[]>(() => getCmsDrafts());
@@ -487,7 +490,31 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, [blood, media, gov, hum, setSlice]);
+  }, [
+    media.setVideos,
+    media.setMediaLibrary,
+    media.setGallery,
+    media.setJourneyVideos,
+    blood.setBloodDonors,
+    blood.setEmergencyBloodRequests,
+    blood.setBloodDonationSettings,
+    blood.setDonorCategories,
+    hum.setCampaigns,
+    hum.setPrograms,
+    hum.setProgramEvents,
+    hum.setEventMediaList,
+    hum.setNews,
+    hum.setEvents,
+    gov.setPersons,
+    gov.setCommittees,
+    gov.setPositions,
+    gov.setCommitteeMembers,
+    setSlice.setHomepageConfig,
+    setSlice.setAboutSettings,
+    setSlice.setHeaderSettings,
+    setSlice.setFooterSettings,
+    setSlice.setSettings
+  ]);
 
   // Clear Admin Session Data from memory and reset admin state
   const clearAdminSessionData = useCallback(() => {
@@ -499,7 +526,19 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuditLogs([]);
     setIsAdminLoaded(false);
     isAdminLoadedRef.current = false;
-  }, [blood, hum, setSlice, gov]);
+    isLoadingAdminDataRef.current = false;
+    adminLoadAttemptsRef.current = 0;
+  }, [
+    blood.resetBloodDonationMemoryState,
+    hum.setVolunteers,
+    hum.setDonations,
+    setSlice.setMessages,
+    gov.setAdminProfiles,
+    setAuditLogs
+  ]);
+
+  const clearAdminSessionDataRef = useRef(clearAdminSessionData);
+  clearAdminSessionDataRef.current = clearAdminSessionData;
 
   // Root Auth State Change Listener to clear admin session data on sign out across tabs or token invalidation
   useEffect(() => {
@@ -509,7 +548,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!client) return;
       const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_OUT' || !session) {
-          clearAdminSessionData();
+          clearAdminSessionDataRef.current();
+        } else if (event === 'SIGNED_IN') {
+          adminLoadAttemptsRef.current = 0;
         }
       });
       unsubscribe = () => subscription.unsubscribe();
@@ -517,17 +558,42 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [clearAdminSessionData]);
+  }, []);
 
   // Load Admin Data
-  const loadAdminData = useCallback(async (): Promise<SyncResult> => {
+  const loadAdminData = useCallback(async (isManualRetry: boolean = false): Promise<SyncResult> => {
     if (!isSupabaseConfigured) return { success: false, error: 'Database not configured' };
-    const supabase = await getSupabase();
-    if (!supabase) return { success: false, error: 'Supabase client unavailable' };
 
-    const failedDatasets: string[] = [];
+    // Guard 1: Already loaded and not manual retry
+    if (isAdminLoadedRef.current && !isManualRetry) {
+      return { success: true, message: 'Admin data already loaded' };
+    }
+
+    // Guard 2: In-flight execution guard
+    if (isLoadingAdminDataRef.current) {
+      return { success: false, error: 'Admin data load already in progress' };
+    }
+
+    // Guard 3: Maximum automatic attempts per session
+    if (!isManualRetry && adminLoadAttemptsRef.current >= MAX_ADMIN_LOAD_ATTEMPTS) {
+      return {
+        success: false,
+        error: 'স্বয়ংক্রিয় লোড সীমা পৌঁছেছে। পুনরায় চেষ্টা করতে "Sync & Refresh" চাপুন।'
+      };
+    }
+
+    if (!isManualRetry) {
+      adminLoadAttemptsRef.current += 1;
+    }
+
+    isLoadingAdminDataRef.current = true;
 
     try {
+      const supabase = await getSupabase();
+      if (!supabase) return { success: false, error: 'Supabase client unavailable' };
+
+      const failedDatasets: string[] = [];
+
       const { data: sessionData } = await supabase.auth.getSession();
       const session = sessionData?.session;
       const hasAdminSession = Boolean(session?.user?.email);
@@ -832,12 +898,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         failedDatasets.push('media_library');
       }
 
-      setIsAdminLoaded(true);
-      isAdminLoadedRef.current = true;
-
       if (failedDatasets.length === 0) {
+        setIsAdminLoaded(true);
+        isAdminLoadedRef.current = true;
         return { success: true, message: 'All admin data loaded successfully.' };
       } else {
+        if (failedDatasets.length < 8) {
+          setIsAdminLoaded(true);
+          isAdminLoadedRef.current = true;
+        }
         return {
           success: false,
           partial: failedDatasets.length < 8,
@@ -848,8 +917,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err: any) {
       console.warn('Admin dataset sync notice:', err);
       return { success: false, error: err?.message || 'Admin dataset sync failed' };
+    } finally {
+      isLoadingAdminDataRef.current = false;
     }
-  }, [blood, hum, setSlice, gov, media]);
+  }, [
+    blood.resetBloodDonationMemoryState,
+    blood.setBloodDonors,
+    blood.setEmergencyBloodRequests,
+    hum.setVolunteers,
+    hum.setDonations,
+    setSlice.setMessages,
+    gov.setAdminProfiles,
+    media.setMediaLibrary,
+    setAuditLogs
+  ]);
 
   // Shared lightweight deep comparison to avoid unnecessary React re-renders and storage writes
   const isDeepEqual = useCallback((a: any, b: any): boolean => {
@@ -2263,6 +2344,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       let syncResult: SyncResult = { success: true, message: 'All datasets synchronized successfully.' };
       if (hasAdminSession) {
+        isAdminLoadedRef.current = false;
+        adminLoadAttemptsRef.current = 0;
         syncResult = await loadAdminData();
       }
       return syncResult;
@@ -2348,6 +2431,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Phase 2: Guarded CMS Mutation Wrappers for P1 Tables
   // Automatically records local drafts with allowlist filtering and secret scanning.
   // -------------------------------------------------------------
+  const humCampaignsRef = useRef(hum.campaigns);
+  humCampaignsRef.current = hum.campaigns;
+  const humProgramsRef = useRef(hum.programs);
+  humProgramsRef.current = hum.programs;
+
   const addCampaignWithDraft = useCallback((campaign: Omit<Campaign, 'id'>) => {
     const created = hum.addCampaign(campaign);
     recordCmsDraft(
@@ -2382,11 +2470,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       typeof created.title === 'object' ? (created.title.bn || created.title.en) : String(created.title || 'ক্যাম্পেইন')
     );
     return created;
-  }, [hum]);
+  }, [hum.addCampaign]);
 
   const updateCampaignWithDraft = useCallback((id: string, updates: Partial<Campaign>) => {
     hum.updateCampaign(id, updates);
-    const existing = hum.campaigns.find(c => c.id === id);
+    const existing = humCampaignsRef.current.find(c => c.id === id);
     const summary = updates.title
       ? (typeof updates.title === 'object' ? (updates.title.bn || updates.title.en) : String(updates.title))
       : (existing?.title ? (typeof existing.title === 'object' ? (existing.title.bn || existing.title.en) : String(existing.title)) : 'ক্যাম্পেইন আপডেট');
@@ -2417,16 +2505,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if ('displayOrder' in updates) dbPayload.display_order = updates.displayOrder;
 
     recordCmsDraft('campaigns', id, 'UPDATE', dbPayload, summary);
-  }, [hum]);
+  }, [hum.updateCampaign]);
 
   const deleteCampaignWithDraft = useCallback((id: string) => {
-    const existing = hum.campaigns.find(c => c.id === id);
+    const existing = humCampaignsRef.current.find(c => c.id === id);
     const summary = existing?.title
       ? (typeof existing.title === 'object' ? (existing.title.bn || existing.title.en) : String(existing.title))
       : 'ক্যাম্পেইন ডিলিট';
     hum.deleteCampaign(id);
     recordCmsDraft('campaigns', id, 'DELETE', {}, summary);
-  }, [hum]);
+  }, [hum.deleteCampaign]);
 
   const addProgramWithDraft = useCallback((program: Omit<Program, 'id'>) => {
     const created = hum.addProgram(program);
@@ -2449,11 +2537,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       typeof created.title === 'object' ? (created.title.bn || created.title.en) : String(created.title || 'প্রোগ্রাম')
     );
     return created;
-  }, [hum]);
+  }, [hum.addProgram]);
 
   const updateProgramWithDraft = useCallback((id: string, updates: Partial<Program>) => {
     hum.updateProgram(id, updates);
-    const existing = hum.programs.find(p => p.id === id);
+    const existing = humProgramsRef.current.find(p => p.id === id);
     const summary = updates.title
       ? (typeof updates.title === 'object' ? (updates.title.bn || updates.title.en) : String(updates.title))
       : (existing?.title ? (typeof existing.title === 'object' ? (existing.title.bn || existing.title.en) : String(existing.title)) : 'প্রোগ্রাম আপডেট');
@@ -2471,16 +2559,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if ('displayOrder' in updates) dbPayload.display_order = updates.displayOrder;
 
     recordCmsDraft('programs', id, 'UPDATE', dbPayload, summary);
-  }, [hum]);
+  }, [hum.updateProgram]);
 
   const deleteProgramWithDraft = useCallback((id: string) => {
-    const existing = hum.programs.find(p => p.id === id);
+    const existing = humProgramsRef.current.find(p => p.id === id);
     const summary = existing?.title
       ? (typeof existing.title === 'object' ? (existing.title.bn || existing.title.en) : String(existing.title))
       : 'প্রোগ্রাম ডিলিট';
     hum.deleteProgram(id);
     recordCmsDraft('programs', id, 'DELETE', {}, summary);
-  }, [hum]);
+  }, [hum.deleteProgram]);
 
   const updateSettingsWithDraft = useCallback((newSettings: Partial<SiteSettings>) => {
     setSlice.updateSettings(newSettings);
@@ -2505,7 +2593,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if ('registrationInfo' in newSettings) dbPayload.registration_info = newSettings.registrationInfo;
 
     recordCmsDraft('site_settings', 'default', 'UPDATE', dbPayload, 'Site Settings');
-  }, [setSlice]);
+  }, [setSlice.updateSettings]);
 
   const updateHomepageConfigWithDraft = useCallback((newConfig: Partial<HomepageConfig>) => {
     setSlice.updateHomepageConfig(newConfig);
@@ -2518,7 +2606,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if ('sectionVisibility' in newConfig) dbPayload.section_visibility = newConfig.sectionVisibility;
 
     recordCmsDraft('homepage_config', 'default', 'UPDATE', dbPayload, 'Homepage Config');
-  }, [setSlice]);
+  }, [setSlice.updateHomepageConfig]);
 
   // Backup, Export & Import
   const exportDatabaseJSON = useCallback(() => {
@@ -2677,7 +2765,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logAudit('RESET', 'Database', 'factory_reset', 'Reset all CMS entities to verified official defaults');
   }, [setSlice, media, gov, hum, blood, logAudit]);
 
-  const value: DataContextType = {
+  const value: DataContextType = useMemo(() => ({
     // Entities from Slices
     campaigns: hum.campaigns,
     programs: hum.programs,
@@ -2877,7 +2965,37 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     deleteCommitteeMember: gov.deleteCommitteeMember,
     reorderCommitteeMembers: gov.reorderCommitteeMembers,
     getMembersWithDetails: gov.getMembersWithDetails
-  };
+  }), [
+    hum,
+    media,
+    setSlice,
+    gov,
+    blood,
+    auditLogs,
+    isSyncing,
+    lastSyncedAt,
+    previewMode,
+    setPreviewMode,
+    syncWithSupabase,
+    syncRouteData,
+    loadAdminData,
+    isAdminLoaded,
+    clearAdminSessionData,
+    cmsDrafts,
+    cmsDraftCount,
+    pushAllToSupabase,
+    resetToDefaultData,
+    exportDatabaseJSON,
+    importDatabaseJSON,
+    updateHomepageConfigWithDraft,
+    updateSettingsWithDraft,
+    addCampaignWithDraft,
+    updateCampaignWithDraft,
+    deleteCampaignWithDraft,
+    addProgramWithDraft,
+    updateProgramWithDraft,
+    deleteProgramWithDraft
+  ]);
 
   return (
     <DataContext.Provider value={value}>

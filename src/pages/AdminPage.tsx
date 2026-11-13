@@ -251,45 +251,53 @@ export const AdminPage: React.FC = () => {
   const [authError, setAuthError] = useState<string | null>(null);
   const [currentRole, setCurrentRole] = useState<AdminRole>('super_admin');
 
+  // Stable refs for background auth/data cycles
+  const isMountedRef = useRef<boolean>(true);
+  const clearAdminSessionDataRef = useRef(clearAdminSessionData);
+  clearAdminSessionDataRef.current = clearAdminSessionData;
+  const loadAdminDataRef = useRef(loadAdminData);
+  loadAdminDataRef.current = loadAdminData;
+
   // Validate active session on mount if Supabase Auth is enabled
   React.useEffect(() => {
+    isMountedRef.current = true;
     localStorage.removeItem('infinity_bd_admin_auth'); // Purge legacy insecure storage key
     if (isSupabaseConfigured) {
       let unsubscribe: (() => void) | undefined;
       getSupabase().then(client => {
-        if (!client) return;
+        if (!client || !isMountedRef.current) return;
         client.auth.getSession().then(({ data: { session } }) => {
+          if (!isMountedRef.current) return;
           setIsAuthenticated(Boolean(session));
           if (!session) {
             sessionStorage.removeItem('infinity_admin_user');
-            clearAdminSessionData();
+            clearAdminSessionDataRef.current();
           }
         }).catch(() => {
+          if (!isMountedRef.current) return;
           setIsAuthenticated(false);
-          clearAdminSessionData();
+          clearAdminSessionDataRef.current();
         });
 
         const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
+          if (!isMountedRef.current) return;
           setIsAuthenticated(Boolean(session));
           if (event === 'SIGNED_OUT' || !session) {
             sessionStorage.removeItem('infinity_admin_user');
-            clearAdminSessionData();
+            clearAdminSessionDataRef.current();
           }
         });
         unsubscribe = () => subscription.unsubscribe();
       });
       return () => {
+        isMountedRef.current = false;
         if (unsubscribe) unsubscribe();
       };
     }
-  }, [clearAdminSessionData]);
-
-  // Load complete admin-only datasets on entry only if actively authenticated
-  React.useEffect(() => {
-    if (isAuthenticated && !isAdminLoaded) {
-      loadAdminData();
-    }
-  }, [isAuthenticated, isAdminLoaded, loadAdminData]);
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // UI Navigation
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
@@ -464,6 +472,19 @@ export const AdminPage: React.FC = () => {
       toastTimerRef.current = null;
     }, duration);
   };
+
+  // Load complete admin-only datasets on entry only if actively authenticated
+  React.useEffect(() => {
+    if (isAuthenticated && !isAdminLoaded) {
+      loadAdminDataRef.current().then(res => {
+        if (!res.success && res.error) {
+          showToast(res.error, 'error');
+        }
+      }).catch(err => {
+        showToast(err?.message || 'Admin data load failed', 'error');
+      });
+    }
+  }, [isAuthenticated, isAdminLoaded]);
 
   const openMediaPicker = (onSelect: (url: string) => void) => {
     setMediaPickerCallback(() => onSelect);
