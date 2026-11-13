@@ -2310,7 +2310,9 @@ export const AdminHomepageManager: React.FC<AdminHomepageManagerProps> = ({
                   alt="Infinity LifeLine Logo Preview"
                   className="max-h-full max-w-full object-contain"
                   onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = '/brand/Infinitylifeline-logo.webp';
+                    const target = e.currentTarget;
+                    target.onerror = null;
+                    target.src = '/brand/Infinitylifeline-logo.webp';
                   }}
                 />
               </div>
