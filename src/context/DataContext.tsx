@@ -444,7 +444,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else if (entityKey === 'emergencyRequests' && Array.isArray(parsed)) {
           blood.setEmergencyBloodRequests(parsed);
         } else if (entityKey === 'bloodDonationSettings' && parsed && typeof parsed === 'object') {
-          blood.setBloodDonationSettings(parsed);
+          const normalized =
+            parsed.wingLogoUrl === '/brand/Infinitylifeline-logo.svg'
+              ? { ...parsed, wingLogoUrl: INITIAL_BLOOD_SETTINGS.wingLogoUrl }
+              : parsed;
+          blood.setBloodDonationSettings(normalized);
         } else if (entityKey === 'donorCategories' && Array.isArray(parsed)) {
           blood.setDonorCategories(parsed);
         } else if (entityKey === 'campaigns' && Array.isArray(parsed)) {
@@ -2304,11 +2308,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data: bSettingsData } = await supabase.from('blood_donation_settings').select('*').single();
       if (bSettingsData) {
         blood.setBloodDonationSettings(prevLocal => {
-          const localHasCustomLogo = prevLocal.wingLogoUrl && prevLocal.wingLogoUrl !== INITIAL_BLOOD_SETTINGS.wingLogoUrl;
-          const remoteLogo = bSettingsData.wing_logo_url;
+          const isLegacyOrDefaultLogo = (url?: string) =>
+            !url || url === '/brand/Infinitylifeline-logo.svg' || url === INITIAL_BLOOD_SETTINGS.wingLogoUrl;
+          const localHasCustomLogo = Boolean(prevLocal.wingLogoUrl && !isLegacyOrDefaultLogo(prevLocal.wingLogoUrl));
+          const remoteLogo =
+            bSettingsData.wing_logo_url === '/brand/Infinitylifeline-logo.svg'
+              ? INITIAL_BLOOD_SETTINGS.wingLogoUrl
+              : bSettingsData.wing_logo_url;
           const resolvedLogo = localHasCustomLogo
             ? prevLocal.wingLogoUrl
-            : (remoteLogo || prevLocal.wingLogoUrl || INITIAL_BLOOD_SETTINGS.wingLogoUrl);
+            : (remoteLogo || INITIAL_BLOOD_SETTINGS.wingLogoUrl);
 
           const isOldImpactLabel = !bSettingsData.stat_impact_label ||
             bSettingsData.stat_impact_label.en === 'Lives Impacted' ||

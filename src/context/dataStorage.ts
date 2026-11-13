@@ -489,6 +489,19 @@ export function purgeInsecureStorageOnStartup(): void {
         storage.setItem(`${STORAGE_PREFIX}emergencyRequests`, JSON.stringify(cleaned));
       }
     }
+    const rawBloodSettings = storage.getItem(`${STORAGE_PREFIX}bloodDonationSettings`);
+    if (rawBloodSettings) {
+      const parsed = JSON.parse(rawBloodSettings);
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        !Array.isArray(parsed) &&
+        parsed.wingLogoUrl === '/brand/Infinitylifeline-logo.svg'
+      ) {
+        parsed.wingLogoUrl = '/brand/Infinitylifeline-logo.webp';
+        storage.setItem(`${STORAGE_PREFIX}bloodDonationSettings`, JSON.stringify(parsed));
+      }
+    }
   } catch (err) {
     console.warn('[STORAGE] Insecure storage startup purge notice:', err);
   }
