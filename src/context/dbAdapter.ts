@@ -916,7 +916,7 @@ export async function safeDbAdminCmsUpdate<T = { id: string }>(
     }
   }
 
-  if (allowlist.includes('updated_at')) {
+  if (allowlist.includes('updated_at') && !sanitized.updated_at) {
     sanitized.updated_at = new Date().toISOString();
   }
 
