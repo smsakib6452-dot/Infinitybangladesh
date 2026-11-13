@@ -144,6 +144,60 @@ export const CMS_SENSITIVE_FIELDS: Record<string, readonly string[]> = Object.fr
   ])
 });
 
+/**
+ * Structural deep equality comparison (key-order independent for objects).
+ */
+export function isCmsDeepEqual(a: unknown, b: unknown): boolean {
+  if (Object.is(a, b)) return true;
+  if (a === null || a === undefined || b === null || b === undefined) return false;
+  if (typeof a !== typeof b) return false;
+  if (typeof a !== 'object') return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (!isCmsDeepEqual(a[i], b[i])) return false;
+    }
+    return true;
+  }
+
+  const objA = a as Record<string, unknown>;
+  const objB = b as Record<string, unknown>;
+  const keysA = Object.keys(objA);
+  const keysB = Object.keys(objB);
+  if (keysA.length !== keysB.length) return false;
+
+  for (const key of keysA) {
+    if (!Object.prototype.hasOwnProperty.call(objB, key)) return false;
+    if (!isCmsDeepEqual(objA[key], objB[key])) return false;
+  }
+  return true;
+}
+
+/**
+ * Canonical predicate determining whether a sensitive column actually changed.
+ * Returns true iff the field is being written in `payload` AND either:
+ * - action is CREATE, or the current DB row / field value is unknown (fail-closed), OR
+ * - payload[field] differs from currentDbRow[field] under isCmsDeepEqual.
+ * Independent of draft.changedFields so a stale/truncated changedFields array can never bypass confirmation.
+ */
+export function isSensitiveFieldChanged(
+  field: string,
+  payload: Record<string, any> | null | undefined,
+  currentDbRow?: Record<string, any> | null,
+  action: 'CREATE' | 'UPDATE' | 'DELETE' = 'UPDATE'
+): boolean {
+  if (action === 'DELETE') return false;
+  if (!payload || !Object.prototype.hasOwnProperty.call(payload, field) || payload[field] === undefined) {
+    return false;
+  }
+  if (action === 'CREATE' || !currentDbRow || !Object.prototype.hasOwnProperty.call(currentDbRow, field)) {
+    return true;
+  }
+  return !isCmsDeepEqual(currentDbRow[field], payload[field]);
+}
+
 export type AdminCmsMutationResult<T = { id: string }> =
   | { success: true; status: 'SUCCESS'; id: string; data?: T; count: number; changedSensitiveFields?: string[] }
   | { success: false; status: 'AUTH_REQUIRED'; error: string; code?: string }
@@ -814,7 +868,8 @@ export async function safeDbAdminCmsUpdate<T = { id: string }>(
   tableName: CmsAllowedTable | string,
   id: string,
   updates: Record<string, any>,
-  expectedUpdatedAt?: string | null
+  expectedUpdatedAt?: string | null,
+  currentDbRow?: Record<string, any> | null
 ): Promise<AdminCmsMutationResult<T>> {
   const cleanId = id?.trim();
   if (!cleanId) {
@@ -929,11 +984,11 @@ export async function safeDbAdminCmsUpdate<T = { id: string }>(
     };
   }
 
-  // 7. Track sensitive fields
+  // 7. Track sensitive fields using canonical DB comparison (same predicate as publish engine & modal)
   const sensitiveList = CMS_SENSITIVE_FIELDS[tableName] || [];
   const changedSensitiveFields: string[] = [];
   for (const field of sensitiveList) {
-    if (field in sanitized) {
+    if (isSensitiveFieldChanged(field, sanitized, currentDbRow, 'UPDATE')) {
       changedSensitiveFields.push(field);
     }
   }

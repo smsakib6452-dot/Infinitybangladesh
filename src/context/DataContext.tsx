@@ -92,7 +92,7 @@ import { getSupabase, isSupabaseConfigured, fetchSupabaseRest } from '../lib/sup
 import { getFreshImageUrl } from '../lib/cloudinary';
 import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL, isBlacklistedMedia } from '../lib/utils/mediaHelper';
 import { STORAGE_PREFIX, DATA_VERSION_KEY, CURRENT_DATA_VERSION, getStoredOrDefault, saveToStorage } from './dataStorage';
-import { safeDbUpsert, safeDbDelete, createAuditLog, REMOTE_CMS_MUTATIONS_LOCKED, InsertResult, AdminUpdateResult } from './dbAdapter';
+import { safeDbUpsert, safeDbDelete, createAuditLog, REMOTE_CMS_MUTATIONS_LOCKED, InsertResult, AdminUpdateResult, isCmsDeepEqual } from './dbAdapter';
 import {
   CmsDraftItem,
   getCmsDrafts,
@@ -350,6 +350,7 @@ export interface DataContextType {
   clearAdminSessionData: () => void;
   cmsDrafts: CmsDraftItem[];
   cmsDraftCount: number;
+  dbSiteSettingsRow: Record<string, unknown> | null;
   syncCmsP1Tables: () => Promise<{ success: boolean; error?: string }>;
   pushAllToSupabase: () => Promise<{ success: boolean; message: string }>;
   resetToDefaultData: () => void;
@@ -358,6 +359,135 @@ export interface DataContextType {
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
+
+export type CmsFieldMapping = {
+  prop: string;
+  altProp?: string;
+  col: string;
+  optionalEmpty?: boolean;
+};
+
+export const CAMPAIGN_FIELD_MAPPINGS: readonly CmsFieldMapping[] = [
+  { prop: 'slug', col: 'slug' },
+  { prop: 'title', col: 'title' },
+  { prop: 'date', col: 'date' },
+  { prop: 'endDate', col: 'end_date', optionalEmpty: true },
+  { prop: 'location', col: 'location' },
+  { prop: 'category', col: 'category' },
+  { prop: 'description', col: 'description' },
+  { prop: 'details', col: 'details' },
+  { prop: 'objectives', col: 'objectives' },
+  { prop: 'activities', col: 'activities' },
+  { prop: 'beneficiaries', col: 'beneficiaries' },
+  { prop: 'beneficiariesCount', col: 'beneficiaries_count' },
+  { prop: 'volunteersCount', col: 'volunteers_count' },
+  { prop: 'impact', col: 'impact' },
+  { prop: 'status', col: 'status' },
+  { prop: 'isFeatured', col: 'is_featured' },
+  { prop: 'targetAmountBDT', col: 'target_amount_bdt', optionalEmpty: true },
+  { prop: 'raisedAmountBDT', col: 'raised_amount_bdt', optionalEmpty: true },
+  { prop: 'imageUrl', col: 'image_url' },
+  { prop: 'galleryImages', col: 'gallery_images' },
+  { prop: 'videoUrl', col: 'video_url', optionalEmpty: true },
+  { prop: 'reportUrl', col: 'report_url', optionalEmpty: true },
+  { prop: 'displayOrder', col: 'display_order', optionalEmpty: true }
+];
+
+export const PROGRAM_FIELD_MAPPINGS: readonly CmsFieldMapping[] = [
+  { prop: 'slug', col: 'slug' },
+  { prop: 'title', col: 'title' },
+  { prop: 'category', col: 'category' },
+  { prop: 'shortDescription', col: 'short_description' },
+  { prop: 'fullDetails', col: 'full_details' },
+  { prop: 'impactHighlights', col: 'impact_highlights' },
+  { prop: 'imageUrl', col: 'image_url' },
+  { prop: 'iconName', col: 'icon_name' },
+  { prop: 'status', col: 'status' },
+  { prop: 'displayOrder', col: 'display_order', optionalEmpty: true }
+];
+
+export const SETTINGS_FIELD_MAPPINGS: readonly CmsFieldMapping[] = [
+  { prop: 'organizationName', col: 'organization_name' },
+  { prop: 'teamIdentity', col: 'team_identity' },
+  { prop: 'tagline', col: 'tagline' },
+  { prop: 'country', col: 'country' },
+  { prop: 'officialAddress', col: 'official_address' },
+  { prop: 'officialPhone', col: 'official_phone' },
+  { prop: 'officialEmail', col: 'official_email' },
+  { prop: 'establishedYear', col: 'established_year' },
+  { prop: 'logoUrl', col: 'logo_url' },
+  { prop: 'faviconUrl', col: 'favicon_url' },
+  { prop: 'bKashNumber', altProp: 'bkashNumber', col: 'bkash_number' },
+  { prop: 'nagadNumber', col: 'nagad_number' },
+  { prop: 'bankDetails', col: 'bank_details', optionalEmpty: true },
+  { prop: 'bannerAnnouncement', col: 'banner_announcement' },
+  { prop: 'showAnnouncementBanner', col: 'show_announcement_banner' },
+  { prop: 'maintenanceMode', col: 'maintenance_mode' },
+  { prop: 'defaultLanguage', col: 'default_language' },
+  { prop: 'registrationInfo', col: 'registration_info' }
+];
+
+export const HOMEPAGE_FIELD_MAPPINGS: readonly CmsFieldMapping[] = [
+  { prop: 'hero', col: 'hero' },
+  { prop: 'aboutPreview', col: 'about_preview' },
+  { prop: 'volunteerBanner', col: 'volunteer_banner' },
+  { prop: 'supportBanner', col: 'support_banner' },
+  { prop: 'sectionOrder', col: 'section_order' },
+  { prop: 'sectionVisibility', col: 'section_visibility' }
+];
+
+function normalizeOptionalCmsValue(val: unknown): unknown {
+  if (val === undefined || val === '') return null;
+  if (typeof val === 'number' && Number.isNaN(val)) return null;
+  return val;
+}
+
+function isCmsFieldUnchanged(existingVal: unknown, nextVal: unknown, optionalEmpty = false): boolean {
+  const a = optionalEmpty ? normalizeOptionalCmsValue(existingVal) : existingVal;
+  const b = optionalEmpty ? normalizeOptionalCmsValue(nextVal) : nextVal;
+  if (isCmsDeepEqual(a, b)) return true;
+  if (
+    (typeof a === 'number' && typeof b === 'string' && b.trim() !== '' && Number(b) === a) ||
+    (typeof b === 'number' && typeof a === 'string' && a.trim() !== '' && Number(a) === b)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+export function diffCmsUpdateColumns<T extends Record<string, any>>(
+  updates: Partial<T>,
+  existing: T | undefined,
+  mappings: readonly CmsFieldMapping[]
+): { dbPayload: Record<string, any>; changedFields: string[] } {
+  const dbPayload: Record<string, any> = {};
+  const changedFields: string[] = [];
+
+  for (const { prop, altProp, col, optionalEmpty } of mappings) {
+    const hasMain = prop in updates;
+    const hasAlt = altProp ? altProp in updates : false;
+    if (!hasMain && !hasAlt) continue;
+
+    const nextVal = hasMain ? (updates as any)[prop] : (updates as any)[altProp!];
+    dbPayload[col] = nextVal;
+
+    if (!existing) {
+      changedFields.push(col);
+      continue;
+    }
+
+    const existingVal =
+      altProp && existing[prop] === undefined && altProp in existing
+        ? (existing as any)[altProp]
+        : (existing as any)[prop];
+
+    if (!isCmsFieldUnchanged(existingVal, nextVal, optionalEmpty)) {
+      changedFields.push(col);
+    }
+  }
+
+  return { dbPayload, changedFields };
+}
 
 // Safe version marker without deleting user customized data
 (() => {
@@ -387,6 +517,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Guarded CMS Drafts Queue state (Phase 2)
   const [cmsDrafts, setCmsDrafts] = useState<CmsDraftItem[]>(() => getCmsDrafts());
   const cmsDraftCount = cmsDrafts.length;
+  // Raw last-synced site_settings row from DB (unoverlaid by local drafts)
+  const [dbSiteSettingsRow, setDbSiteSettingsRow] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     const handleDraftsChange = () => {
@@ -984,6 +1116,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const siteData = siteRows?.[0];
       if (siteData) {
+        setDbSiteSettingsRow(siteData);
         saveCmsRemoteVersionsBatch([{ table: 'site_settings', id: 'default', updatedAt: siteData.updated_at }]);
         const overlaidSite = applyCmsSingleRowOverlay('site_settings', siteData);
         setSlice.setSettings(prev => {
@@ -1719,6 +1852,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 1. Site Settings
       const { data: siteData } = await supabase.from('site_settings').select('*').single();
       if (siteData) {
+        setDbSiteSettingsRow(siteData);
         saveCmsRemoteVersionsBatch([{ table: 'site_settings', id: 'default', updatedAt: siteData.updated_at }]);
         const overlaidSite = applyCmsSingleRowOverlay('site_settings', siteData);
         setSlice.setSettings(prev => ({
@@ -2455,6 +2589,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   humCampaignsRef.current = hum.campaigns;
   const humProgramsRef = useRef(hum.programs);
   humProgramsRef.current = hum.programs;
+  const settingsRef = useRef(setSlice.settings);
+  settingsRef.current = setSlice.settings;
+  const homepageConfigRef = useRef(setSlice.homepageConfig);
+  homepageConfigRef.current = setSlice.homepageConfig;
 
   const addCampaignWithDraft = useCallback((campaign: Omit<Campaign, 'id'>) => {
     const created = hum.addCampaign(campaign);
@@ -2493,38 +2631,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [hum.addCampaign]);
 
   const updateCampaignWithDraft = useCallback((id: string, updates: Partial<Campaign>) => {
-    hum.updateCampaign(id, updates);
     const existing = humCampaignsRef.current.find(c => c.id === id);
+    hum.updateCampaign(id, updates);
     const summary = updates.title
       ? (typeof updates.title === 'object' ? (updates.title.bn || updates.title.en) : String(updates.title))
       : (existing?.title ? (typeof existing.title === 'object' ? (existing.title.bn || existing.title.en) : String(existing.title)) : 'ক্যাম্পেইন আপডেট');
 
-    const dbPayload: Record<string, any> = {};
-    if ('slug' in updates) dbPayload.slug = updates.slug;
-    if ('title' in updates) dbPayload.title = updates.title;
-    if ('date' in updates) dbPayload.date = updates.date;
-    if ('endDate' in updates) dbPayload.end_date = updates.endDate;
-    if ('location' in updates) dbPayload.location = updates.location;
-    if ('category' in updates) dbPayload.category = updates.category;
-    if ('description' in updates) dbPayload.description = updates.description;
-    if ('details' in updates) dbPayload.details = updates.details;
-    if ('objectives' in updates) dbPayload.objectives = updates.objectives;
-    if ('activities' in updates) dbPayload.activities = updates.activities;
-    if ('beneficiaries' in updates) dbPayload.beneficiaries = updates.beneficiaries;
-    if ('beneficiariesCount' in updates) dbPayload.beneficiaries_count = updates.beneficiariesCount;
-    if ('volunteersCount' in updates) dbPayload.volunteers_count = updates.volunteersCount;
-    if ('impact' in updates) dbPayload.impact = updates.impact;
-    if ('status' in updates) dbPayload.status = updates.status;
-    if ('isFeatured' in updates) dbPayload.is_featured = updates.isFeatured;
-    if ('targetAmountBDT' in updates) dbPayload.target_amount_bdt = updates.targetAmountBDT;
-    if ('raisedAmountBDT' in updates) dbPayload.raised_amount_bdt = updates.raisedAmountBDT;
-    if ('imageUrl' in updates) dbPayload.image_url = updates.imageUrl;
-    if ('galleryImages' in updates) dbPayload.gallery_images = updates.galleryImages;
-    if ('videoUrl' in updates) dbPayload.video_url = updates.videoUrl;
-    if ('reportUrl' in updates) dbPayload.report_url = updates.reportUrl;
-    if ('displayOrder' in updates) dbPayload.display_order = updates.displayOrder;
+    const { dbPayload, changedFields } = diffCmsUpdateColumns(updates, existing, CAMPAIGN_FIELD_MAPPINGS);
+    const hasPendingDraft = getCmsDrafts().some(d => d.table === 'campaigns' && d.id === id);
+    if (existing && changedFields.length === 0 && !hasPendingDraft) return;
 
-    recordCmsDraft('campaigns', id, 'UPDATE', dbPayload, summary);
+    recordCmsDraft('campaigns', id, 'UPDATE', dbPayload, summary, changedFields);
   }, [hum.updateCampaign]);
 
   const deleteCampaignWithDraft = useCallback((id: string) => {
@@ -2560,25 +2677,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [hum.addProgram]);
 
   const updateProgramWithDraft = useCallback((id: string, updates: Partial<Program>) => {
-    hum.updateProgram(id, updates);
     const existing = humProgramsRef.current.find(p => p.id === id);
+    hum.updateProgram(id, updates);
     const summary = updates.title
       ? (typeof updates.title === 'object' ? (updates.title.bn || updates.title.en) : String(updates.title))
       : (existing?.title ? (typeof existing.title === 'object' ? (existing.title.bn || existing.title.en) : String(existing.title)) : 'প্রোগ্রাম আপডেট');
 
-    const dbPayload: Record<string, any> = {};
-    if ('slug' in updates) dbPayload.slug = updates.slug;
-    if ('title' in updates) dbPayload.title = updates.title;
-    if ('category' in updates) dbPayload.category = updates.category;
-    if ('shortDescription' in updates) dbPayload.short_description = updates.shortDescription;
-    if ('fullDetails' in updates) dbPayload.full_details = updates.fullDetails;
-    if ('impactHighlights' in updates) dbPayload.impact_highlights = updates.impactHighlights;
-    if ('imageUrl' in updates) dbPayload.image_url = updates.imageUrl;
-    if ('iconName' in updates) dbPayload.icon_name = updates.iconName;
-    if ('status' in updates) dbPayload.status = updates.status;
-    if ('displayOrder' in updates) dbPayload.display_order = updates.displayOrder;
+    const { dbPayload, changedFields } = diffCmsUpdateColumns(updates, existing, PROGRAM_FIELD_MAPPINGS);
+    const hasPendingDraft = getCmsDrafts().some(d => d.table === 'programs' && d.id === id);
+    if (existing && changedFields.length === 0 && !hasPendingDraft) return;
 
-    recordCmsDraft('programs', id, 'UPDATE', dbPayload, summary);
+    recordCmsDraft('programs', id, 'UPDATE', dbPayload, summary, changedFields);
   }, [hum.updateProgram]);
 
   const deleteProgramWithDraft = useCallback((id: string) => {
@@ -2591,41 +2700,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [hum.deleteProgram]);
 
   const updateSettingsWithDraft = useCallback((newSettings: Partial<SiteSettings>) => {
+    const existing = settingsRef.current;
     setSlice.updateSettings(newSettings);
-    const dbPayload: Record<string, any> = {};
-    if ('organizationName' in newSettings) dbPayload.organization_name = newSettings.organizationName;
-    if ('teamIdentity' in newSettings) dbPayload.team_identity = newSettings.teamIdentity;
-    if ('tagline' in newSettings) dbPayload.tagline = newSettings.tagline;
-    if ('country' in newSettings) dbPayload.country = newSettings.country;
-    if ('officialAddress' in newSettings) dbPayload.official_address = newSettings.officialAddress;
-    if ('officialPhone' in newSettings) dbPayload.official_phone = newSettings.officialPhone;
-    if ('officialEmail' in newSettings) dbPayload.official_email = newSettings.officialEmail;
-    if ('establishedYear' in newSettings) dbPayload.established_year = newSettings.establishedYear;
-    if ('logoUrl' in newSettings) dbPayload.logo_url = newSettings.logoUrl;
-    if ('faviconUrl' in newSettings) dbPayload.favicon_url = newSettings.faviconUrl;
-    if ('bkashNumber' in newSettings) dbPayload.bkash_number = newSettings.bkashNumber;
-    if ('nagadNumber' in newSettings) dbPayload.nagad_number = newSettings.nagadNumber;
-    if ('bankDetails' in newSettings) dbPayload.bank_details = newSettings.bankDetails;
-    if ('bannerAnnouncement' in newSettings) dbPayload.banner_announcement = newSettings.bannerAnnouncement;
-    if ('showAnnouncementBanner' in newSettings) dbPayload.show_announcement_banner = newSettings.showAnnouncementBanner;
-    if ('maintenanceMode' in newSettings) dbPayload.maintenance_mode = newSettings.maintenanceMode;
-    if ('defaultLanguage' in newSettings) dbPayload.default_language = newSettings.defaultLanguage;
-    if ('registrationInfo' in newSettings) dbPayload.registration_info = newSettings.registrationInfo;
+    const { dbPayload, changedFields } = diffCmsUpdateColumns(newSettings, existing, SETTINGS_FIELD_MAPPINGS);
+    const hasPendingDraft = getCmsDrafts().some(d => d.table === 'site_settings' && d.id === 'default');
+    if (existing && changedFields.length === 0 && !hasPendingDraft) return;
 
-    recordCmsDraft('site_settings', 'default', 'UPDATE', dbPayload, 'Site Settings');
+    recordCmsDraft('site_settings', 'default', 'UPDATE', dbPayload, 'Site Settings', changedFields);
   }, [setSlice.updateSettings]);
 
   const updateHomepageConfigWithDraft = useCallback((newConfig: Partial<HomepageConfig>) => {
+    const existing = homepageConfigRef.current;
     setSlice.updateHomepageConfig(newConfig);
-    const dbPayload: Record<string, any> = {};
-    if ('hero' in newConfig) dbPayload.hero = newConfig.hero;
-    if ('aboutPreview' in newConfig) dbPayload.about_preview = newConfig.aboutPreview;
-    if ('volunteerBanner' in newConfig) dbPayload.volunteer_banner = newConfig.volunteerBanner;
-    if ('supportBanner' in newConfig) dbPayload.support_banner = newConfig.supportBanner;
-    if ('sectionOrder' in newConfig) dbPayload.section_order = newConfig.sectionOrder;
-    if ('sectionVisibility' in newConfig) dbPayload.section_visibility = newConfig.sectionVisibility;
+    const { dbPayload, changedFields } = diffCmsUpdateColumns(newConfig, existing, HOMEPAGE_FIELD_MAPPINGS);
+    const hasPendingDraft = getCmsDrafts().some(d => d.table === 'homepage_config' && d.id === 'default');
+    if (existing && changedFields.length === 0 && !hasPendingDraft) return;
 
-    recordCmsDraft('homepage_config', 'default', 'UPDATE', dbPayload, 'Homepage Config');
+    recordCmsDraft('homepage_config', 'default', 'UPDATE', dbPayload, 'Homepage Config', changedFields);
   }, [setSlice.updateHomepageConfig]);
 
   // Backup, Export & Import
@@ -2845,6 +2936,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearAdminSessionData,
     cmsDrafts,
     cmsDraftCount,
+    dbSiteSettingsRow,
     syncCmsP1Tables,
     pushAllToSupabase,
     resetToDefaultData,
@@ -3004,6 +3096,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearAdminSessionData,
     cmsDrafts,
     cmsDraftCount,
+    dbSiteSettingsRow,
     syncCmsP1Tables,
     pushAllToSupabase,
     resetToDefaultData,

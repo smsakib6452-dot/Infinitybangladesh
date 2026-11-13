@@ -9,6 +9,7 @@ import {
   CmsAllowedTable,
   AdminCmsMutationResult,
   CMS_SENSITIVE_FIELDS,
+  isSensitiveFieldChanged,
   safeDbAdminCreate,
   safeDbAdminCmsUpdate,
   safeDbAdminCmsDelete
@@ -232,9 +233,16 @@ export function detectSensitiveChanges(
     if (!sensitiveList || sensitiveList.length === 0) continue;
 
     for (const field of sensitiveList) {
-      const inChangedFields = draft.changedFields.includes(field);
-      const inPayload = draft.payload && field in draft.payload;
-      if (!inChangedFields && !inPayload) continue;
+      if (
+        !isSensitiveFieldChanged(
+          field,
+          draft.payload as Record<string, unknown> | undefined,
+          currentDbSiteSettings,
+          draft.action
+        )
+      ) {
+        continue;
+      }
 
       const label = SENSITIVE_FIELD_LABELS[field] || { bn: field, en: field };
       const oldValue = formatDisplayValue(currentDbSiteSettings?.[field]);
@@ -427,11 +435,45 @@ export async function publishCmsDrafts(
     };
   }
 
-  const dbSiteSettings =
-    options.currentSiteSettings ??
-    backupResult.backupDoc.rowsByTable.site_settings?.[0] ??
-    null;
-  const resolvedSensitiveChanges = detectSensitiveChanges(orderedDrafts, dbSiteSettings);
+  const backupSiteSettingsRow = backupResult.backupDoc.rowsByTable.site_settings?.[0];
+  const mergedDbSiteSettings =
+    options.currentSiteSettings || backupSiteSettingsRow
+      ? { ...(options.currentSiteSettings || {}), ...(backupSiteSettingsRow || {}) }
+      : null;
+  const resolvedSensitiveChanges = detectSensitiveChanges(orderedDrafts, mergedDbSiteSettings);
+
+  if (resolvedSensitiveChanges.length > 0 && options.confirmSensitive !== true) {
+    const blockedResults: CmsPublishItemResult[] = orderedDrafts.map((d) => {
+      const hasSensitive = detectSensitiveChanges([d], mergedDbSiteSettings).length > 0;
+      return {
+        draftId: d.draftId,
+        table: d.table,
+        id: d.id,
+        action: d.action,
+        summary: d.summary,
+        status: hasSensitive ? 'VALIDATION_FAILED' : 'SKIPPED',
+        success: false,
+        error: hasSensitive
+          ? 'সংবেদনশীল তথ্য (বিকাশ/নগদ/ব্যাংক/ফোন/ইমেইল) পরিবর্তনের জন্য আলাদা নিশ্চিতকরণ প্রয়োজন। / Explicit confirmation is required before publishing sensitive contact/payment fields.'
+          : 'সংবেদনশীল তথ্যের নিশ্চিতকরণ অপেক্ষমাণ থাকায় প্রকাশ স্থগিত করা হয়েছে। / Halted pending sensitive fields confirmation.'
+      };
+    });
+
+    return {
+      total: orderedDrafts.length,
+      succeeded: 0,
+      failed: blockedResults.filter((r) => r.status === 'VALIDATION_FAILED').length,
+      skipped: blockedResults.filter((r) => r.status === 'SKIPPED').length,
+      haltedByAuth: false,
+      backupFailed: false,
+      backupFilename: backupResult.filename,
+      backupDoc: backupResult.backupDoc,
+      requiresSensitiveConfirmation: true,
+      sensitiveChanges: resolvedSensitiveChanges,
+      postPublishSyncOk: false,
+      results: blockedResults
+    };
+  }
 
   // 3. Sequential Execution: CREATE -> UPDATE -> DELETE
   const results: CmsPublishItemResult[] = [];
@@ -473,6 +515,17 @@ export async function publishCmsDrafts(
         updated_at: publishTimestamp
       });
     } else if (draft.action === 'UPDATE') {
+      const tableBackupRows = backupResult.backupDoc.rowsByTable[draft.table];
+      const backupRow = Array.isArray(tableBackupRows)
+        ? (tableBackupRows.find((r) => r.id === draft.id) ?? null)
+        : null;
+      const currentDbRowForUpdate =
+        draft.table === 'site_settings'
+          ? (options.currentSiteSettings || backupRow
+              ? { ...(options.currentSiteSettings || {}), ...(backupRow || {}) }
+              : null)
+          : backupRow;
+
       mutationRes = await safeDbAdminCmsUpdate(
         draft.table,
         draft.id,
@@ -480,7 +533,8 @@ export async function publishCmsDrafts(
           ...draft.payload,
           updated_at: publishTimestamp
         },
-        draft.originalUpdatedAt ?? undefined
+        draft.originalUpdatedAt ?? undefined,
+        currentDbRowForUpdate
       );
     } else {
       mutationRes = await safeDbAdminCmsDelete(

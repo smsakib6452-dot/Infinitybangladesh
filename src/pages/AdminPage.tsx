@@ -156,7 +156,7 @@ import { AdminErrorBoundary } from '../components/AdminErrorBoundary';
 import { CmsPublishModal } from '../components/CmsPublishModal';
 import { ModalShell } from '../components/ModalShell';
 import { clearAllCmsDrafts } from '../context/cmsDraftStore';
-import { getSupabase, isSupabaseConfigured, signInWithEmail, signOutAdmin } from '../lib/supabase';
+import { getSupabase, isSupabaseConfigured, fetchSupabaseRest, signInWithEmail, signOutAdmin } from '../lib/supabase';
 import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL, isPortraitVideo } from '../lib/utils/mediaHelper';
 import { uploadToCloudinary } from '../lib/cloudinary';
 import { isValidPermanentUrl } from '../lib/utils/mediaSanitizer';
@@ -243,6 +243,7 @@ export const AdminPage: React.FC = () => {
     loadAdminData, isAdminLoaded, clearAdminSessionData,
     cmsDrafts,
     cmsDraftCount,
+    dbSiteSettingsRow,
     syncCmsP1Tables
   } = useData();
 
@@ -758,16 +759,7 @@ export const AdminPage: React.FC = () => {
   const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
   const [isDiscarding, setIsDiscarding] = useState(false);
 
-  const siteSettingsRow = React.useMemo(() => {
-    if (!settings) return null;
-    return {
-      bkash_number: settings.bKashNumber || (settings as any).bkashNumber || '',
-      nagad_number: settings.nagadNumber || '',
-      bank_details: settings.bankDetails || null,
-      official_phone: settings.officialPhone || '',
-      official_email: settings.officialEmail || ''
-    };
-  }, [settings]);
+  const [modalDbSiteSettings, setModalDbSiteSettings] = useState<Record<string, unknown> | null>(null);
 
   const handleOpenPublish = useCallback(async () => {
     if (cmsDraftCount === 0) {
@@ -816,8 +808,26 @@ export const AdminPage: React.FC = () => {
       return;
     }
 
+    if (cmsDrafts.some((d) => d.table === 'site_settings')) {
+      if (isSupabaseConfigured) {
+        try {
+          const rows = await fetchSupabaseRest<Record<string, unknown>[]>(
+            'site_settings',
+            'select=*&id=eq.default'
+          );
+          setModalDbSiteSettings(Array.isArray(rows) ? (rows[0] ?? null) : null);
+        } catch {
+          setModalDbSiteSettings(null);
+        }
+      } else {
+        setModalDbSiteSettings(dbSiteSettingsRow ?? null);
+      }
+    } else {
+      setModalDbSiteSettings(dbSiteSettingsRow ?? null);
+    }
+
     setIsPublishOpen(true);
-  }, [cmsDraftCount, isBn, showToast]);
+  }, [cmsDraftCount, cmsDrafts, dbSiteSettingsRow, isBn, showToast]);
 
   const handleClosePublish = useCallback(() => {
     setIsPublishOpen(false);
@@ -9380,7 +9390,7 @@ export const AdminPage: React.FC = () => {
           isOpen={isPublishOpen}
           onClose={handleClosePublish}
           drafts={cmsDrafts}
-          currentSiteSettings={siteSettingsRow}
+          currentSiteSettings={modalDbSiteSettings}
           isBn={isBn}
           onDraftsChanged={handleDraftsChanged}
           onPostPublishSync={handlePostPublishSync}

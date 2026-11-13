@@ -157,7 +157,8 @@ export function recordCmsDraft(
   id: string,
   intendedAction: CmsAction,
   payload: Record<string, any>,
-  summary?: string
+  summary?: string,
+  explicitChangedFields?: string[]
 ): { success: boolean; draft?: CmsDraftItem; error?: string } {
   // Gate check
   if (CMS_FORBIDDEN_TABLES.has(table)) {
@@ -250,7 +251,16 @@ export function recordCmsDraft(
   let mergedChangedFields: string[];
   let originalUpdatedAt: string | null;
 
-  const newChangedKeys = Object.keys(sanitizeRes.sanitized);
+  const allSanitizedKeys = Object.keys(sanitizeRes.sanitized);
+  // For CREATE drafts, every non-empty column in the payload is newly created.
+  // For UPDATE drafts, callers pass explicitChangedFields so unchanged full-object fields aren't listed;
+  // fallback to allSanitizedKeys only when caller doesn't specify explicitChangedFields.
+  const newChangedKeys =
+    effectiveAction === 'CREATE'
+      ? allSanitizedKeys
+      : Array.isArray(explicitChangedFields)
+        ? explicitChangedFields.filter(key => key in sanitizeRes.sanitized)
+        : allSanitizedKeys;
 
   if (existingDraft) {
     mergedPayload = { ...existingDraft.payload, ...sanitizeRes.sanitized };
