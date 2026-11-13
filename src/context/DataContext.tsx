@@ -350,6 +350,7 @@ export interface DataContextType {
   clearAdminSessionData: () => void;
   cmsDrafts: CmsDraftItem[];
   cmsDraftCount: number;
+  syncCmsP1Tables: () => Promise<{ success: boolean; error?: string }>;
   pushAllToSupabase: () => Promise<{ success: boolean; message: string }>;
   resetToDefaultData: () => void;
   exportDatabaseJSON: () => string;
@@ -942,8 +943,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Lightweight Homepage REST Sync (Zero SDK loading, pure fetch via Promise.allSettled + Deep Compare)
-  const syncHomepageViaRest = useCallback(async () => {
-    if (!isSupabaseConfigured) return;
+  const syncHomepageViaRest = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
+    if (!isSupabaseConfigured) return { success: true };
 
     try {
       const results = await Promise.allSettled([
@@ -972,6 +973,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const metricData = getFulfilledValue(results[7]);
       const storyData = getFulfilledValue(results[8]);
       const bloodSettingsRows = getFulfilledValue(results[9]);
+
+      if (siteRows === null && homeRows === null && progData === null && campData === null) {
+        return { success: false, error: 'Database fetch failed for P1 tables.' };
+      }
 
       const siteData = siteRows?.[0];
       if (siteData) {
@@ -1212,10 +1217,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return isDeepEqual(prev, next) ? prev : next;
         });
       }
-    } catch (err) {
+      return { success: true };
+    } catch (err: any) {
       if (import.meta.env?.DEV) {
         console.warn('[DataContext] Homepage REST sync error:', err);
       }
+      return { success: false, error: err?.message || 'Failed to sync data from database.' };
     }
   }, [setSlice, hum, blood, isDeepEqual]);
 
@@ -2363,6 +2370,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const syncHomepageViaRestRef = useRef(syncHomepageViaRest);
   syncHomepageViaRestRef.current = syncHomepageViaRest;
 
+  const syncCmsP1Tables = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
+    return syncHomepageViaRestRef.current();
+  }, []);
+
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     if (hasSyncedRef.current) return;
@@ -2825,6 +2836,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearAdminSessionData,
     cmsDrafts,
     cmsDraftCount,
+    syncCmsP1Tables,
     pushAllToSupabase,
     resetToDefaultData,
     exportDatabaseJSON,
@@ -2983,6 +2995,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearAdminSessionData,
     cmsDrafts,
     cmsDraftCount,
+    syncCmsP1Tables,
     pushAllToSupabase,
     resetToDefaultData,
     exportDatabaseJSON,

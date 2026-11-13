@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
 import { useRouter } from '../context/RouterContext';
@@ -27,6 +27,7 @@ import {
   Sparkles,
   Download,
   Upload,
+  UploadCloud,
   Settings,
   Eye,
   EyeOff,
@@ -152,6 +153,9 @@ import { BloodDonorModal } from '../components/BloodDonorModal';
 import { EmergencyRequestAdminModal } from '../components/EmergencyRequestAdminModal';
 import { AdminHomepageManager } from '../components/AdminHomepageManager';
 import { AdminErrorBoundary } from '../components/AdminErrorBoundary';
+import { CmsPublishModal } from '../components/CmsPublishModal';
+import { ModalShell } from '../components/ModalShell';
+import { clearAllCmsDrafts } from '../context/cmsDraftStore';
 import { getSupabase, isSupabaseConfigured, signInWithEmail, signOutAdmin } from '../lib/supabase';
 import { detectAndNormalizeMedia, DEFAULT_VIDEO_THUMBNAIL, isPortraitVideo } from '../lib/utils/mediaHelper';
 import { uploadToCloudinary } from '../lib/cloudinary';
@@ -237,7 +241,9 @@ export const AdminPage: React.FC = () => {
     programEvents, getEventsByProgramId, getEventHighlights, getEventMedia, deleteProgramEvent,
     isLiveSupabase, isSyncing, lastSyncedAt, syncWithSupabase, pushAllToSupabase, resetToDefaultData, exportDatabaseJSON, importDatabaseJSON,
     loadAdminData, isAdminLoaded, clearAdminSessionData,
-    cmsDraftCount
+    cmsDrafts,
+    cmsDraftCount,
+    syncCmsP1Tables
   } = useData();
 
   // Auth State
@@ -460,7 +466,7 @@ export const AdminPage: React.FC = () => {
     };
   }, []);
 
-  const showToast = (msg: string, type: ToastType = 'success') => {
+  const showToast = useCallback((msg: string, type: ToastType = 'success') => {
     if (toastTimerRef.current) {
       clearTimeout(toastTimerRef.current);
       toastTimerRef.current = null;
@@ -471,7 +477,7 @@ export const AdminPage: React.FC = () => {
       setToast(null);
       toastTimerRef.current = null;
     }, duration);
-  };
+  }, []);
 
   // Load complete admin-only datasets on entry only if actively authenticated
   React.useEffect(() => {
@@ -746,6 +752,124 @@ export const AdminPage: React.FC = () => {
   };
 
   // -------------------------------------------------------------
+  // CMS Publish & Discard Drafts Handlers (Phase 4)
+  // -------------------------------------------------------------
+  const [isPublishOpen, setIsPublishOpen] = useState(false);
+  const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
+  const [isDiscarding, setIsDiscarding] = useState(false);
+
+  const siteSettingsRow = React.useMemo(() => {
+    if (!settings) return null;
+    return {
+      bkash_number: settings.bKashNumber || (settings as any).bkashNumber || '',
+      nagad_number: settings.nagadNumber || '',
+      bank_details: settings.bankDetails || null,
+      official_phone: settings.officialPhone || '',
+      official_email: settings.officialEmail || ''
+    };
+  }, [settings]);
+
+  const handleOpenPublish = useCallback(async () => {
+    if (cmsDraftCount === 0) {
+      showToast(isBn ? 'কোনো অপ্রকাশিত পরিবর্তন নেই' : 'No unpublished changes', 'info');
+      return;
+    }
+
+    if (isSupabaseConfigured) {
+      try {
+        const client = await getSupabase();
+        if (!client) {
+          showToast(
+            isBn
+              ? 'আপনার লগইন সেশন নেই, আবার সাইন ইন করুন'
+              : 'No active session found. Please sign in again.',
+            'error'
+          );
+          return;
+        }
+        const { data: { session }, error: sessionError } = await client.auth.getSession();
+        if (sessionError || !session?.user?.email) {
+          showToast(
+            isBn
+              ? 'আপনার লগইন সেশন নেই, আবার সাইন ইন করুন'
+              : 'No active session found. Please sign in again.',
+            'error'
+          );
+          return;
+        }
+      } catch {
+        showToast(
+          isBn
+            ? 'আপনার লগইন সেশন নেই, আবার সাইন ইন করুন'
+            : 'No active session found. Please sign in again.',
+          'error'
+        );
+        return;
+      }
+    } else if (!sessionStorage.getItem('infinity_admin_user')) {
+      showToast(
+        isBn
+          ? 'আপনার লগইন সেশন নেই, আবার সাইন ইন করুন'
+          : 'No active session found. Please sign in again.',
+        'error'
+      );
+      return;
+    }
+
+    setIsPublishOpen(true);
+  }, [cmsDraftCount, isBn, showToast]);
+
+  const handleClosePublish = useCallback(() => {
+    setIsPublishOpen(false);
+  }, []);
+
+  const handleDraftsChanged = useCallback(() => {
+    // infinity_cms_drafts_changed event is dispatched by cmsDraftStore and handled by DataContext
+  }, []);
+
+  const handlePostPublishSync = useCallback(async () => {
+    await syncCmsP1Tables();
+  }, [syncCmsP1Tables]);
+
+  const handleOpenDiscard = useCallback(() => {
+    if (cmsDraftCount === 0) return;
+    setIsDiscardConfirmOpen(true);
+  }, [cmsDraftCount]);
+
+  const handleConfirmDiscard = useCallback(async () => {
+    setIsDiscarding(true);
+    try {
+      clearAllCmsDrafts();
+      const syncRes = await syncCmsP1Tables();
+      if (syncRes.success) {
+        showToast(
+          isBn
+            ? 'অপ্রকাশিত সব খসড়া বাতিল করা হয়েছে এবং ডাটাবেজের তথ্য আনা হয়েছে।'
+            : 'All unpublished drafts discarded and latest data synced.',
+          'success'
+        );
+      } else {
+        showToast(
+          isBn
+            ? 'খসড়া মোছা হয়েছে কিন্তু ডাটাবেজ থেকে তথ্য আনা যায়নি; পাতা রিফ্রেশ করুন'
+            : 'Drafts were cleared, but latest database data could not be retrieved; please refresh the page.',
+          'error'
+        );
+      }
+    } catch {
+      showToast(
+        isBn
+          ? 'খসড়া মোছা হয়েছে কিন্তু ডাটাবেজ থেকে তথ্য আনা যায়নি; পাতা রিফ্রেশ করুন'
+          : 'Drafts were cleared, but latest database data could not be retrieved; please refresh the page.',
+        'error'
+      );
+    } finally {
+      setIsDiscarding(false);
+      setIsDiscardConfirmOpen(false);
+    }
+  }, [syncCmsP1Tables, isBn, showToast]);
+
+  // -------------------------------------------------------------
   // 1. AUTHENTICATION LOGIN SCREEN
   // -------------------------------------------------------------
   if (!isAuthenticated) {
@@ -897,24 +1021,24 @@ export const AdminPage: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-extrabold text-sm sm:text-base tracking-tight font-display">
+                <h1 className="font-extrabold text-sm sm:text-base tracking-tight font-display text-white">
                   Infinity Bangladesh CMS
                 </h1>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#006A4E] text-emerald-200">
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#006A4E] text-white border border-emerald-400/40">
                   {currentRole.toUpperCase()}
                 </span>
               </div>
-              <p className="text-[11px] text-emerald-300/80">
+              <p className="text-[11px] text-emerald-300 font-medium">
                 {isLiveSupabase ? '🟢 Supabase PostgreSQL Live' : '🟠 Local Offline Storage Active'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <button
               type="button"
               onClick={() => navigate('home')}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs text-emerald-200 font-semibold transition-colors cursor-pointer"
+              className="min-h-[44px] hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs text-emerald-100 font-semibold transition-colors cursor-pointer focus:ring-2 focus:ring-emerald-400 focus:outline-none"
             >
               <Eye className="w-3.5 h-3.5" />
               <span>{isBn ? 'ওয়েবসাইট দেখুন' : 'Live Website'}</span>
@@ -922,9 +1046,9 @@ export const AdminPage: React.FC = () => {
 
             {/* CMS Drafts Badge (Phase 2) */}
             <div
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all select-none ${
+              className={`min-h-[44px] inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all select-none ${
                 cmsDraftCount > 0
-                  ? 'bg-amber-400/20 border border-amber-400/40 text-amber-300 shadow-sm'
+                  ? 'bg-amber-400/20 border border-amber-400/50 text-amber-300 shadow-sm'
                   : 'bg-white/10 border border-white/10 text-slate-300 font-medium'
               }`}
               title={
@@ -946,53 +1070,80 @@ export const AdminPage: React.FC = () => {
               </span>
             </div>
 
-            {isLiveSupabase && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    showToast(
-                      isBn
-                        ? 'বাল্ক পুশ ডাটাবেজ সুরক্ষার স্বার্থে নিষ্ক্রিয় রাখা হয়েছে।'
-                        : 'Bulk cloud push is disabled to protect live database integrity.',
-                      'info'
-                    );
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-400 text-xs font-bold transition-all cursor-not-allowed opacity-60"
-                  title="Bulk cloud push is permanently disabled to protect database integrity."
-                >
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>{isBn ? 'ক্লাউড পুশ (নিষ্ক্রিয়)' : 'Push to Cloud (Disabled)'}</span>
-                </button>
+            {/* Primary Publish Changes Button (Phase 4) */}
+            <button
+              type="button"
+              onClick={handleOpenPublish}
+              disabled={cmsDraftCount === 0}
+              className={`min-h-[44px] inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all focus:ring-2 focus:ring-emerald-400 focus:outline-none ${
+                cmsDraftCount > 0
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md cursor-pointer'
+                  : 'bg-slate-800/90 text-slate-400 border border-slate-700/60 cursor-not-allowed opacity-80'
+              }`}
+              title={
+                cmsDraftCount > 0
+                  ? (isBn ? 'অপ্রকাশিত পরিবর্তনগুলো ক্লাউড ডাটাবেজে প্রকাশ করুন' : 'Publish unpublished changes to cloud database')
+                  : (isBn ? 'কোনো অপ্রকাশিত পরিবর্তন নেই' : 'No unpublished changes')
+              }
+              aria-label={
+                cmsDraftCount > 0
+                  ? (isBn ? 'পরিবর্তন প্রকাশ করুন' : 'Publish Changes')
+                  : (isBn ? 'কোনো অপ্রকাশিত পরিবর্তন নেই' : 'No unpublished changes')
+              }
+            >
+              <UploadCloud className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>{isBn ? 'প্রকাশ করুন' : 'Publish Changes'}</span>
+            </button>
 
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const res = await syncWithSupabase();
-                    if (res?.success) {
-                      showToast(isBn ? 'সফলভাবে ক্লাউড ডাটাবেজ থেকে লোড করা হয়েছে।' : 'Pulled latest data from cloud database.', 'success');
-                    } else if (res?.partial) {
-                      showToast(isBn
-                        ? `আংশিক লোড হয়েছে (${res.failedDatasets?.join(', ') || ''} লোড করা যায়নি)`
-                        : `Partially loaded (failed: ${res.failedDatasets?.join(', ') || ''})`, 'info');
-                    } else {
-                      showToast(res?.error || (isBn ? 'ক্লাউড ডাটাবেজ থেকে লোড ব্যর্থ হয়েছে।' : 'Failed to pull cloud database.'), 'error');
-                    }
-                  }}
-                  disabled={isSyncing}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#006A4E] hover:bg-[#008562] text-xs text-white font-bold transition-all cursor-pointer"
-                  title="Fetch latest updates from Supabase"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-                  <span>{isSyncing ? 'Syncing...' : (isBn ? 'সিঙ্ক' : 'Pull DB')}</span>
-                </button>
-              </>
+            {/* Discard Drafts Button (Phase 4) */}
+            <button
+              type="button"
+              onClick={handleOpenDiscard}
+              disabled={cmsDraftCount === 0}
+              className={`min-h-[44px] inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all focus:ring-2 focus:ring-amber-400 focus:outline-none ${
+                cmsDraftCount > 0
+                  ? 'bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-200 cursor-pointer'
+                  : 'bg-white/5 border border-white/5 text-slate-500 cursor-not-allowed opacity-60'
+              }`}
+              title={
+                cmsDraftCount > 0
+                  ? (isBn ? 'অপ্রকাশিত খসড়া বাতিল করুন' : 'Discard unpublished drafts')
+                  : (isBn ? 'বাতিল করার মতো কোনো খসড়া নেই' : 'No drafts to discard')
+              }
+              aria-label={isBn ? 'খসড়া বাতিল' : 'Discard drafts'}
+            >
+              <Trash2 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              <span className="hidden sm:inline">{isBn ? 'খসড়া বাতিল' : 'Discard drafts'}</span>
+            </button>
+
+            {isLiveSupabase && (
+              <button
+                type="button"
+                onClick={async () => {
+                  const res = await syncWithSupabase();
+                  if (res?.success) {
+                    showToast(isBn ? 'সফলভাবে ক্লাউড ডাটাবেজ থেকে লোড করা হয়েছে।' : 'Pulled latest data from cloud database.', 'success');
+                  } else if (res?.partial) {
+                    showToast(isBn
+                      ? `আংশিক লোড হয়েছে (${res.failedDatasets?.join(', ') || ''} লোড করা যায়নি)`
+                      : `Partially loaded (failed: ${res.failedDatasets?.join(', ') || ''})`, 'info');
+                  } else {
+                    showToast(res?.error || (isBn ? 'ক্লাউড ডাটাবেজ থেকে লোড ব্যর্থ হয়েছে।' : 'Failed to pull cloud database.'), 'error');
+                  }
+                }}
+                disabled={isSyncing}
+                className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#006A4E] hover:bg-[#008562] text-xs text-white font-bold transition-all cursor-pointer focus:ring-2 focus:ring-emerald-400 focus:outline-none"
+                title="Fetch latest updates from Supabase"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>{isSyncing ? 'Syncing...' : (isBn ? 'সিঙ্ক' : 'Pull DB')}</span>
+              </button>
             )}
 
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-xs text-white font-bold transition-colors cursor-pointer"
+              className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs text-white font-bold transition-colors cursor-pointer focus:ring-2 focus:ring-rose-400 focus:outline-none"
               title="Sign Out"
             >
               <LogOut className="w-3.5 h-3.5" />
@@ -1005,13 +1156,20 @@ export const AdminPage: React.FC = () => {
       {/* 2. Admin Workspace Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Browser Demo & Safety Notice Banner */}
-        <div className="mb-5 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-start sm:items-center gap-3 text-xs text-amber-900">
-          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
-          <p className="leading-relaxed font-medium">
-            {isBn
-              ? 'বেশিরভাগ বিষয়বস্তু সম্পাদনা এখন শুধু এই ব্রাউজারে ডেমো অবস্থায় (ডাটাবেজে সংরক্ষিত নয়); দাতা অনুমোদন ও জরুরি অনুরোধের স্ট্যাটাস ডাটাবেজে সংরক্ষিত হয়।'
-              : 'Most content edits are in local demo mode in this browser (not saved to database); donor approvals and emergency request status are saved to the database.'}
-          </p>
+        <div className="mb-5 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3 text-xs text-amber-950">
+          <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+          <div className="leading-relaxed font-medium space-y-1">
+            <p>
+              {isBn
+                ? "কনটেন্ট পরিবর্তন প্রথমে এই ব্রাউজারে খসড়া হিসেবে থাকে। সাইটে প্রকাশ করতে উপরের 'প্রকাশ করুন' চাপুন। প্রকাশের আগে ব্যাকআপ-ফাইল নামবে। দাতা অনুমোদন ও জরুরি অনুরোধের স্ট্যাটাস সঙ্গে সঙ্গে ডাটাবেজে সংরক্ষিত হয়।"
+                : "Content edits are initially saved as drafts in this browser. Click 'Publish Changes' above to publish to the live site. A backup file will download before publishing. Donor approvals and emergency request statuses are saved directly to the database."}
+            </p>
+            <p className="text-[11px] text-amber-900/90 font-semibold">
+              {isBn
+                ? "ক্যাম্পেইন, প্রোগ্রাম, হোমপেজ ও সাইট-সেটিংস ছাড়া অন্যান্য বিভাগের পরিবর্তন এখনও শুধু এই ব্রাউজারে থাকে, সাইটে যায় না।"
+                : "Changes outside Campaigns, Programs, Homepage, and Site Settings currently remain in this browser only and are not published to the live site."}
+            </p>
+          </div>
         </div>
         {/* Mobile Quick Section Selector */}
         <div className="lg:hidden mb-4 bg-white rounded-2xl border border-[#EAE3D9] p-3.5 shadow-warm-sm space-y-2">
@@ -9212,6 +9370,71 @@ export const AdminPage: React.FC = () => {
           program={selectedProgramForMedia}
           event={selectedEventForMedia}
         />
+      )}
+
+      {/* ======================================================== */}
+      {/* CMS PUBLISH MODAL (Phase 4) */}
+      {/* ======================================================== */}
+      {isPublishOpen && (
+        <CmsPublishModal
+          isOpen={isPublishOpen}
+          onClose={handleClosePublish}
+          drafts={cmsDrafts}
+          currentSiteSettings={siteSettingsRow}
+          isBn={isBn}
+          onDraftsChanged={handleDraftsChanged}
+          onPostPublishSync={handlePostPublishSync}
+        />
+      )}
+
+      {/* ======================================================== */}
+      {/* CMS DISCARD DRAFTS CONFIRMATION MODAL (Phase 4) */}
+      {/* ======================================================== */}
+      {isDiscardConfirmOpen && (
+        <ModalShell
+          isOpen={isDiscardConfirmOpen}
+          onClose={() => {
+            if (!isDiscarding) setIsDiscardConfirmOpen(false);
+          }}
+          ariaLabel={isBn ? 'খসড়া বাতিলের নিশ্চিতকরণ' : 'Confirm Discard Drafts'}
+          className="max-w-md p-6 space-y-4"
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-5 h-5" aria-hidden="true" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-slate-900 font-display">
+                {isBn ? 'অপ্রকাশিত খসড়া বাতিল করবেন?' : 'Discard Unpublished Drafts?'}
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                {isBn
+                  ? `আপনি কি অপ্রকাশিত ${cmsDraftCount} টি খসড়া বাতিল করে ডাটাবেজের সর্বশেষ তথ্য আনতে চান? এটা ফেরানো যাবে না।`
+                  : `Are you sure you want to discard ${cmsDraftCount} unpublished draft${cmsDraftCount > 1 ? 's' : ''} and fetch the latest database data? This cannot be undone.`}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              disabled={isDiscarding}
+              onClick={() => setIsDiscardConfirmOpen(false)}
+              className="min-h-[44px] px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 focus:ring-2 focus:ring-slate-400 focus:outline-none disabled:opacity-50 transition-colors"
+            >
+              {isBn ? 'না, রাখুন' : 'Keep Drafts'}
+            </button>
+            <button
+              type="button"
+              disabled={isDiscarding}
+              onClick={handleConfirmDiscard}
+              className="min-h-[44px] px-5 py-2 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none disabled:opacity-50 transition-colors"
+            >
+              {isDiscarding
+                ? (isBn ? 'বাতিল হচ্ছে...' : 'Discarding...')
+                : (isBn ? 'হ্যাঁ, বাতিল করুন' : 'Yes, Discard All')}
+            </button>
+          </div>
+        </ModalShell>
       )}
 
       {/* Toast Notification */}
