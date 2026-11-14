@@ -249,10 +249,47 @@ export const ADMIN_MUTATION_GATES: Record<AdminMutationTable, {
 export type InsertResult<T = { id: string }> =
   | { success: true; status: 'SUCCESS'; id: string; data?: T; code?: string; error?: string }
   | { success: false; status: 'VALIDATION_FAILED'; error: string; code?: string }
+  | { success: false; status: 'RATE_LIMITED'; error: string; code?: string }
   | { success: false; status: 'DATABASE_ERROR'; error: string; code?: string }
   | { success: false; status: 'ONLINE_REQUIRED'; error: string; code?: string }
   | { success: false; status: 'FEATURE_DISABLED'; error: string; code?: string }
   | { success: false; status: 'DISABLED_PHASE_2'; error: string; code?: string };
+
+export const VALID_BLOOD_GROUPS = Object.freeze(['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'] as const);
+
+export function normalizeBdPhoneNumber(raw: string): string {
+  const digits = String(raw || '').replace(/\D/g, '');
+  if (digits.startsWith('008801') && digits.length === 15) {
+    return '0' + digits.slice(5);
+  }
+  if (digits.startsWith('8801') && digits.length === 13) {
+    return '0' + digits.slice(3);
+  }
+  return digits;
+}
+
+function formatLocalYmd(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+export function getEmergencyRequiredDateBounds(referenceDate: Date = new Date()): { min: string; max: string } {
+  const minDate = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate() - 2);
+  const maxDate = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate() + 30);
+  return {
+    min: formatLocalYmd(minDate),
+    max: formatLocalYmd(maxDate)
+  };
+}
+
+export function isValidIsoCalendarDate(dateStr: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const parsed = new Date(Date.UTC(y, m - 1, d));
+  return parsed.getUTCFullYear() === y && parsed.getUTCMonth() === m - 1 && parsed.getUTCDate() === d;
+}
 
 /**
  * 1. Strict Public Submission Allowlists
@@ -337,7 +374,7 @@ export const PUBLIC_SUBMISSION_ALLOWLISTS: Record<PublicSubmissionTable, readonl
  */
 export const PUBLIC_SUBMISSION_GATES: Record<PublicSubmissionTable, 'ACTIVE' | 'BLOCKED_PENDING_MIGRATION'> = {
   blood_donors: 'ACTIVE',
-  emergency_blood_requests: 'BLOCKED_PENDING_MIGRATION',
+  emergency_blood_requests: 'ACTIVE',
   volunteer_applications: 'BLOCKED_PENDING_MIGRATION',
   contact_messages: 'BLOCKED_PENDING_MIGRATION',
   donation_records: 'BLOCKED_PENDING_MIGRATION'
@@ -448,14 +485,65 @@ export function validatePayloadSchema(table: PublicSubmissionTable, payload: Rec
       return { valid: false, error: 'privacy_consent must be explicitly true' };
     }
   } else if (table === 'emergency_blood_requests') {
-    if (typeof payload.patient_name !== 'string' || !payload.patient_name.trim()) {
-      return { valid: false, error: 'patient_name must be a non-empty string' };
+    if (
+      typeof payload.requester_name !== 'string' ||
+      payload.requester_name.trim().length < 1 ||
+      payload.requester_name.trim().length > 120
+    ) {
+      return { valid: false, error: 'requester_name must be a non-empty string up to 120 characters' };
+    }
+    if (
+      typeof payload.patient_name !== 'string' ||
+      payload.patient_name.trim().length < 1 ||
+      payload.patient_name.trim().length > 120
+    ) {
+      return { valid: false, error: 'patient_name must be a non-empty string up to 120 characters' };
     }
     if (typeof payload.contact_number !== 'string' || !/^01[3-9]\d{8}$/.test(payload.contact_number.replace(/\D/g, ''))) {
       return { valid: false, error: 'contact_number must be a valid 11-digit Bangladeshi number' };
     }
-    if (typeof payload.units_needed !== 'number' || payload.units_needed < 1 || !Number.isInteger(payload.units_needed)) {
-      return { valid: false, error: 'units_needed must be an integer greater than or equal to 1' };
+    if (
+      typeof payload.blood_group !== 'string' ||
+      !(VALID_BLOOD_GROUPS as readonly string[]).includes(payload.blood_group)
+    ) {
+      return { valid: false, error: 'blood_group must be a valid blood group' };
+    }
+    if (
+      typeof payload.units_needed !== 'number' ||
+      !Number.isInteger(payload.units_needed) ||
+      payload.units_needed < 1 ||
+      payload.units_needed > 10
+    ) {
+      return { valid: false, error: 'units_needed must be an integer between 1 and 10' };
+    }
+    if (
+      typeof payload.hospital_name !== 'string' ||
+      payload.hospital_name.trim().length < 2 ||
+      payload.hospital_name.trim().length > 150
+    ) {
+      return { valid: false, error: 'hospital_name must be between 2 and 150 characters' };
+    }
+    if (
+      typeof payload.emergency_level !== 'string' ||
+      payload.emergency_level.trim().length < 1 ||
+      payload.emergency_level.trim().length > 20
+    ) {
+      return { valid: false, error: 'emergency_level must be a non-empty string up to 20 characters' };
+    }
+    if (typeof payload.required_date !== 'string' || !isValidIsoCalendarDate(payload.required_date.trim())) {
+      return { valid: false, error: 'required_date must be a valid YYYY-MM-DD date' };
+    }
+    const reqDateBounds = getEmergencyRequiredDateBounds();
+    const trimmedDate = payload.required_date.trim();
+    if (trimmedDate < reqDateBounds.min || trimmedDate > reqDateBounds.max) {
+      return { valid: false, error: 'required_date must be within 2 days ago to 30 days ahead' };
+    }
+    if (
+      payload.additional_notes !== undefined &&
+      payload.additional_notes !== null &&
+      (typeof payload.additional_notes !== 'string' || payload.additional_notes.length > 500)
+    ) {
+      return { valid: false, error: 'additional_notes must be a string up to 500 characters' };
     }
   } else if (table === 'donation_records') {
     if (typeof payload.amount_bdt !== 'number' || payload.amount_bdt <= 0 || isNaN(payload.amount_bdt)) {
@@ -537,9 +625,58 @@ export async function safeDbInsert<T = { id: string }>(
     // PostgREST minimal return (omitting .select() sends Prefer: return=minimal)
     const { error } = await client.from(tableName).insert(payload);
     if (error) {
-      if (import.meta.env.DEV) {
-        console.warn(`Supabase safeDbInsert error on ${tableName}:`, error.message);
+      const pgCode = String((error as any).code || '').trim();
+      const pgHint = String((error as any).hint || '').trim();
+      const pgDetails = String((error as any).details || '').trim();
+      const pgMsg = String((error as any).message || '').trim();
+      const marker = `${pgCode} ${pgHint} ${pgDetails} ${pgMsg}`.toUpperCase();
+
+      if (import.meta.env?.DEV) {
+        console.warn(`Supabase safeDbInsert error on ${tableName}:`, pgCode || 'UNKNOWN');
       }
+
+      if (tableName === 'emergency_blood_requests') {
+        if (
+          pgCode === '22007' ||
+          marker.includes('EMERGENCY_DATE_OUT_OF_RANGE') ||
+          marker.includes('EMERGENCY_INVALID_DATE')
+        ) {
+          return {
+            success: false,
+            status: 'VALIDATION_FAILED',
+            code:
+              pgCode === '22007' || marker.includes('EMERGENCY_INVALID_DATE')
+                ? 'EMERGENCY_INVALID_DATE'
+                : 'EMERGENCY_DATE_OUT_OF_RANGE',
+            error: 'Required date is invalid or outside the allowed window (from 2 days ago up to 30 days ahead).'
+          };
+        }
+        if (pgCode === 'P0001' || marker.includes('EMERGENCY_PHONE_RATE_LIMIT')) {
+          return {
+            success: false,
+            status: 'RATE_LIMITED',
+            code: 'EMERGENCY_PHONE_RATE_LIMIT',
+            error: 'Too many emergency requests were submitted from this number recently. Please wait before trying again or call our helpline directly.'
+          };
+        }
+        if (pgCode === '23514') {
+          return {
+            success: false,
+            status: 'VALIDATION_FAILED',
+            code: '23514',
+            error: 'Some fields did not satisfy database limits (units 1–10, phone format, or text length). Please review your entries.'
+          };
+        }
+        if (pgCode === '42501') {
+          return {
+            success: false,
+            status: 'DATABASE_ERROR',
+            code: '42501',
+            error: 'Database permission check blocked the submission. Please retry or call our helpline directly.'
+          };
+        }
+      }
+
       return {
         success: false,
         status: 'DATABASE_ERROR',
@@ -553,7 +690,7 @@ export async function safeDbInsert<T = { id: string }>(
       id: payload.id
     };
   } catch (err: any) {
-    if (import.meta.env.DEV) {
+    if (import.meta.env?.DEV) {
       console.warn(`Network failure during safeDbInsert on ${tableName}:`, err.message);
     }
     return {

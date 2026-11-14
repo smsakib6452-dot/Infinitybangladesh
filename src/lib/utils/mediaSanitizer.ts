@@ -3,14 +3,13 @@
  * Ensures only verified permanent URLs reach persistent storage and manages transient object URLs safely.
  */
 
-// Exact whitelist of 66 verified physical image assets in public/
+// Exact whitelist of 68 verified physical image assets in public/
 export const VERIFIED_LOCAL_ASSET_PATHS = new Set<string>([
   '/brand/infinity-favicon.png',
   '/brand/Infinitylifeline-logo.webp',
   '/brand/infinity-logo.png',
   '/brand/infi-robot.png',
   '/brand/infi-robot.webp',
-  '/brand/Infinitylifeline-logo.webp',
   '/images/infinity-cover-hero.webp',
   '/images/infinity-cover-hero-640.webp',
   '/images/events/winter-warmth.webp',
