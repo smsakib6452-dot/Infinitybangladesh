@@ -133,8 +133,10 @@ async function runTestSuite() {
   const indexContent = fs.readFileSync(indexPath, 'utf8');
 
   assert(
-    indexContent.includes('rel="preload" as="image" href="/images/infinity-cover-hero.jpg"'),
-    'index.html preloads LCP Hero Cover Image with high priority'
+    indexContent.includes('href="/images/infinity-cover-hero-640.webp"') &&
+    indexContent.includes('href="/images/infinity-cover-hero.webp"') &&
+    indexContent.includes('fetchpriority="high"'),
+    'index.html preloads LCP Hero Cover Image (.webp responsive candidates) with high priority'
   );
   assert(
     !indexContent.includes('href="#/blood-donation"'),
@@ -381,11 +383,14 @@ async function runTestSuite() {
     'blood_donors public submission gate is ACTIVE'
   );
   assert(
-    PUBLIC_SUBMISSION_GATES.emergency_blood_requests === 'BLOCKED_PENDING_MIGRATION' &&
+    PUBLIC_SUBMISSION_GATES.emergency_blood_requests === 'ACTIVE',
+    'emergency_blood_requests public submission gate is ACTIVE'
+  );
+  assert(
     PUBLIC_SUBMISSION_GATES.volunteer_applications === 'BLOCKED_PENDING_MIGRATION' &&
     PUBLIC_SUBMISSION_GATES.donation_records === 'BLOCKED_PENDING_MIGRATION' &&
     PUBLIC_SUBMISSION_GATES.contact_messages === 'BLOCKED_PENDING_MIGRATION',
-    'Other 4 public tables remain BLOCKED_PENDING_MIGRATION'
+    'Other 3 public tables remain BLOCKED_PENDING_MIGRATION'
   );
   assert(
     CLOUDINARY_UPLOADS_LOCKED === true,
@@ -398,7 +403,6 @@ async function runTestSuite() {
 
   // Test 7.2: Public Ingestion Fail-Closed (Zero Network Dispatches for Gated Tables)
   const gatedTables = [
-    'emergency_blood_requests',
     'volunteer_applications',
     'donation_records',
     'contact_messages'
@@ -556,7 +560,7 @@ async function runTestSuite() {
   assert(!isValidPermanentUrl('https://192.168.1.100/banner.jpg'), '8.1.6: Rejects remote URL with IPv4 private Class C address');
   assert(!isValidPermanentUrl('https://10.0.0.1/test.jpg'), '8.1.6: Rejects remote URL with IPv4 private Class A address');
   assert(!isValidPermanentUrl('https://[::1]/test.jpg'), '8.1.6: Rejects remote URL with IPv6 loopback literal');
-  assert(VERIFIED_LOCAL_ASSET_PATHS.size === 66, '8.1.7: Verified local asset whitelist contains exactly 66 physical images');
+  assert(VERIFIED_LOCAL_ASSET_PATHS.size === 68, '8.1.7: Verified local asset whitelist contains exactly 68 physical images');
   assert(isValidPermanentUrl('/brand/infinity-logo.png'), '8.1.7: Accepts verified local asset /brand/infinity-logo.png');
   assert(!isValidPermanentUrl('/images/non-existent-synthetic-file.jpg'), '8.1.7: Rejects unverified local path not in whitelist');
   assert(isValidPermanentUrl('https://res.cloudinary.com/infinity/image/upload/sample.jpg'), '8.1.8: Accepts valid public HTTPS Cloudinary CDN asset');
