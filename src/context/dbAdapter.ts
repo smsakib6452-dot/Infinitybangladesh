@@ -631,19 +631,11 @@ export async function safeDbInsert<T = { id: string }>(
       const pgMsg = String((error as any).message || '').trim();
       const marker = `${pgCode} ${pgHint} ${pgDetails} ${pgMsg}`.toUpperCase();
 
-      if (import.meta.env.DEV) {
+      if (import.meta.env?.DEV) {
         console.warn(`Supabase safeDbInsert error on ${tableName}:`, pgCode || 'UNKNOWN');
       }
 
       if (tableName === 'emergency_blood_requests') {
-        if (pgCode === 'P0001' || marker.includes('EMERGENCY_PHONE_RATE_LIMIT')) {
-          return {
-            success: false,
-            status: 'RATE_LIMITED',
-            code: 'EMERGENCY_PHONE_RATE_LIMIT',
-            error: 'Too many emergency requests were submitted from this number recently. Please wait before trying again or call our helpline directly.'
-          };
-        }
         if (
           pgCode === '22007' ||
           marker.includes('EMERGENCY_DATE_OUT_OF_RANGE') ||
@@ -657,6 +649,14 @@ export async function safeDbInsert<T = { id: string }>(
                 ? 'EMERGENCY_INVALID_DATE'
                 : 'EMERGENCY_DATE_OUT_OF_RANGE',
             error: 'Required date is invalid or outside the allowed window (from 2 days ago up to 30 days ahead).'
+          };
+        }
+        if (pgCode === 'P0001' || marker.includes('EMERGENCY_PHONE_RATE_LIMIT')) {
+          return {
+            success: false,
+            status: 'RATE_LIMITED',
+            code: 'EMERGENCY_PHONE_RATE_LIMIT',
+            error: 'Too many emergency requests were submitted from this number recently. Please wait before trying again or call our helpline directly.'
           };
         }
         if (pgCode === '23514') {
@@ -690,7 +690,7 @@ export async function safeDbInsert<T = { id: string }>(
       id: payload.id
     };
   } catch (err: any) {
-    if (import.meta.env.DEV) {
+    if (import.meta.env?.DEV) {
       console.warn(`Network failure during safeDbInsert on ${tableName}:`, err.message);
     }
     return {
