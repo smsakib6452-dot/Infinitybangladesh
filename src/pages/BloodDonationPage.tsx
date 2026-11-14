@@ -3217,8 +3217,8 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                             required
                             min={emgDateBounds.min}
                             max={emgDateBounds.max}
-                            minYear={new Date().getFullYear() - 1}
-                            maxYear={new Date().getFullYear() + 2}
+                            minYear={Number(emgDateBounds.min.slice(0, 4))}
+                            maxYear={Number(emgDateBounds.max.slice(0, 4))}
                             yearOrder="asc"
                             showQuickToday
                           />
