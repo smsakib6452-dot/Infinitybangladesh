@@ -19,7 +19,7 @@ import { getFreshImageUrl } from '../../lib/cloudinary';
 import { getSupabase, isSupabaseConfigured } from '../../lib/supabase';
 import { STORAGE_PREFIX, getStoredOrDefault, saveToStorage } from '../dataStorage';
 import { resolveMediaFieldUpdate, isValidPermanentUrl } from '../../lib/utils/mediaSanitizer';
-import { safeDbUpsert, safeDbInsert, safeDbDelete, safeDbAdminUpdate, createAuditLog, generateSecureId, REMOTE_CMS_MUTATIONS_LOCKED, InsertResult, AdminUpdateResult } from '../dbAdapter';
+import { safeDbUpsert, safeDbInsert, safeDbDelete, safeDbAdminUpdate, createAuditLog, generateSecureId, normalizeBdPhoneNumber, REMOTE_CMS_MUTATIONS_LOCKED, InsertResult, AdminUpdateResult } from '../dbAdapter';
 
 export function useBloodDonationSlice(onAuditLog: (action: string, entity: string, entityId: string, details: string) => void) {
   const deletedDonorIdsRef = useRef<Set<string>>(new Set(getStoredOrDefault<string[]>('deleted_donor_ids', [])));
@@ -414,11 +414,12 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
 
   const addEmergencyBloodRequest = useCallback(async (req: Omit<EmergencyBloodRequest, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Promise<InsertResult<EmergencyBloodRequest>> => {
     const id = generateSecureId('req');
+    const normalizedContact = normalizeBdPhoneNumber(req.contactNumber);
 
     const dbPayload = {
       id,
       requester_name: req.requesterName.trim(),
-      contact_number: req.contactNumber.trim(),
+      contact_number: normalizedContact,
       patient_name: req.patientName.trim(),
       blood_group: req.bloodGroup,
       units_needed: req.unitsNeeded,
@@ -439,7 +440,7 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
       ...req,
       id,
       requesterName: req.requesterName.trim(),
-      contactNumber: req.contactNumber.trim(),
+      contactNumber: normalizedContact,
       patientName: req.patientName.trim(),
       hospitalName: req.hospitalName.trim(),
       district: req.district,
@@ -457,7 +458,7 @@ export function useBloodDonationSlice(onAuditLog: (action: string, entity: strin
       return updated;
     });
 
-    onAuditLog('CREATE', 'EmergencyBloodRequest', id, `Created emergency request for ${newReq.patientName} (${newReq.bloodGroup})`);
+    onAuditLog('CREATE', 'EmergencyBloodRequest', id, `Created emergency request (${newReq.bloodGroup}, ${newReq.district})`);
     return {
       success: true,
       status: 'SUCCESS',

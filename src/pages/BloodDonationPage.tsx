@@ -3,6 +3,12 @@ import { useLanguage } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
 import { useRouter } from '../context/RouterContext';
 import {
+  normalizeBdPhoneNumber,
+  getEmergencyRequiredDateBounds,
+  isValidIsoCalendarDate,
+  VALID_BLOOD_GROUPS
+} from '../context/dbAdapter';
+import {
   BloodDonor,
   BloodGroup,
   DonorAvailabilityStatus,
@@ -89,6 +95,38 @@ import { ScrollReveal } from '../components/motion/ScrollReveal';
 import { AnimatedCounter } from '../components/motion/AnimatedCounter';
 import { LifeLineHeroLogoAnimation } from '../components/motion/LifeLineHeroLogoAnimation';
 import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
+
+export const EMG_COOLDOWN_STORAGE_KEY = 'infinity_emg_last_submit_at';
+export const EMG_COOLDOWN_MS = 10 * 60 * 1000;
+const EMG_LINK_SUSPICION_REGEX = /(https?:\/\/|www\.)/i;
+
+export function hasSuspiciousLinkInFields(fields: (string | undefined | null)[]): boolean {
+  return fields.some(val => typeof val === 'string' && EMG_LINK_SUSPICION_REGEX.test(val));
+}
+
+export function getEmergencyCooldownRemainingMinutes(nowMs: number = Date.now()): number {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return 0;
+    const raw = window.localStorage.getItem(EMG_COOLDOWN_STORAGE_KEY);
+    if (!raw) return 0;
+    const lastTs = Number(raw);
+    if (!Number.isFinite(lastTs) || lastTs <= 0 || lastTs > nowMs) return 0;
+    const elapsed = nowMs - lastTs;
+    if (elapsed >= EMG_COOLDOWN_MS) return 0;
+    return Math.max(1, Math.ceil((EMG_COOLDOWN_MS - elapsed) / 60000));
+  } catch {
+    return 0;
+  }
+}
+
+export function recordEmergencySubmitCooldown(nowMs: number = Date.now()): void {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    window.localStorage.setItem(EMG_COOLDOWN_STORAGE_KEY, String(nowMs));
+  } catch {
+    // Ignore storage quota or restricted context errors
+  }
+}
 
 interface BloodDonationPageProps {
   initialTab?: 'find-donor' | 'become-donor' | 'update-donor' | 'emergency-request' | 'donors' | 'statistics' | 'guidelines';
@@ -675,6 +713,9 @@ export const BloodDonationPage: React.FC<BloodDonationPageProps> = ({
   const [emgRefId, setEmgRefId] = useState('');
   const [emgFormError, setEmgFormError] = useState<string | null>(null);
   const [emgDisabledHelpline, setEmgDisabledHelpline] = useState<string | null>(null);
+  const [emgWebsiteHp, setEmgWebsiteHp] = useState('');
+  const [emgWhatsAppUrl, setEmgWhatsAppUrl] = useState<string | null>(null);
+  const emgDateBounds = useMemo(() => getEmergencyRequiredDateBounds(), []);
 
   // ----------------------------------------------------
   // LIVE COMPUTED STATISTICS
@@ -918,72 +959,216 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
     e.preventDefault();
     setEmgFormError(null);
     setEmgDisabledHelpline(null);
-    if (!emgRequesterName.trim() || !emgContactNumber.trim() || !emgPatientName.trim() || !emgHospital.trim()) return;
+    const helpline = bloodDonationSettings.emergencyHelpline || '+8801839008339';
 
-    // Validate 11-digit BD Phone Number
-    const cleanPhone = emgContactNumber.replace(/\D/g, '');
-    if (!/^01[3-9]\d{8}$/.test(cleanPhone)) {
+    // Off-screen honeypot: bots get silent honest screen with zero DB dispatch and zero fake Req ID
+    if (emgWebsiteHp.trim().length > 0) {
+      setEmgRefId('');
+      setEmgWhatsAppUrl(null);
+      setEmgSubmitted(true);
+      setIsEmgSubmitting(false);
+      return;
+    }
+
+    const reqName = emgRequesterName.trim();
+    const patName = emgPatientName.trim();
+    const hospName = emgHospital.trim();
+    const notesTrimmed = emgNotes.trim();
+
+    if (!reqName || !emgContactNumber.trim() || !patName || !hospName) {
+      setEmgDisabledHelpline(helpline);
       setEmgFormError(
         isBn
-          ? 'যোগাযোগের জন্য সঠিক ১১ ডিজিটের বাংলাদেশি মোবাইল নম্বর প্রদান করুন (যেমন: 018XXXXXXXX)'
-          : 'Please enter a valid 11-digit Bangladeshi contact number (e.g. 018XXXXXXXX)'
+          ? 'অনুগ্রহ করে সকল প্রয়োজনীয় (*) ঘর পূরণ করুন। সাহায্যের জন্য কল করুন: '
+          : 'Please complete all required (*) fields. For urgent help, call: '
+      );
+      return;
+    }
+
+    if (reqName.length > 120 || patName.length > 120) {
+      setEmgDisabledHelpline(helpline);
+      setEmgFormError(
+        isBn
+          ? 'আবেদনকারী বা রোগীর নাম সর্বোচ্চ ১২০ অক্ষরের মধ্যে হতে হবে। সাহায্যের জন্য কল করুন: '
+          : 'Requester and patient names must be 120 characters or fewer. Need help? Call: '
+      );
+      return;
+    }
+
+    if (hospName.length < 2 || hospName.length > 150) {
+      setEmgDisabledHelpline(helpline);
+      setEmgFormError(
+        isBn
+          ? 'হাসপাতালের নাম কমপক্ষে ২ অক্ষর এবং সর্বোচ্চ ১৫০ অক্ষরের মধ্যে হতে হবে। সাহায্যের জন্য কল করুন: '
+          : 'Hospital name must be between 2 and 150 characters. Need help? Call: '
+      );
+      return;
+    }
+
+    if (notesTrimmed.length > 500) {
+      setEmgDisabledHelpline(helpline);
+      setEmgFormError(
+        isBn
+          ? 'অতিরিক্ত বিবরণ সর্বোচ্চ ৫০০ অক্ষরের মধ্যে সীমাবদ্ধ রাখুন। সাহায্যের জন্য কল করুন: '
+          : 'Additional notes must be 500 characters or fewer. Need help? Call: '
+      );
+      return;
+    }
+
+    if (hasSuspiciousLinkInFields([reqName, patName, hospName, notesTrimmed])) {
+      setEmgDisabledHelpline(helpline);
+      setEmgFormError(
+        isBn
+          ? 'দয়া করে আবেদনের ঘরে কোনো ওয়েবসাইট লিংক (http/https/www) যুক্ত করবেন না। সাহায্যের জন্য কল করুন: '
+          : 'Please do not include website links (http/https/www) in form fields. Need help? Call: '
+      );
+      return;
+    }
+
+    // Normalize (+880 / 880 -> 01...) and validate 11-digit BD mobile number
+    const cleanPhone = normalizeBdPhoneNumber(emgContactNumber);
+    if (!/^01[3-9]\d{8}$/.test(cleanPhone)) {
+      setEmgDisabledHelpline(helpline);
+      setEmgFormError(
+        isBn
+          ? 'যোগাযোগের জন্য সঠিক ১১ ডিজিটের বাংলাদেশি মোবাইল নম্বর প্রদান করুন (যেমন: 018XXXXXXXX বা +88018XXXXXXXX)। সাহায্যের জন্য কল করুন: '
+          : 'Please enter a valid 11-digit Bangladeshi mobile number (e.g. 018XXXXXXXX or +88018XXXXXXXX). Need help? Call: '
+      );
+      return;
+    }
+
+    if (!(VALID_BLOOD_GROUPS as readonly string[]).includes(emgBloodGroup)) {
+      setEmgDisabledHelpline(helpline);
+      setEmgFormError(
+        isBn
+          ? 'সঠিক রক্তের গ্রুপ নির্বাচন করুন। সাহায্যের জন্য কল করুন: '
+          : 'Please select a valid blood group. Need help? Call: '
+      );
+      return;
+    }
+
+    const unitsNum = Number(emgUnits);
+    if (!Number.isInteger(unitsNum) || unitsNum < 1 || unitsNum > 10) {
+      setEmgDisabledHelpline(helpline);
+      setEmgFormError(
+        isBn
+          ? 'রক্তের পরিমাণ ১ থেকে ১০ ব্যাগের মধ্যে পূর্ণ সংখ্যা হতে হবে। সাহায্যের জন্য কল করুন: '
+          : 'Blood units needed must be a whole number between 1 and 10. Need help? Call: '
+      );
+      return;
+    }
+
+    if (typeof emgUrgency !== 'string' || !emgUrgency.trim() || emgUrgency.trim().length > 20) {
+      setEmgDisabledHelpline(helpline);
+      setEmgFormError(
+        isBn
+          ? 'সঠিক জরুরিতা লেভেল নির্বাচন করুন। সাহায্যের জন্য কল করুন: '
+          : 'Please select a valid urgency level. Need help? Call: '
+      );
+      return;
+    }
+
+    const cleanDate = (emgRequiredDate || '').trim();
+    const dateBounds = getEmergencyRequiredDateBounds();
+    if (!isValidIsoCalendarDate(cleanDate) || cleanDate < dateBounds.min || cleanDate > dateBounds.max) {
+      setEmgDisabledHelpline(helpline);
+      setEmgFormError(
+        isBn
+          ? 'প্রয়োজনের তারিখ আজ থেকে ২ দিন আগে থেকে ৩০ দিন পর পর্যন্ত হতে হবে। সাহায্যের জন্য কল করুন: '
+          : 'Required date must be within 2 days ago up to 30 days ahead. Need help? Call: '
+      );
+      return;
+    }
+
+    const waitMinutes = getEmergencyCooldownRemainingMinutes();
+    if (waitMinutes > 0) {
+      setEmgDisabledHelpline(helpline);
+      setEmgFormError(
+        isBn
+          ? `এই ব্রাউজার থেকে পুনরায় আবেদন করতে অনুগ্রহ করে প্রায় ${waitMinutes} মিনিট অপেক্ষা করুন অথবা সরাসরি হেল্পলাইনে কল করুন: `
+          : `Please wait approximately ${waitMinutes} minute(s) before submitting another request from this browser, or call our helpline: `
       );
       return;
     }
 
     setIsEmgSubmitting(true);
 
-    // Auto-match donors
-    const matched = bloodDonors.filter(
-      d => d.approvalStatus === 'APPROVED' && d.bloodGroup === emgBloodGroup && d.availabilityStatus !== 'UNAVAILABLE'
-    ).map(d => d.id);
-
-    const res = await addEmergencyBloodRequest({
-      requesterName: emgRequesterName.trim(),
-      contactNumber: cleanPhone,
-      patientName: emgPatientName.trim(),
-      bloodGroup: emgBloodGroup,
-      unitsNeeded: Number(emgUnits) || 1,
-      hospitalName: emgHospital.trim(),
-      district: emgDistrict,
-      upazila: emgUpazila,
-      emergencyLevel: emgUrgency,
-      requiredDate: emgRequiredDate,
-      additionalNotes: emgNotes.trim() || undefined,
-      matchedDonorIds: matched
-    });
-
-    if (!res.success) {
-      setIsEmgSubmitting(false);
-      const helpline = bloodDonationSettings.emergencyHelpline || '+8801839008339';
-      if (res.status === 'FEATURE_DISABLED') {
-        setEmgDisabledHelpline(helpline);
-        setEmgFormError(
-          isBn
-            ? 'অনলাইনে জমা দেওয়া এখন সাময়িকভাবে বন্ধ আছে। জরুরি প্রয়োজনে সরাসরি হেল্পলাইনে কল করুন: '
-            : 'Online submission is temporarily unavailable. For urgent needs, please call the helpline: '
-        );
-      } else {
-        setEmgFormError(res.error || (isBn ? 'জরুরি রক্তের আবেদন জমা নেওয়া যায়নি।' : 'Emergency blood request could not be processed.'));
-      }
-      return;
-    }
-
-    const cleanHelpline = (bloodDonationSettings.emergencyHelpline || '+8801839008339').replace(/[^0-9]/g, '');
-    const emgWhatsAppMsg = encodeURIComponent(
-      `🚨 জরুরি রক্তের আবেদন!\n\n📋 বিবরণ:\n• রোগীর নাম: ${emgPatientName.trim()}\n• রক্তের গ্রুপ: ${emgBloodGroup} (${emgUnits || 1} ব্যাগ)\n• হাসপাতাল: ${emgHospital.trim()}\n• অবস্থান: ${emgUpazila}, ${emgDistrict}\n• যোগাযোগের নম্বর: ${cleanPhone}\n• প্রয়োজনীয় তারিখ: ${emgRequiredDate || 'জরুরি'}\n• অনুরোধকারী: ${emgRequesterName.trim()}\n\nঅনুগ্রহ করে জরুরিভাবে রক্তদাতা সমন্বয়ে সহায়তা করুন।`
-    );
-    const emgWaUrl = `https://wa.me/${cleanHelpline}?text=${emgWhatsAppMsg}`;
-
     try {
-      window.open(emgWaUrl, '_blank');
-    } catch (e) {
-      // Pop-up blocker fallback
-    }
+      // Auto-match donors
+      const matched = bloodDonors.filter(
+        d => d.approvalStatus === 'APPROVED' && d.bloodGroup === emgBloodGroup && d.availabilityStatus !== 'UNAVAILABLE'
+      ).map(d => d.id);
 
-    setEmgRefId(res.id);
-    setEmgSubmitted(true);
-    setIsEmgSubmitting(false);
+      const res = await addEmergencyBloodRequest({
+        requesterName: reqName,
+        contactNumber: cleanPhone,
+        patientName: patName,
+        bloodGroup: emgBloodGroup,
+        unitsNeeded: unitsNum,
+        hospitalName: hospName,
+        district: emgDistrict,
+        upazila: emgUpazila,
+        emergencyLevel: emgUrgency,
+        requiredDate: cleanDate,
+        additionalNotes: notesTrimmed || undefined,
+        matchedDonorIds: matched
+      });
+
+      if (!res.success) {
+        setEmgDisabledHelpline(helpline);
+        if (res.status === 'FEATURE_DISABLED') {
+          setEmgFormError(
+            isBn
+              ? 'অনলাইনে জমা দেওয়া এখন সাময়িকভাবে বন্ধ আছে। জরুরি প্রয়োজনে সরাসরি হেল্পলাইনে কল করুন: '
+              : 'Online submission is temporarily unavailable. For urgent needs, please call the helpline: '
+          );
+        } else if (res.status === 'RATE_LIMITED') {
+          setEmgFormError(
+            isBn
+              ? 'এই নম্বর থেকে সম্প্রতি একাধিক আবেদন জমা হয়েছে। অনুগ্রহ করে কিছুক্ষণ পর চেষ্টা করুন অথবা সরাসরি হেল্পলাইনে কল করুন: '
+              : 'Too many requests were submitted recently from this number. Please try again later or call our helpline: '
+          );
+        } else if (res.status === 'VALIDATION_FAILED') {
+          setEmgFormError(
+            isBn
+              ? 'প্রদত্ত কোনো তথ্য সীমার বাইরে বা সঠিক ফরম্যাটে নেই (ব্যাগ ১-১০, ফোন নম্বর বা তারিখ)। যাচাই করে আবার চেষ্টা করুন অথবা কল করুন: '
+              : 'Submitted values did not pass server validation (units 1–10, phone format, or date window). Please review and retry, or call: '
+          );
+        } else if (res.status === 'ONLINE_REQUIRED') {
+          setEmgFormError(
+            isBn
+              ? 'ইন্টারনেট সংযোগ বিচ্ছিন্ন আছে। সংযোগ চালু করে আবার চেষ্টা করুন অথবা হেল্পলাইনে কল করুন: '
+              : 'Network connection appears offline. Please reconnect and retry, or call our helpline: '
+          );
+        } else {
+          setEmgFormError(
+            isBn
+              ? 'জরুরি রক্তের আবেদন জমা নেওয়া যায়নি। দয়া করে আবার চেষ্টা করুন অথবা হেল্পলাইনে কল করুন: '
+              : 'Emergency blood request could not be processed. Please try again or call our helpline: '
+          );
+        }
+        return;
+      }
+
+      recordEmergencySubmitCooldown();
+
+      const cleanHelpline = helpline.replace(/[^0-9]/g, '');
+      const emgWhatsAppMsg = encodeURIComponent(
+        `🚨 জরুরি রক্তের আবেদন!\n\n📋 তথ্য:\n• রক্তের গ্রুপ: ${emgBloodGroup} (${unitsNum} ব্যাগ)\n• হাসপাতাল: ${hospName}\n• অবস্থান: ${emgUpazila}, ${emgDistrict}\n• জরুরিতা: ${emgUrgency}\n• প্রয়োজনীয় তারিখ: ${cleanDate}\n\nঅনুগ্রহ করে জরুরিভাবে রক্তদাতা সমন্বয়ে সহায়তা করুন।`
+      );
+      setEmgWhatsAppUrl(`https://wa.me/${cleanHelpline}?text=${emgWhatsAppMsg}`);
+      setEmgRefId(res.id);
+      setEmgSubmitted(true);
+    } catch {
+      setEmgDisabledHelpline(helpline);
+      setEmgFormError(
+        isBn
+          ? 'আবেদন পাঠানোর সময় অপ্রত্যাশিত ত্রুটি হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন অথবা হেল্পলাইনে কল করুন: '
+          : 'An unexpected error occurred while submitting. Please retry or call our helpline: '
+      );
+    } finally {
+      setIsEmgSubmitting(false);
+    }
   };
 
   return (
@@ -2768,22 +2953,54 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                     </div>
                     <div className="space-y-1">
                       <h4 className="text-xl font-extrabold text-slate-900 font-display">
-                        {isBn ? 'জরুরি রক্তের আবেদন গৃহীত হয়েছে!' : 'Emergency Request Broadcasted!'}
+                        {isBn ? 'জরুরি রক্তের আবেদন জমা হয়েছে!' : 'Emergency Request Submitted!'}
                       </h4>
-                      <p className="text-xs text-slate-600 leading-relaxed">
+                      <p className="text-xs text-slate-600 leading-relaxed max-w-md mx-auto">
                         {isBn
-                          ? 'আমাদের স্বেচ্ছাসেবক কো-অর্ডিনেটরগণ ম্যাচিং রক্তদাতাদের সাথে যোগাযোগ শুরু করেছেন।'
-                          : 'Our voluntary team is actively coordinating matching available donors for this request.'}
+                          ? 'আপনার জরুরি আবেদনটি সিস্টেমে সংরক্ষিত হয়েছে। দ্রুত রক্তদাতা সমন্বয়ের জন্য নিচের বাটনে ক্লিক করে হোয়াটসঅ্যাপে আমাদের টিমকে জানাতে পারেন অথবা সরাসরি হেল্পলাইনে কল করতে পারেন।'
+                          : 'Your emergency request has been recorded. For faster donor coordination, please notify our team via WhatsApp below or call our helpline directly.'}
                       </p>
                     </div>
-                    <div className="p-3 bg-[#FAF7F2] rounded-xl border border-[#EAE3D9] inline-block text-xs font-mono font-bold text-slate-700">
-                      Req ID: <span className="text-rose-600">{emgRefId}</span>
-                    </div>
-                    <div className="pt-2">
+                    {emgRefId && (
+                      <div className="p-3 bg-[#FAF7F2] rounded-xl border border-[#EAE3D9] inline-block text-xs font-mono font-bold text-slate-700">
+                        Req ID: <span className="text-rose-600">{emgRefId}</span>
+                      </div>
+                    )}
+                    <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                      {emgWhatsAppUrl && (
+                        <a
+                          href={emgWhatsAppUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          <span>{isBn ? 'হোয়াটসঅ্যাপে টিমকে জানান' : 'Notify Team on WhatsApp'}</span>
+                        </a>
+                      )}
+                      <a
+                        href={`tel:${(bloodDonationSettings.emergencyHelpline || '+8801839008339').replace(/[^0-9+]/g, '')}`}
+                        className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+                      >
+                        <Phone className="w-4 h-4" />
+                        <span>
+                          {isBn ? 'হেল্পলাইনে কল করুন' : 'Call Helpline'} ({bloodDonationSettings.emergencyHelpline || '+8801839008339'})
+                        </span>
+                      </a>
                       <button
                         type="button"
-                        onClick={() => setEmgSubmitted(false)}
-                        className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs cursor-pointer"
+                        onClick={() => {
+                          setEmgSubmitted(false);
+                          setEmgRefId('');
+                          setEmgWhatsAppUrl(null);
+                          setEmgWebsiteHp('');
+                          setEmgRequesterName('');
+                          setEmgContactNumber('');
+                          setEmgPatientName('');
+                          setEmgHospital('');
+                          setEmgNotes('');
+                        }}
+                        className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs cursor-pointer"
                       >
                         {isBn ? 'নতুন আবেদন করুন' : 'Post Another Request'}
                       </button>
@@ -2821,12 +3038,30 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                     )}
 
                     <form onSubmit={handleEmergencyRequestSubmit} className="space-y-4">
+                      {/* Off-screen honeypot field for bot filtering (avoid display:none) */}
+                      <div
+                        aria-hidden="true"
+                        className="absolute -left-[9999px] top-auto w-px h-px overflow-hidden opacity-0 pointer-events-none"
+                      >
+                        <label htmlFor="emg-website-hp">Website</label>
+                        <input
+                          id="emg-website-hp"
+                          name="website"
+                          type="text"
+                          tabIndex={-1}
+                          autoComplete="off"
+                          value={emgWebsiteHp}
+                          onChange={(e) => setEmgWebsiteHp(e.target.value)}
+                        />
+                      </div>
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1">
                           <label className="block text-xs font-bold text-slate-800">{isBn ? 'আবেদনকারীর নাম *' : 'Requester Name *'}</label>
                           <input
                             type="text"
                             required
+                            maxLength={120}
                             value={emgRequesterName}
                             onChange={(e) => setEmgRequesterName(e.target.value)}
                             placeholder="e.g. Faruk Ahmed"
@@ -2839,14 +3074,14 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                           <input
                             type="tel"
                             required
-                            maxLength={11}
+                            maxLength={18}
                             value={emgContactNumber}
-                            onChange={(e) => setEmgContactNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
-                            placeholder="01XXXXXXXXX"
+                            onChange={(e) => setEmgContactNumber(e.target.value.replace(/[^\d+\s-]/g, '').slice(0, 18))}
+                            placeholder="01XXXXXXXXX or +8801XXXXXXXXX"
                             className="w-full px-3.5 py-2.5 rounded-xl border border-[#EAE3D9] bg-[#FAF7F2] text-xs font-mono focus:bg-white focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
                           />
                           <p className="text-[10px] text-slate-500 font-medium">
-                            {isBn ? '১১ ডিজিটের মোবাইল নম্বর' : '11-digit BD mobile number'}
+                            {isBn ? '১১ ডিজিটের মোবাইল নম্বর (০১... অথবা +৮৮০১...)' : '11-digit BD mobile (01... or +8801...)'}
                           </p>
                         </div>
                       </div>
@@ -2857,6 +3092,7 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                           <input
                             type="text"
                             required
+                            maxLength={120}
                             value={emgPatientName}
                             onChange={(e) => setEmgPatientName(e.target.value)}
                             placeholder="e.g. Rashedul Islam (Age 32)"
@@ -2886,8 +3122,9 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                           <label className="block text-xs font-bold text-slate-800">{isBn ? 'পরিমাণ (ব্যাগ) *' : 'Units (Bags) *'}</label>
                           <input
                             type="number"
-                            min="1"
-                            max="10"
+                            min={1}
+                            max={10}
+                            step={1}
                             required
                             value={emgUnits}
                             onChange={(e) => setEmgUnits(Number(e.target.value))}
@@ -2947,6 +3184,7 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                           <input
                             type="text"
                             required
+                            maxLength={150}
                             value={emgHospital}
                             onChange={(e) => setEmgHospital(e.target.value)}
                             placeholder="e.g. CMCH / Parkview Hospital"
@@ -2961,6 +3199,8 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                             onChange={(val) => setEmgRequiredDate(val)}
                             isBn={isBn}
                             required
+                            min={emgDateBounds.min}
+                            max={emgDateBounds.max}
                             minYear={new Date().getFullYear() - 1}
                             maxYear={new Date().getFullYear() + 2}
                             yearOrder="asc"
@@ -2973,6 +3213,7 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                         <label className="block text-xs font-bold text-slate-800">{isBn ? 'রোগীর বিবরণ / ওয়ার্ড / কেবিন নম্বর' : 'Ward / Bed / Notes'}</label>
                         <textarea
                           rows={2}
+                          maxLength={500}
                           value={emgNotes}
                           onChange={(e) => setEmgNotes(e.target.value)}
                           placeholder="e.g. ICU Bed 12, surgery scheduled at 10 AM..."
