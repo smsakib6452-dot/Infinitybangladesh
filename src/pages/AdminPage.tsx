@@ -980,9 +980,13 @@ export const AdminPage: React.FC = () => {
           id: 'blood_donation' as AdminTab, 
           label: isBn ? 'রক্তদান ব্যবস্থাপনা (ব্লাড ব্যাংক)' : 'Blood Donation Network', 
           icon: Droplet,
-          badge: bloodDonors.filter(d => d.approvalStatus === 'PENDING').length > 0
-            ? bloodDonors.filter(d => d.approvalStatus === 'PENDING').length
-            : undefined
+          badge: (() => {
+            const totalPending =
+              bloodDonors.filter(d => d.approvalStatus === 'PENDING').length +
+              emergencyBloodRequests.filter(r => r.status === 'PENDING').length;
+            return totalPending > 0 ? totalPending : undefined;
+          })(),
+          badgeTone: emergencyBloodRequests.some(r => r.status === 'PENDING') ? 'emergency' : 'pending'
         },
         { id: 'campaigns' as AdminTab, label: isBn ? 'ক্যাম্পেইনসমূহ' : 'Campaigns', icon: Flag },
         { id: 'programs' as AdminTab, label: isBn ? 'সেবামূলক প্রোগ্রাম' : 'Programs', icon: Handshake },
@@ -1239,7 +1243,11 @@ export const AdminPage: React.FC = () => {
                           <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#006A4E]' : 'text-slate-400'}`} />
                           <span className="truncate">{item.label}</span>
                           {badgeCount !== undefined && (
-                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-black bg-amber-500 text-white shrink-0 animate-pulse shadow-2xs">
+                            <span
+                              className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-black text-white shrink-0 shadow-2xs ${
+                                (item as any).badgeTone === 'emergency' ? 'bg-rose-700' : 'bg-amber-700'
+                              }`}
+                            >
                               {badgeCount}
                             </span>
                           )}
@@ -4555,16 +4563,26 @@ export const AdminPage: React.FC = () => {
                     {(() => {
                       const pendingDonors = bloodDonors.filter(d => d.approvalStatus === 'PENDING');
                       const pendingCount = pendingDonors.length;
+                      const pendingEmergencyCount = emergencyBloodRequests.filter(r => r.status === 'PENDING').length;
                       return [
                         { id: 'overview', label: isBn ? 'ড্যাশবোর্ড ওভারভিউ' : 'Overview Dashboard', icon: LayoutDashboard },
                         { 
                           id: 'pending', 
                           label: isBn ? `অপেক্ষমাণ আবেদন (${pendingCount})` : `Pending Approvals (${pendingCount})`, 
                           icon: Clock,
-                          badge: pendingCount > 0 ? pendingCount : undefined 
+                          badge: pendingCount > 0 ? pendingCount : undefined,
+                          badgeClass: 'bg-amber-700 text-white'
                         },
                         { id: 'donors', label: isBn ? `রক্তদাতাবৃন্দ (${bloodDonors.length})` : `All Donors (${bloodDonors.length})`, icon: Users },
-                        { id: 'emergency', label: isBn ? `জরুরি আবেদন (${emergencyBloodRequests.length})` : `Emergency Requests (${emergencyBloodRequests.length})`, icon: AlertTriangle },
+                        { 
+                          id: 'emergency', 
+                          label: isBn ? `জরুরি আবেদন (${emergencyBloodRequests.length})` : `Emergency Requests (${emergencyBloodRequests.length})`, 
+                          icon: AlertTriangle,
+                          badge: pendingEmergencyCount > 0
+                            ? (isBn ? `${pendingEmergencyCount} পেন্ডিং` : `${pendingEmergencyCount} Pending`)
+                            : undefined,
+                          badgeClass: 'bg-rose-700 text-white'
+                        },
                         { id: 'settings', label: isBn ? 'সেটিংস ও ক্যাটাগরি' : 'Settings & Categories', icon: Sliders }
                       ].map(st => {
                         const Icon = st.icon;
@@ -4583,7 +4601,7 @@ export const AdminPage: React.FC = () => {
                             <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-emerald-200' : 'text-slate-500'}`} />
                             <span>{st.label}</span>
                             {st.badge !== undefined && (
-                              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-black bg-amber-500 text-white animate-pulse">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-black ${st.badgeClass || 'bg-amber-700 text-white'}`}>
                                 {st.badge}
                               </span>
                             )}
@@ -4628,13 +4646,20 @@ export const AdminPage: React.FC = () => {
                         onClick={() => setBloodSubTab('emergency')}
                         className="p-5 rounded-3xl bg-rose-50 border border-rose-200 shadow-warm-xs space-y-1 cursor-pointer hover:border-rose-400 transition-colors group"
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <p className="text-xs font-bold text-rose-800 uppercase">{isBn ? 'জরুরি রক্তের আবেদন' : 'Emergency Requests'}</p>
                           <ChevronRight className="w-3.5 h-3.5 text-rose-600 group-hover:translate-x-1 transition-transform" />
                         </div>
-                        <p className="text-2xl sm:text-3xl font-extrabold text-rose-700 font-display">
-                          {emergencyBloodRequests.length}
-                        </p>
+                        <div className="flex items-baseline justify-between gap-2">
+                          <p className="text-2xl sm:text-3xl font-extrabold text-rose-700 font-display">
+                            {emergencyBloodRequests.length}
+                          </p>
+                          {emergencyBloodRequests.filter(r => r.status === 'PENDING').length > 0 && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-700 text-white">
+                              {emergencyBloodRequests.filter(r => r.status === 'PENDING').length} {isBn ? 'পেন্ডিং' : 'Pending'}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -5221,7 +5246,18 @@ export const AdminPage: React.FC = () => {
                             </div>
 
                             <p className="text-xs text-slate-600">
-                              Hospital: <span className="font-bold">{req.hospitalName}</span> ({req.upazila}, {req.district}) &bull; Requester: {req.requesterName} ({req.contactNumber})
+                              Hospital: <span className="font-bold">{req.hospitalName}</span> ({req.upazila}, {req.district}) &bull; Requester: {req.requesterName} (
+                              {req.contactNumber ? (
+                                <a
+                                  href={`tel:${String(req.contactNumber).replace(/[^0-9+]/g, '')}`}
+                                  className="font-mono font-bold text-[#006A4E] hover:underline focus:outline-none focus:ring-2 focus:ring-[#006A4E] rounded px-0.5"
+                                >
+                                  {req.contactNumber}
+                                </a>
+                              ) : (
+                                <span>{isBn ? 'নম্বর নেই' : 'N/A'}</span>
+                              )}
+                              )
                             </p>
                           </div>
 
