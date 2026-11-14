@@ -374,7 +374,7 @@ export const PUBLIC_SUBMISSION_ALLOWLISTS: Record<PublicSubmissionTable, readonl
  */
 export const PUBLIC_SUBMISSION_GATES: Record<PublicSubmissionTable, 'ACTIVE' | 'BLOCKED_PENDING_MIGRATION'> = {
   blood_donors: 'ACTIVE',
-  emergency_blood_requests: 'BLOCKED_PENDING_MIGRATION',
+  emergency_blood_requests: 'ACTIVE',
   volunteer_applications: 'BLOCKED_PENDING_MIGRATION',
   contact_messages: 'BLOCKED_PENDING_MIGRATION',
   donation_records: 'BLOCKED_PENDING_MIGRATION'
