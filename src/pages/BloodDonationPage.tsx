@@ -1398,8 +1398,8 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                     </h4>
                     <p className="text-xs text-slate-500 leading-relaxed">
                       {isBn
-                        ? 'আপনার নির্বাচিত ফিল্টারের সাথে কোনো রক্তদাতা মেলেনি। ফিল্টার পরিবর্তন করুন অথবা তাৎক্ষণিক জরুরি আবেদন পোস্ট করুন।'
-                        : 'Try adjusting your search criteria or submit an emergency request to notify our voluntary coordinators.'}
+                        ? 'আপনার নির্বাচিত ফিল্টারের সাথে কোনো রক্তদাতা মেলেনি। ফিল্টার পরিবর্তন করুন অথবা আমাদের তালিকায় জরুরি আবেদন জমা দিন (জরুরি হলে হেল্পলাইনে কল করুন)।'
+                        : 'Try adjusting your search criteria or save an emergency request to our queue (for urgent needs, please call our helpline directly).'}
                     </p>
                   </div>
                   <button
@@ -3017,6 +3017,22 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                       </p>
                     </div>
 
+                    <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-slate-900 text-xs leading-relaxed flex items-start gap-2.5">
+                      <Info className="w-4 h-4 text-amber-800 shrink-0 mt-0.5" />
+                      <p className="font-medium">
+                        {isBn
+                          ? 'এই ফর্ম আপনার আবেদন আমাদের তালিকায় জমা রাখে, কাউকে স্বয়ংক্রিয়ভাবে জানায় না। জীবন-মরণ জরুরি হলে এখনই হেল্পলাইনে কল করুন: '
+                          : 'This form saves your request to our queue and does not notify anyone automatically. For a life-threatening emergency, call the helpline now: '}
+                        <a
+                          href={`tel:${(bloodDonationSettings.emergencyHelpline || '+8801839008339').replace(/[^0-9+]/g, '')}`}
+                          className="font-extrabold underline text-rose-800 hover:text-rose-950 focus:outline-none focus:ring-2 focus:ring-rose-600 rounded px-0.5 inline-block"
+                        >
+                          {bloodDonationSettings.emergencyHelpline || '+8801839008339'}
+                        </a>
+                        {isBn ? '।' : '.'}
+                      </p>
+                    </div>
+
                     {emgFormError && (
                       <div className="p-4 rounded-2xl bg-rose-50 border-2 border-rose-300 text-rose-900 text-xs sm:text-sm font-bold flex items-start gap-2.5 shadow-warm-xs animate-in fade-in">
                         <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
@@ -3231,7 +3247,7 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                         }`}
                       >
                         <Send className="w-4 h-4" />
-                        <span>{isEmgSubmitting ? (isBn ? 'জমা হচ্ছে...' : 'Submitting...') : (isBn ? 'জরুরি আবেদন প্রচার করুন' : 'Broadcast Emergency Request')}</span>
+                        <span>{isEmgSubmitting ? (isBn ? 'জমা হচ্ছে...' : 'Submitting...') : (isBn ? 'জরুরি আবেদন জমা দিন' : 'Submit Emergency Request')}</span>
                       </button>
                     </form>
                   </>
@@ -3323,7 +3339,7 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                             type="button"
                             onClick={() => handleCopyEmergencyDetails(req)}
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#FAF7F2] hover:bg-slate-100 text-slate-700 text-xs font-bold border border-[#EAE3D9] transition-all cursor-pointer"
-                            title={isBn ? 'জরুরি মেসেজ কপি করুন' : 'Copy formatted broadcast message'}
+                            title={isBn ? 'জরুরি মেসেজ কপি করুন' : 'Copy formatted request message'}
                           >
                             {copiedReqId === req.id ? (
                               <>
@@ -3468,19 +3484,19 @@ ${req.additionalNotes ? `📝 রোগীর বিবরণ: ${req.additionalN
                   <AnimatedCounter value={stats.activeEmergencyRequests} />
                 </p>
                 <p className="text-xs text-amber-900">
-                  {isBn ? 'কো-অর্ডিনেটরগণ সরাসরি পর্যবেক্ষণ করছেন' : 'Currently being coordinated by volunteer desk'}
+                  {isBn ? 'তালিকায় জমা থাকা জরুরি আবেদন' : 'Requests listed in the emergency queue'}
                 </p>
               </div>
 
               <div className="p-6 rounded-3xl bg-rose-50 border border-rose-200 space-y-2">
                 <p className="text-xs font-bold text-rose-800 uppercase tracking-wider">
-                  {isBn ? 'জরুরি রক্তদানে প্রস্তুত' : 'Immediate Emergency Readiness'}
+                  {isBn ? 'জরুরি রক্তদানে প্রস্তুত' : 'Active Blood Donors'}
                 </p>
                 <p className="text-3xl font-extrabold text-rose-600 font-display">
                   <AnimatedCounter value={stats.activeDonors} /> {isBn ? 'জন' : 'Donors'}
                 </p>
                 <p className="text-xs text-rose-900">
-                  {isBn ? 'তাৎক্ষণিক হাসপাতালে পৌঁছাতে প্রস্তুত' : 'Available within minimum response window'}
+                  {isBn ? 'রক্তদানে প্রস্তুত হিসেবে তালিকাভুক্ত' : 'Listed as available for voluntary donation'}
                 </p>
               </div>
             </div>
